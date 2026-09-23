@@ -19,8 +19,8 @@ import { get } from "@vercel/blob";
 export const runtime = "nodejs";
 
 const ALLOWED = new Set(["GT-America-Standard-Regular.woff2", "GT-America-Standard-Bold.woff2"]);
-/** Folder inside the private store; override with FONT_BLOB_PREFIX. */
-const PREFIX = (process.env.FONT_BLOB_PREFIX ?? "gt-america").replace(/^\/|\/$/g, "");
+/** The files sit at the store root; FONT_BLOB_PREFIX names a folder instead. */
+const PREFIX = (process.env.FONT_BLOB_PREFIX ?? "").replace(/^\/|\/$/g, "");
 
 /** One diagnostic per function instance, not one per request: a misconfigured store would otherwise log on every page view. */
 const warned = new Set<string>();
@@ -62,7 +62,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ file: st
     // No local copy: try the linked private store. Any failure degrades to the
     // system font (a 404 here is what font-tier.tsx expects), but say why in the
     // function logs so a misconfigured store is not mistaken for "no fonts".
-    const pathname = `${PREFIX}/${file}`;
+    const pathname = PREFIX ? `${PREFIX}/${file}` : file;
     try {
       const result = await get(pathname, { access: "private" });
       if (!result) {
