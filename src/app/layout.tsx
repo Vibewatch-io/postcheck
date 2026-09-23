@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://postcheck.vibewatch.io"),
   openGraph: { title: TITLE, description: DESCRIPTION, type: "website" },
-  twitter: { card: "summary", title: TITLE, description: DESCRIPTION, site: "@vibewatch_io" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, site: "@vibewatch_io" },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#F9F8F5" };
