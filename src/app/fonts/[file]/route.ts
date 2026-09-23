@@ -8,8 +8,8 @@ import { get } from "@vercel/blob";
  * X's CDN is blocked. They are licensed to Vibewatch under Grilli Type's web
  * licence (self-hosted, @font-face only, served only to sites under the
  * licensee's control), so the files are never committed: locally they live in
- * .fonts/gt-america/, in production in a private Vercel Blob store read with
- * the store's server token (BLOB_READ_WRITE_TOKEN, set by linking the store).
+ * .fonts/gt-america/, in production in a private Vercel Blob store linked to
+ * the project (the SDK authenticates with the store token or Vercel OIDC).
  * Requests from other origins are refused so the fonts can't be hotlinked by
  * another site. Anything not in the allowlist 404s.
  *
@@ -51,12 +51,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ file: st
     const bytes = await readFile(join(process.cwd(), ".fonts", "gt-america", file));
     return new NextResponse(bytes, { headers });
   } catch {
-    if (!process.env.BLOB_READ_WRITE_TOKEN) return new NextResponse(null, { status: 404 });
+    // No local copy: try the linked private store. Any failure degrades to the
+    // system font (a 404 here is what font-tier.tsx expects), but say why in the
+    // function logs so a misconfigured store is not mistaken for "no fonts".
+    const pathname = `${PREFIX}/${file}`;
     try {
-      const result = await get(`${PREFIX}/${file}`, { access: "private" });
-      if (result?.statusCode !== 200) return new NextResponse(null, { status: 404 });
+      const result = await get(pathname, { access: "private" });
+      if (!result) {
+        console.warn(`[fonts] ${pathname}: not found in the linked Blob store`);
+        return new NextResponse(null, { status: 404 });
+      }
+      if (result.statusCode !== 200) return new NextResponse(null, { status: 404 });
       return new NextResponse(result.stream, { headers });
-    } catch {
+    } catch (err) {
+      console.warn(`[fonts] ${pathname}: Blob read failed: ${err instanceof Error ? err.message : String(err)}`);
       return new NextResponse(null, { status: 404 });
     }
   }
