@@ -22,6 +22,14 @@ const ALLOWED = new Set(["GT-America-Standard-Regular.woff2", "GT-America-Standa
 /** Folder inside the private store; override with FONT_BLOB_PREFIX. */
 const PREFIX = (process.env.FONT_BLOB_PREFIX ?? "gt-america").replace(/^\/|\/$/g, "");
 
+/** One diagnostic per function instance, not one per request: a misconfigured store would otherwise log on every page view. */
+const warned = new Set<string>();
+function warnOnce(pathname: string, why: string) {
+  if (warned.has(pathname)) return;
+  warned.add(pathname);
+  console.warn(`[fonts] ${pathname}: ${why} (degrading to the system font; further failures for this file are not logged)`);
+}
+
 /** True when the browser is fetching for a page on this same host. */
 function sameOrigin(req: Request): boolean {
   const site = req.headers.get("sec-fetch-site");
@@ -58,13 +66,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ file: st
     try {
       const result = await get(pathname, { access: "private" });
       if (!result) {
-        console.warn(`[fonts] ${pathname}: not found in the linked Blob store`);
+        warnOnce(pathname, "not found in the linked Blob store");
         return new NextResponse(null, { status: 404 });
       }
       if (result.statusCode !== 200) return new NextResponse(null, { status: 404 });
       return new NextResponse(result.stream, { headers });
     } catch (err) {
-      console.warn(`[fonts] ${pathname}: Blob read failed: ${err instanceof Error ? err.message : String(err)}`);
+      warnOnce(pathname, `Blob read failed: ${err instanceof Error ? err.message : String(err)}`);
       return new NextResponse(null, { status: 404 });
     }
   }
