@@ -37,7 +37,7 @@ export function useComposer(onChange: (draft: Draft) => void) {
         "aria-label": "Post text",
         "aria-multiline": "true",
         role: "textbox",
-        class: "composer min-h-[clamp(96px,20vh,204px)] w-full rounded-xl border border-brand-warm-border bg-white px-4 py-3 font-sans text-base leading-7 text-brand-warm-dark outline-none focus:border-brand-teal",
+        class: "composer min-h-[clamp(96px,20vh,204px)] w-full rounded-xl border border-brand-warm-border bg-white px-4 py-3 font-sans text-base leading-7 text-brand-warm-dark outline-hidden focus:border-brand-teal",
       },
       // Plain-text paste keeps every line break (ProseMirror's default collapses blank lines).
       clipboardTextParser: (text, _context, _plain, view) => {

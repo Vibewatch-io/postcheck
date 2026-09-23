@@ -1,6 +1,35 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Fonts are inline: next/font sets --font-syne and --font-geist on <body>, so a
+   :root-level alias would not resolve. */
+@theme inline {
+  --font-syne: var(--font-syne), sans-serif;
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+}
+
+@theme {
+  --color-brand-teal: #00c4a1;
+  --color-brand-teal-dark: #00735a;
+  --color-brand-teal-light: #00dfc8;
+  --color-brand-violet: #7b5ea7;
+  --color-brand-orange: #f97316;
+  --color-brand-ivory: #f9f8f5;
+  --color-brand-warm-dark: #141412;
+  --color-brand-warm-gray: #6a6861;
+  --color-brand-warm-secondary: #8a867e;
+  --color-brand-warm-muted: #b8b4ae;
+  --color-brand-warm-border: #e4e1da;
+  --color-brand-warm-border-hover: #d4d0c8;
+  --color-brand-warm-surface: #f2f0eb;
+}
+
+/* Tailwind 4 gives buttons the default cursor; keep the pointer. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 /* Tracking per loaded font, calibrated against x.com (web pane) and the app's
    own Chirp (app pane); see scripts/ios/README.md. Stamped by font-tier.tsx. */

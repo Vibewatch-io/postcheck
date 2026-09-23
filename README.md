@@ -85,7 +85,7 @@ npm install
 npm run dev
 ```
 
-Node 20+. `npm run build` and `npm run lint` are the gate.
+Node 24+. `npm run build` and `npm run lint` are the gate.
 
 ## Deploying
 

@@ -29,7 +29,7 @@ const SEVERITY_STYLE = {
   note: { dot: "bg-brand-warm-muted", label: "Note" },
 } as const;
 
-const inputCls = "min-w-0 flex-1 rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-sm text-brand-warm-dark outline-none placeholder:text-brand-warm-muted focus:border-brand-teal focus:placeholder:text-transparent";
+const inputCls = "min-w-0 flex-1 rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal focus:placeholder:text-transparent";
 
 export function Postcheck() {
   const [draft, setDraft] = useState<Draft>({ text: "", styles: [] });
@@ -258,7 +258,7 @@ export function Postcheck() {
 
       {/* Composer on the left; scrolls on its own if it outgrows the window. */}
       <section
-        className={`max-h-full min-h-0 overflow-y-auto rounded-2xl border border-brand-warm-border bg-white/75 p-4 shadow-[0_1px_2px_rgba(20,20,18,0.04)] backdrop-blur-sm ${narrow ? "w-full max-w-[560px]" : "flex-none"}`}
+        className={`max-h-full min-h-0 overflow-y-auto rounded-2xl border border-brand-warm-border bg-white/75 p-4 shadow-[0_1px_2px_rgba(20,20,18,0.04)] backdrop-blur-xs ${narrow ? "w-full max-w-[560px]" : "flex-none"}`}
         style={narrow ? undefined : { width: COMPOSER_W }}
       >
         {/* Identity in one row, handle first: it doubles as the lookup that fills in the rest. */}
@@ -272,7 +272,7 @@ export function Postcheck() {
           <div className="flex min-w-0 flex-[1.3] basis-[190px] items-center rounded-lg border border-brand-warm-border bg-white pl-3 focus-within:border-brand-teal">
             <span className="text-sm text-brand-warm-secondary">@</span>
             <input
-              className="min-w-0 flex-1 bg-transparent py-2 text-sm text-brand-warm-dark outline-none placeholder:text-brand-warm-muted focus:placeholder:text-transparent"
+              className="min-w-0 flex-1 bg-transparent py-2 text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:placeholder:text-transparent"
               value={identity.handle}
               maxLength={15}
               placeholder="yourhandle"
@@ -505,7 +505,7 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
           </select>
         )}
         {exportAllowed ? (
-          <button type="button" onClick={() => void exportPng()} disabled={exporting} className="ml-auto h-8 flex-none whitespace-nowrap rounded-lg bg-brand-teal px-3 text-[13px] font-medium text-brand-warm-dark shadow-sm transition hover:bg-brand-teal-light disabled:opacity-60">
+          <button type="button" onClick={() => void exportPng()} disabled={exporting} className="ml-auto h-8 flex-none whitespace-nowrap rounded-lg bg-brand-teal px-3 text-[13px] font-medium text-brand-warm-dark shadow-xs transition hover:bg-brand-teal-light disabled:opacity-60">
             {exporting ? "Rendering…" : "Export PNG"}
           </button>
         ) : (
@@ -549,7 +549,7 @@ function ThemeToggle({ themeId, onChange }: { themeId: ThemeId; onChange: (t: Th
       aria-label="Preview in dark mode"
       title={dark ? "Previews in X's dark mode. Click for light." : "Previews in X's light mode. Click for dark."}
       onClick={() => onChange(dark ? "light" : "dark")}
-      className="flex items-center gap-1 rounded-full border border-brand-warm-border bg-white p-1 text-brand-warm-gray shadow-sm"
+      className="flex items-center gap-1 rounded-full border border-brand-warm-border bg-white p-1 text-brand-warm-gray shadow-xs"
     >
       <span className={`flex h-7 w-7 items-center justify-center rounded-full ${dark ? "" : "bg-brand-warm-dark text-white"}`} aria-hidden>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
