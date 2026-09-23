@@ -68,7 +68,7 @@ The only analytics is Vercel Web Analytics, a cookieless page-view counter with 
 
 Previews render in Chirp from X's CDN, never bundled. If that fails, the page degrades to GT America, the typeface Chirp was derived from. GT America is licensed to Vibewatch from Grilli Type under a web licence: self-hosted, `@font-face` only, served only to the licensee's own sites, and never uploaded to a public repository. So:
 
-- The files are not in this repo. `/fonts/[file]` serves them from `.fonts/gt-america/` locally or from a private Vercel Blob store in production (folder `gt-america/`, read with the store's server token), refuses cross-origin requests, and 404s otherwise.
+- The files are not in this repo. `/fonts/[file]` serves them from `.fonts/gt-america/` locally or from a private Vercel Blob store linked to the project in production, refuses cross-origin requests, and 404s otherwise.
 - A fork without the files gets the system font. A banner says which tier is active, and `npm run verify -- --no-chirp` tests the degraded path.
 - PNG export is disabled while GT America is active, because the licence forbids saving the font into images.
 
@@ -92,7 +92,7 @@ Node 20+. `npm run build` and `npm run lint` are the gate.
 Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
 
 - `NEXT_PUBLIC_SITE_URL` if the site lives somewhere other than `postcheck.vibewatch.io`, so Open Graph URLs resolve.
-- A linked **private Vercel Blob store** holding `gt-america/GT-America-Standard-Regular.woff2` and `…-Bold.woff2`, only if you hold your own GT America web licence (`FONT_BLOB_PREFIX` changes the folder). Without it the fallback is the system font, which is fine.
+- A linked **private Vercel Blob store** holding `GT-America-Standard-Regular.woff2` and `GT-America-Standard-Bold.woff2` at its root (or under the folder named by `FONT_BLOB_PREFIX`), only if you hold your own GT America web licence. Without it the fallback is the system font, which is fine.
 - **Rate limits** on `/api/unfurl` and `/api/profile` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
 
 ## Working on it
