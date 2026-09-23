@@ -8,6 +8,11 @@ updates:
       # Keep the Node typings on the runtime major (Vercel and CI run Node 24).
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # ESLint 10 is blocked upstream: eslint-config-next bundles eslint-plugin-react, which
+      # still calls context.getFilename() (removed in ESLint 10). Drop this when
+      # https://github.com/vercel/next.js/issues/89764 closes.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
