@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Syne } from "next/font/google";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", weight: ["600", "700"] });
@@ -27,7 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preload" as="font" type="font/woff2" href="https://abs.twimg.com/fonts/v2/chirp-regular-web.woff2" crossOrigin="anonymous" />
         <link rel="preload" as="font" type="font/woff2" href="https://abs.twimg.com/fonts/v2/chirp-bold-web.woff2" crossOrigin="anonymous" />
       </head>
-      <body className={`${syne.variable} ${geist.variable} font-sans`}>{children}</body>
+      <body className={`${syne.variable} ${geist.variable} font-sans`}>
+        {children}
+        {/* Vercel Web Analytics: cookieless page-view counts. The GT America web licence requires a
+            monthly unique-visitor count; this is the whole reason it is here. No-op outside Vercel. */}
+        <Analytics />
+      </body>
     </html>
   );
 }

@@ -1,22 +1,26 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
+import { get } from "@vercel/blob";
 
 /**
  * Serves the GT America web fonts (Grilli Type), the stand-in for Chirp when
  * X's CDN is blocked. They are licensed to Vibewatch under Grilli Type's web
  * licence (self-hosted, @font-face only, served only to sites under the
  * licensee's control), so the files are never committed: locally they live in
- * .fonts/gt-america/, in production they come from FONT_BASE_URL (a private
- * bucket). Requests from other origins are refused so the fonts can't be
- * hotlinked by another site. Anything not in the allowlist 404s.
+ * .fonts/gt-america/, in production in a private Vercel Blob store read with
+ * the store's server token (BLOB_READ_WRITE_TOKEN, set by linking the store).
+ * Requests from other origins are refused so the fonts can't be hotlinked by
+ * another site. Anything not in the allowlist 404s.
  *
- * Forks: without the files or FONT_BASE_URL this route 404s and the page
+ * Forks: without the files or a linked store this route 404s and the page
  * degrades to the system font, which font-tier.tsx reports honestly.
  */
 export const runtime = "nodejs";
 
 const ALLOWED = new Set(["GT-America-Standard-Regular.woff2", "GT-America-Standard-Bold.woff2"]);
+/** Folder inside the private store; override with FONT_BLOB_PREFIX. */
+const PREFIX = (process.env.FONT_BLOB_PREFIX ?? "gt-america").replace(/^\/|\/$/g, "");
 
 /** True when the browser is fetching for a page on this same host. */
 function sameOrigin(req: Request): boolean {
@@ -47,10 +51,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ file: st
     const bytes = await readFile(join(process.cwd(), ".fonts", "gt-america", file));
     return new NextResponse(bytes, { headers });
   } catch {
-    const base = process.env.FONT_BASE_URL;
-    if (!base) return new NextResponse(null, { status: 404 });
-    const res = await fetch(`${base.replace(/\/$/, "")}/${file}`);
-    if (!res.ok) return new NextResponse(null, { status: 404 });
-    return new NextResponse(await res.arrayBuffer(), { headers });
+    if (!process.env.BLOB_READ_WRITE_TOKEN) return new NextResponse(null, { status: 404 });
+    try {
+      const result = await get(`${PREFIX}/${file}`, { access: "private" });
+      if (result?.statusCode !== 200) return new NextResponse(null, { status: 404 });
+      return new NextResponse(result.stream, { headers });
+    } catch {
+      return new NextResponse(null, { status: 404 });
+    }
   }
 }

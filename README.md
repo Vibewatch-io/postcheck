@@ -62,13 +62,13 @@ The post you type never leaves your browser. Three things do:
 - **A username** you look up goes to `/api/profile`, which asks FxTwitter's public API (`api.fxtwitter.com`) for the name, avatar and badge.
 - **Font requests** go to X's CDN (`abs.twimg.com`), because the previews render in Chirp loaded exactly the way x.com loads it. X sees the same request it would see from any page that embeds a post.
 
-No analytics run in this repo. The hosted site counts unique visitors with a cookieless counter because the fallback font's licence requires it (see Fonts).
+The only analytics is Vercel Web Analytics, a cookieless page-view counter with no cross-site tracking. It is there because the fallback font's licence requires a monthly unique-visitor count (see Fonts), and it does nothing outside Vercel.
 
 ## Fonts
 
 Previews render in Chirp from X's CDN, never bundled. If that fails, the page degrades to GT America, the typeface Chirp was derived from. GT America is licensed to Vibewatch from Grilli Type under a web licence: self-hosted, `@font-face` only, served only to the licensee's own sites, and never uploaded to a public repository. So:
 
-- The files are not in this repo. `/fonts/[file]` serves them from `.fonts/gt-america/` locally or from `FONT_BASE_URL` (a private bucket) in production, refuses cross-origin requests, and 404s otherwise.
+- The files are not in this repo. `/fonts/[file]` serves them from `.fonts/gt-america/` locally or from a private Vercel Blob store in production (folder `gt-america/`, read with the store's server token), refuses cross-origin requests, and 404s otherwise.
 - A fork without the files gets the system font. A banner says which tier is active, and `npm run verify -- --no-chirp` tests the degraded path.
 - PNG export is disabled while GT America is active, because the licence forbids saving the font into images.
 
@@ -92,7 +92,7 @@ Node 20+. `npm run build` and `npm run lint` are the gate.
 Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
 
 - `NEXT_PUBLIC_SITE_URL` if the site lives somewhere other than `postcheck.vibewatch.io`, so Open Graph URLs resolve.
-- `FONT_BASE_URL` only if you hold your own GT America web licence and host the two `.woff2` files in a private bucket. Without it the fallback is the system font, which is fine.
+- A linked **private Vercel Blob store** holding `gt-america/GT-America-Standard-Regular.woff2` and `…-Bold.woff2`, only if you hold your own GT America web licence (`FONT_BLOB_PREFIX` changes the folder). Without it the fallback is the system font, which is fine.
 - **Rate limits** on `/api/unfurl` and `/api/profile` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
 
 ## Working on it
