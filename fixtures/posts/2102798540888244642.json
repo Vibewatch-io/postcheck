@@ -1,0 +1,28 @@
+{
+  "id_str": "2102798540888244642",
+  "text": "Test 44: quote of the photo post https://t.co/JzuuLotqpk",
+  "display_text_range": [
+    0,
+    56
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/Postcheck_test…",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102784124830507151",
+        "indices": [
+          33,
+          56
+        ],
+        "url": "https://t.co/JzuuLotqpk"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

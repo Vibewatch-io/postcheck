@@ -1,0 +1,1038 @@
+{
+ "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice",
+ "device": "iphone-16",
+ "posts": [
+  {
+   "id": "2097746764560552262",
+   "lines": [
+    "NEW: Featuring the top @Stacks voices ✨",
+    "Every week, the 10 most active public voices in",
+    "the Stacks ecosystem, ranked by message",
+    "volume across the panel.",
+    "Shout out to the current top 10 💚",
+    "See the list live"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2098487491007496481",
+   "lines": [
+    "Most of this week landed on the Stacks Vibe",
+    "Index.",
+    "Top voices is live, summaries now publish the",
+    "model's own TL;DR, and agents can find the",
+    "paid index through an x402 listing.",
+    "Weekly reports now use each day's closing",
+    "token price"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2095156793769120151",
+   "lines": [
+    "The @Stacks Vibe Index is live 🟠",
+    "A real-time sentiment dashboard built from a",
+    "dozen different Stacks communities (including",
+    "the Discords and Telegrams that other",
+    "sentiment tools can't touch)",
+    "Real-time updates. Query via API + MCP 👀"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2096976856780329081",
+   "lines": [
+    "Ask a social-listening tool what your community",
+    "says on Discord and it comes back empty. A",
+    "server has no public index and no search API",
+    "returning every mention across it.",
+    "The only way in is a bot with real server",
+    "membership.",
+    "What that actually requires:"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2092648171961041203",
+   "lines": [
+    "Announcing first-class support for buzz.xyz by",
+    "@blocks.",
+    "🐝 Ask your Vibewatch agent questions with",
+    "full context across a dozen social integrations.",
+    "🐝 Receive automatic weekly reports about",
+    "what your community is saying on"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2097429649861325082",
+   "lines": [
+    "15,000 sats to anyone who can pull paid Stacks",
+    "Vibe Index data without paying for it.",
+    "Every x402 query settles on Stacks mainnet,",
+    "100 sats a call. Two edge cases are known. Turn",
+    "either into free data, or find a third.",
+    "Live on @aibtcdev 🟠"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2097429666504315008",
+   "lines": [
+    "5,000 sats for the first agent to make one paid",
+    "query and write up what the docs got wrong.",
+    "First of five, one win each.",
+    "For 100 sats you get per-project daily history,",
+    "the posts behind each weekly theme, and",
+    "changes since any timestamp."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2098520148391190575",
+   "lines": [
+    "Someone minted roughly 4,000 BTC out of thin",
+    "air on Liquid and bridged it out before anyone",
+    "could see.",
+    "They gave 3,400 back, kept 600, and are",
+    "negotiating with Blockstream in OP_RETURN",
+    "messages.",
+    "Plus Trezor's leak grows to 80,00"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2095546954688380962",
+   "lines": [
+    "Would you lock up 2.5x your down payment in",
+    "BTC to buy a house without selling it?",
+    "@coinbase's crypto mortgage is live nationwide:",
+    "conforming Fannie Mae first mortgage, a second",
+    "loan against your coins, no margin calls when",
+    "price drops. @katemparkman runs through who",
+    "it's for."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2094822883201868125",
+   "lines": [
+    "Bitcoin just printed the largest weekly dollar",
+    "gain in its history, per @galaxyhq.",
+    "Kate wouldn't have guessed it. Brandon barely",
+    "felt it. Hold Bitcoin long enough and a record",
+    "week lands as 'of course it went up.'",
+    "Up only. Let's go."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2095184760285135059",
+   "lines": [
+    "Brandon gives you until about 2029 to get your",
+    "quantum ducks in a row.",
+    "Kate figures you just have to survive Coldcard",
+    "and Lightning until then.",
+    "Brandon would rather take out a mortgage and",
+    "let Coinbase deal with it."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2094461503110000723",
+   "lines": [
+    "Quantum-proofing Bitcoin was supposed to",
+    "need a fork. @StarkWareLtd just got a",
+    "quantum-resistant transaction mined on",
+    "mainnet without one, submitted through",
+    "Marathon's Slipstream since most miners won't",
+    "accept the non-standard format. $150 a",
+    "transaction, and it works today."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2094118251437666695",
+   "lines": [
+    "$1.59 billion. Added to @strategy's USD reserve",
+    "in a week, without touching their Bitcoin.",
+    "Brandon breaks down the mechanism: print",
+    "new MSTR shares, sell them at the market.",
+    "Shareholders shrug — the stock is up over 40%",
+    "in a month and STRC is back near $98."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2093757415825248606",
+   "lines": [
+    "The bug reports were AI-generated. The",
+    "vulnerabilities were real.",
+    "Core Lightning is shipping emergency fixes",
+    "under a two-week embargo and telling every",
+    "node operator to go offline until they land.",
+    "Brandon and Kate on the closest call Bitcoin",
+    "has had."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "1646674962055565319",
+   "compose": "We’re making improvements to the writing and reading experience on Twitter! Starting today, Twitter now supports Tweets up to 10,000 characters in length, with **bold** and __italic__ text formatting.\n\nSign up for Twitter Blue to access these new features, and apply to enable Subscriptions on your account to earn income directly on Twitter. Tap on “Monetization” in settings to apply today.",
+   "lines": [
+    "We’re making improvements to the writing and",
+    "reading experience on Twitter! Starting today,",
+    "Twitter now supports Tweets up to 10,000",
+    "characters in length, with bold and italic text",
+    "formatting.",
+    "Sign up for Twitter Blue to access these new",
+    "features, and apply to enable Subscriptions on",
+    "your account to earn income direct"
+   ],
+   "showMore": true,
+   "note": "iOS shows 'italic' upright in bold (no slant) and also bolds 'formatting.' which the web renders regular. One sample."
+  },
+  {
+   "id": "2100300746269008191",
+   "lines": [
+    "Spacing test 17:  two spaces,   three spaces,",
+    "four spaces, and a trailing space."
+   ],
+   "showMore": false,
+   "note": "The 4 spaces before 'four' in the source are not visibly rendered at the wrap point (trimmed); recorded lines omit them."
+  },
+  {
+   "id": "2100300597098688990",
+   "lines": [
+    "Hyphen test 16: state-of-the-art quantum-",
+    "resistant peer-to-peer end-to-end well-known",
+    "long-term real-time high-quality cross-platform",
+    "open-source user-friendly up-to-date"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100300464600633836",
+   "lines": [
+    "Long word test 15:",
+    "Supercalifragilisticexpialidocious-and-then-",
+    "some-more-letters sits in the middle of this",
+    "sentence to see where it wraps."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100300298313183628",
+   "lines": [
+    "Blank lines test 14: one blank line below.",
+    "",
+    "Three blank lines below this paragraph.",
+    "",
+    "Last paragraph."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100300134030746111",
+   "lines": [
+    "Fold test 13",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    ""
+   ],
+   "showMore": true,
+   "note": "Line 9 is empty: the app eats the last character of the folded line, so its single 'a' goes and only ' Show more' remains."
+  },
+  {
+   "id": "2100299967806263515",
+   "lines": [
+    "Fold test 12",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nin"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2100299835433988437",
+   "lines": [
+    "Fold test 11",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100299700960370848",
+   "lines": [
+    "Fold test 10",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100299521561706589",
+   "lines": [
+    "Long test 08: an emoji starts on character 280",
+    "and ends on 281. the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the..",
+    "🚀 and this sentence keeps going past the cut",
+    "so the post needs Show more on the web",
+    "timeline."
+   ],
+   "showMore": false,
+   "note": "fixtures/posts/2100299521561706589.json only has the legacy truncated 'text' field (note_tweet post); ground truth for transcription verification taken from fixtures/TEST-POSTS.md test 08."
+  },
+  {
+   "id": "2100299387255902230",
+   "lines": [
+    "Long test 06: character 280 falls in the middle",
+    "of a long word here. the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a extraordinarily",
+    "and this sentence keeps going past the cut so",
+    "the post needs Show more on the web timeline."
+   ],
+   "showMore": false,
+   "note": "fixtures/posts/2100299387255902230.json only has the legacy truncated 'text' field (note_tweet post); ground truth for transcription verification taken from fixtures/TEST-POSTS.md test 06."
+  },
+  {
+   "id": "2100299215364931868",
+   "lines": [
+    "Long test 05: the word before Show more ends",
+    "exactly on character 280. the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog and this sentence keeps",
+    "going past the cut so the post needs Show more",
+    "on the web timeline."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100298868282077295",
+   "lines": [
+    "Emoji test: family emoji count as two 👨‍👩‍👧‍👦 flags",
+    "too 🇺🇸 skin tones 👍🏽 and this line runs right up",
+    "to the limit ok ok ok ok ok ok ok ok ok ok ok ok",
+    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
+    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
+    "ok ok ok ok ok ok ok ok ok ok ok ok 🚀"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100298643605709117",
+   "lines": [
+    "CJK test: 日本語のテキストは一文字が二文字分",
+    "として数えられます。日本語のテキストは一文",
+    "字が二文字分として数えられます。日本語のテ",
+    "キストは一文字が二文字分として数えられま",
+    "す。日本語のテキストは一文字が二文字分とし",
+    "て数えられます。日本語のテキストは一文字が",
+    "二文字分として数えられます。"
+   ],
+   "showMore": false,
+   "note": "App shows this post translated by default (banner 'Translated from Japanese'); captured after tapping 'Show translation' to reveal the original Japanese, which is a navigation-type toggle."
+  },
+  {
+   "id": "2100298548843872339",
+   "lines": [
+    "Length test A: this post is exactly 280 weighted",
+    "characters and ends on a whole word. the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100652733972074764",
+   "lines": [
+    "Email user@vibewatch.io is not a mention or a",
+    "link"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100652600748327317",
+   "lines": [
+    "Punctuation (vibewatch.io). And vibewatch.io,",
+    "then \"example.com\""
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100652452194459838",
+   "lines": [
+    "Bare domain vibewatch.io and example.ai and",
+    "file.zip"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100652317301477696",
+   "lines": [
+    "Long link"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "title": "The React Framework for the Web",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100652180256837990",
+   "lines": [
+    "Three links example.com vibewatch.io",
+    "news.ycombinator.com"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100652042847211844",
+   "lines": [
+    "Card then no card vibewatch.io and",
+    "example.com"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100651909187240216",
+   "lines": [
+    "Two cards, reversed vibewatch.io and",
+    "github.com/vercel/next.js"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100651772096422319",
+   "lines": [
+    "Two cards github.com/vercel/next.js and",
+    "vibewatch.io"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "title": "The React Framework for the Web",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100651637895528592",
+   "lines": [
+    "OG image but no twitter:card"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "small",
+    "domain": "en.wikipedia.org",
+    "title": "X (social network) - Wikipedia",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100651502826410031",
+   "lines": [
+    "No card tags example.com"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100651368239513946",
+   "lines": [
+    "Small card"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "small",
+    "domain": "developer.mozilla.org",
+    "title": "HTML: HyperText Markup Language | MDN",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100651232109142223",
+   "lines": [
+    "Large card, link github.com/vercel/next.js in the",
+    "middle of the sentence"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "title": "The React Framework for the Web",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100651092556333450",
+   "lines": [
+    "Large card, link at the end"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "title": "The React Framework for the Web",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100650875857629266",
+   "lines": [
+    "Long test 07: a link starts before character 280",
+    "and ends after it. the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a vibewatch.io",
+    "and this sentence keeps going past the cut so",
+    "the post needs Show more on the web timeline."
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
+    "hasImage": true
+   }
+  },
+  {
+   "id": "2100661546485768548",
+   "lines": [
+    "Link to a post at the end"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": {
+    "text": "Length test A: this post is exactly 280",
+    "lines": 5,
+    "hasCard": false,
+    "hasName": true
+   },
+   "replyChrome": null
+  },
+  {
+   "id": "2100661699259089326",
+   "lines": [
+    "Link to a post x.com/Postcheck_test… in the",
+    "middle"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": {
+    "text": "Length test A: this post is exactly 280",
+    "lines": 5,
+    "hasCard": false,
+    "hasName": true
+   },
+   "replyChrome": null
+  },
+  {
+   "id": "2100661969854529868",
+   "lines": [
+    "Native quote of a text post"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": null,
+   "replyChrome": {
+    "type": "replying-to",
+    "handle": "@Postcheck_test"
+   }
+  },
+  {
+   "id": "2100662183369801798",
+   "lines": [
+    "Native quote of a card post"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": null,
+   "replyChrome": {
+    "type": "connector"
+   }
+  },
+  {
+   "id": "2100662395349962818",
+   "lines": [
+    "Native quote with a link"
+   ],
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
+    "hasImage": true
+   },
+   "quote": null,
+   "replyChrome": {
+    "type": "replying-to",
+    "handle": "@Postcheck_test"
+   }
+  },
+  {
+   "id": "2100662935148536159",
+   "lines": [
+    "Link to an X article x.com/i/article/2094…"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": null,
+   "replyChrome": null
+  },
+  {
+   "id": "2100663298148762063",
+   "lines": [
+    "Reply test 47: a reply to post 01 from the same",
+    "account"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": null,
+   "replyChrome": {
+    "type": "connector"
+   }
+  },
+  {
+   "id": "2100663568354144336",
+   "lines": [
+    "@Vibewatch_io this starts with a handle"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": null,
+   "replyChrome": null
+  },
+  {
+   "id": "2100663799900721554",
+   "lines": [
+    ".@Vibewatch_io this starts with a dot"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": null,
+   "replyChrome": null
+  },
+  {
+   "id": "2100668055517003869",
+   "lines": [
+    "Native quote of a text post"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": {
+    "text": "Length test A: this post is exactly 280",
+    "lines": 5,
+    "hasCard": false,
+    "hasName": true
+   },
+   "replyChrome": null
+  },
+  {
+   "id": "2100668333914030498",
+   "lines": [
+    "Native quote of a card post"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": {
+    "text": "Large card, link at the end",
+    "lines": 2,
+    "hasCard": false,
+    "hasName": true
+   },
+   "replyChrome": null
+  },
+  {
+   "id": "2100668421813960865",
+   "lines": [
+    "Native quote with a link vibewatch.io"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": {
+    "text": "Length test A: this post is exactly 280",
+    "lines": 5,
+    "hasCard": false,
+    "hasName": true
+   },
+   "replyChrome": null
+  },
+  {
+   "id": "2102798540888244642",
+   "lines": [
+    "Test 44: quote of the photo post"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": {
+    "text": "Test 50: one landscape photo and a link",
+    "lines": 2,
+    "hasCard": false,
+    "hasName": true,
+    "photo": [
+     1,
+     106,
+     321,
+     171
+    ]
+   },
+   "replyChrome": null
+  },
+  {
+   "id": "2102798501671485704",
+   "lines": [
+    "Test 59c: photo, GIF, video and photo"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": true,
+    "items": [
+     [
+      0,
+      0,
+      220,
+      219,
+      ""
+     ],
+     [
+      223,
+      0,
+      null,
+      219,
+      "GIF"
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102798291289378944",
+   "lines": [
+    "Test 59b: a photo and a video"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": true,
+    "items": [
+     [
+      0,
+      0,
+      259,
+      220,
+      ""
+     ],
+     [
+      263,
+      0,
+      null,
+      220,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102790843342221559",
+   "lines": [
+    "Test 57b: poll with an image on each choice"
+   ],
+   "showMore": false,
+   "card": null,
+   "poll": {
+    "carousel": true,
+    "image": [
+     0,
+     0,
+     213,
+     213
+    ],
+    "nextChoiceX": 222,
+    "button": [
+     -2,
+     220,
+     214,
+     28
+    ],
+    "footer": "0 votes · 23h left"
+   }
+  },
+  {
+   "id": "2102785373109907527",
+   "lines": [
+    "Test 58: photo with alt text"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      322,
+      182,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102785196269731968",
+   "lines": [
+    "Test 57: poll with four options"
+   ],
+   "showMore": false,
+   "card": null,
+   "poll": {
+    "choices": [
+     "One",
+     "Two",
+     "Three",
+     "Four"
+    ],
+    "pill": [
+     10,
+     0,
+     302,
+     34
+    ],
+    "pitch": 34,
+    "footer": "0 votes · 22 hours 10 minutes left"
+   }
+  },
+  {
+   "id": "2102785066304946588",
+   "lines": [
+    "Test 56: a short video"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      322,
+      185,
+      "mute"
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102784970435825828",
+   "lines": [
+    "Test 55: a GIF"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      322,
+      182,
+      "GIF"
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102784753879716159",
+   "lines": [
+    "Test 54: four photos"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": true,
+    "items": [
+     [
+      0,
+      0,
+      219,
+      219,
+      ""
+     ],
+     [
+      224,
+      0,
+      null,
+      219,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102784652847337479",
+   "lines": [
+    "Test 53: three photos"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": true,
+    "items": [
+     [
+      0,
+      0,
+      220,
+      218,
+      ""
+     ],
+     [
+      224,
+      0,
+      null,
+      218,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102784476229366142",
+   "lines": [
+    "Test 52: two photos"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      158,
+      157,
+      ""
+     ],
+     [
+      164,
+      0,
+      158,
+      157,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102784276173648304",
+   "lines": [
+    "Test 51: one tall portrait photo"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      226,
+      402,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2102784124830507151",
+   "lines": [
+    "Test 50: one landscape photo and a link",
+    "vibewatch.io"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      322,
+      182,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,42 @@
+{
+  "id_str": "2097429649861325082",
+  "text": "15,000 sats to anyone who can pull paid Stacks Vibe Index data without paying for it.\n\nEvery x402 query settles on Stacks mainnet, 100 sats a call. Two edge cases are known. Turn either into free data, or find a third.\n\nLive on @aibtcdev 🟠\nhttps://t.co/xtI5TQRxmt",
+  "display_text_range": [
+    0,
+    264
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "aibtc.com/bounties/mtt3j…",
+        "expanded_url": "https://aibtc.com/bounties/mtt3jab204ba31f85ab0",
+        "indices": [
+          240,
+          263
+        ],
+        "url": "https://t.co/xtI5TQRxmt"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "1788312359452192768",
+        "indices": [
+          228,
+          237
+        ],
+        "name": "AIBTC",
+        "screen_name": "aibtcdev"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/xtI5TQRxmt"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

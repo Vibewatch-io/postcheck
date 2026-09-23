@@ -1,0 +1,31 @@
+{
+  "id_str": "2100652317301477696",
+  "text": "Long link https://t.co/VblbihFHzT",
+  "display_text_range": [
+    0,
+    33
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "github.com/vercel/next.js…",
+        "expanded_url": "https://github.com/vercel/next.js/blob/canary/packages/next/src/server/lib/router-utils/resolve-routes.ts?plain=1#L10",
+        "indices": [
+          10,
+          33
+        ],
+        "url": "https://t.co/VblbihFHzT"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/VblbihFHzT"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

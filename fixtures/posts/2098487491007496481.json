@@ -1,0 +1,31 @@
+{
+  "id_str": "2098487491007496481",
+  "text": "Most of this week landed on the Stacks Vibe Index.\n\nTop voices is live, summaries now publish the model's own TL;DR, and agents can find the paid index through an x402 listing.\n\nWeekly reports now use each day's closing token price.\n\nFull notes ↓\nhttps://t.co/i363XY2mch",
+  "display_text_range": [
+    0,
+    270
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io/changelog/2026…",
+        "expanded_url": "https://vibewatch.io/changelog/2026-09-11?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260910-changelog-2026-09-11",
+        "indices": [
+          247,
+          270
+        ],
+        "url": "https://t.co/i363XY2mch"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/i363XY2mch"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

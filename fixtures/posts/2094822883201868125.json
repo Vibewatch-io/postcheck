@@ -1,0 +1,39 @@
+{
+  "id_str": "2094822883201868125",
+  "text": "Bitcoin just printed the largest weekly dollar gain in its history, per @galaxyhq.\n\nKate wouldn't have guessed it. Brandon barely felt it. Hold Bitcoin long enough and a record week lands as 'of course it went up.'\n\nUp only. Let's go. https://t.co/G3BuOZBE8M",
+  "display_text_range": [
+    0,
+    234
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/G3BuOZBE8M",
+        "expanded_url": "https://x.com/goodforbtc/status/2094822883201868125/video/1",
+        "indices": [
+          235,
+          258
+        ],
+        "url": "https://t.co/G3BuOZBE8M"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "1164262615339675648",
+        "indices": [
+          72,
+          81
+        ],
+        "name": "Galaxy",
+        "screen_name": "galaxyhq"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

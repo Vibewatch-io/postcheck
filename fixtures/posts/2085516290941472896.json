@@ -1,0 +1,29 @@
+{
+  "id_str": "2085516290941472896",
+  "text": "NEW comparison: Vibewatch vs Dash Social, for community sentiment.\n\nDash Social's Social Listening is a separate add-on with no published price, stacked on a $999-1,999/mo content suite — and it still doesn't reach Discord or Telegram. Vibewatch scores every message 1-10, in https://t.co/5NaZs0KMK1",
+  "display_text_range": [
+    0,
+    275
+  ],
+  "note_tweet": true,
+  "full_text": "NEW comparison: Vibewatch vs Dash Social, for community sentiment.\n\nDash Social's Social Listening is a separate add-on with no published price, stacked on a $999-1,999/mo content suite — and it still doesn't reach Discord or Telegram. Vibewatch scores every message 1-10, in both, starting at $19/mo.\n\nhttps://vibewatch.io/compare/vibewatch-vs-dash-social?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260805-vibewatch-vs-dash-social",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/5NaZs0KMK1",
+        "expanded_url": "https://x.com/Vibewatch_io/status/2085516290941472896/photo/1",
+        "indices": [
+          276,
+          299
+        ],
+        "url": "https://t.co/5NaZs0KMK1"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

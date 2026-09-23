@@ -1,0 +1,16 @@
+{
+  "id_str": "2100298548843872339",
+  "text": "Length test A: this post is exactly 280 weighted characters and ends on a whole word. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps.",
+  "display_text_range": [
+    0,
+    280
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

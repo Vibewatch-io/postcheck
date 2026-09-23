@@ -1,0 +1,16 @@
+{
+  "id_str": "2100661969854529868",
+  "text": "Native quote of a text post",
+  "display_text_range": [
+    0,
+    27
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

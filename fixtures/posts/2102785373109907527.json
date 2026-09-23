@@ -1,0 +1,36 @@
+{
+  "id_str": "2102785373109907527",
+  "text": "Test 58: photo with alt text https://t.co/YrKkiNnXhq",
+  "display_text_range": [
+    0,
+    28
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/YrKkiNnXhq",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102785373109907527/photo/1",
+        "indices": [
+          29,
+          52
+        ],
+        "url": "https://t.co/YrKkiNnXhq"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "media": [
+    {
+      "type": "photo",
+      "width": 1600,
+      "height": 900,
+      "alt": "Postcheck alt text test"
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

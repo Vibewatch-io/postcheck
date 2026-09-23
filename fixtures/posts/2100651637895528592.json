@@ -1,0 +1,31 @@
+{
+  "id_str": "2100651637895528592",
+  "text": "OG image but no twitter:card https://t.co/7fsfEQCu94",
+  "display_text_range": [
+    0,
+    52
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "en.wikipedia.org/wiki/Twitter",
+        "expanded_url": "https://en.wikipedia.org/wiki/Twitter",
+        "indices": [
+          29,
+          52
+        ],
+        "url": "https://t.co/7fsfEQCu94"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary",
+    "url": "https://t.co/7fsfEQCu94"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

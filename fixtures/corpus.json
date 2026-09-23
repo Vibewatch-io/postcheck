@@ -1,0 +1,673 @@
+{
+ "about": "Canonical posts every render rule is tested against. Re-capture with `npm run capture:web` (x.com) and the iPhone Mirroring rig (app), then `npm run verify`. Keep ids stable; add, don't replace.",
+ "accounts": {
+  "Vibewatch_io": [
+   {
+    "id": "2095156793769120151",
+    "tags": [
+     "large-card",
+     "mention",
+     "emoji",
+     "exactly-8-lines-app"
+    ]
+   },
+   {
+    "id": "2098487491007496481",
+    "tags": [
+     "large-card",
+     "app-fold",
+     "trailing-card-url-hidden"
+    ]
+   },
+   {
+    "id": "2097746764560552262",
+    "tags": [
+     "photo",
+     "mention",
+     "emoji",
+     "trailing-url-visible-with-media",
+     "app-fold-drops-char"
+    ]
+   },
+   {
+    "id": "2097429649861325082",
+    "tags": [
+     "large-card",
+     "mention",
+     "emoji",
+     "numbers"
+    ]
+   },
+   {
+    "id": "2097429666504315008",
+    "tags": [
+     "large-card"
+    ]
+   },
+   {
+    "id": "2096976856780329081",
+    "tags": [
+     "large-card",
+     "exactly-9-lines-app-no-fold"
+    ]
+   },
+   {
+    "id": "2094476199401775577",
+    "tags": [
+     "x-article-post",
+     "emoji"
+    ]
+   },
+   {
+    "id": "2093715338768847095",
+    "tags": [
+     "large-card"
+    ]
+   },
+   {
+    "id": "2092648171961041203",
+    "tags": [
+     "video",
+     "inline-url",
+     "mention",
+     "emoji",
+     "app-fold-blank-line-9"
+    ]
+   },
+   {
+    "id": "2092648184174772227",
+    "tags": [
+     "mention",
+     "emoji",
+     "quote-in-text"
+    ]
+   },
+   {
+    "id": "2092329594993234037",
+    "tags": [
+     "x-article-post",
+     "mention"
+    ]
+   },
+   {
+    "id": "2089427094224974124",
+    "tags": [
+     "long-post",
+     "web-show-more"
+    ]
+   },
+   {
+    "id": "2087977514631381502",
+    "tags": [
+     "long-post",
+     "web-show-more",
+     "em-dash"
+    ]
+   },
+   {
+    "id": "2087554813450203482",
+    "tags": [
+     "long-post",
+     "web-show-more",
+     "photo"
+    ]
+   },
+   {
+    "id": "2085516290941472896",
+    "tags": [
+     "long-post",
+     "web-show-more-measured-live",
+     "photo"
+    ]
+   }
+  ],
+  "goodforbtc": [
+   {
+    "id": "2098520148391190575",
+    "tags": [
+     "long-post",
+     "video",
+     "app-fold-mid-number",
+     "arrow"
+    ]
+   },
+   {
+    "id": "2098520161620042133",
+    "tags": [
+     "youtube-large-card",
+     "one-line"
+    ]
+   },
+   {
+    "id": "2098472217487212983",
+    "tags": [
+     "video-self-caption-card",
+     "one-line"
+    ]
+   },
+   {
+    "id": "2095546954688380962",
+    "tags": [
+     "video",
+     "mention",
+     "apostrophe-after-mention",
+     "edge-1px"
+    ]
+   },
+   {
+    "id": "2095184760285135059",
+    "tags": [
+     "video",
+     "three-paragraphs"
+    ]
+   },
+   {
+    "id": "2094822883201868125",
+    "tags": [
+     "video",
+     "mention-then-period",
+     "quotes"
+    ]
+   },
+   {
+    "id": "2094461503110000723",
+    "tags": [
+     "video",
+     "mention",
+     "dollar-amount"
+    ]
+   },
+   {
+    "id": "2094118251437666695",
+    "tags": [
+     "video",
+     "mention-possessive",
+     "em-dash",
+     "edge-1px"
+    ]
+   },
+   {
+    "id": "2093757415825248606",
+    "tags": [
+     "video"
+    ]
+   },
+   {
+    "id": "2093440498879152216",
+    "tags": [
+     "long-post",
+     "video",
+     "arrow"
+    ]
+   },
+   {
+    "id": "2093440511298384031",
+    "tags": [
+     "youtube-large-card",
+     "one-line"
+    ]
+   },
+   {
+    "id": "2093398716619370983",
+    "tags": [
+     "video-self-caption-card",
+     "one-line"
+    ]
+   },
+   {
+    "id": "2093010435872280622",
+    "tags": [
+     "video",
+     "mention"
+    ]
+   },
+   {
+    "id": "2092649810511966572",
+    "tags": [
+     "video"
+    ]
+   },
+   {
+    "id": "2092285413541236776",
+    "tags": [
+     "video",
+     "mention"
+    ]
+   },
+   {
+    "id": "2091923825818812586",
+    "tags": [
+     "video",
+     "semicolon"
+    ]
+   },
+   {
+    "id": "2091582829981466834",
+    "tags": [
+     "video",
+     "straight-quotes",
+     "mentions",
+     "parentheses"
+    ]
+   },
+   {
+    "id": "2091219882197266775",
+    "tags": [
+     "video",
+     "mention",
+     "numbers"
+    ]
+   },
+   {
+    "id": "2090928716063060310",
+    "tags": [
+     "video",
+     "hyphenated-word-at-edge",
+     "mention"
+    ]
+   },
+   {
+    "id": "2090888922197103072",
+    "tags": [
+     "large-card",
+     "arrow",
+     "trailing-card-url-hidden"
+    ]
+   },
+   {
+    "id": "2090888939360203059",
+    "tags": [
+     "long-post",
+     "photo",
+     "bullet",
+     "web-show-more"
+    ]
+   }
+  ],
+  "Write": [
+   {
+    "id": "1646674962055565319",
+    "tags": [
+     "premium-bold",
+     "premium-italic",
+     "long-post",
+     "web-post-page",
+     "composed-not-imported"
+    ]
+   }
+  ],
+  "postcheck_test": [
+   {
+    "id": "2100298548843872339",
+    "tags": [
+     "t01",
+     "length-280-exact"
+    ]
+   },
+   {
+    "id": "2100298643605709117",
+    "tags": [
+     "t03",
+     "cjk-280"
+    ]
+   },
+   {
+    "id": "2100298868282077295",
+    "tags": [
+     "t04",
+     "emoji-weights"
+    ]
+   },
+   {
+    "id": "2100299215364931868",
+    "tags": [
+     "t05",
+     "long-word-ends-at-280"
+    ]
+   },
+   {
+    "id": "2100299387255902230",
+    "tags": [
+     "t06",
+     "long-280-mid-word"
+    ]
+   },
+   {
+    "id": "2100299521561706589",
+    "tags": [
+     "t08",
+     "long-emoji-straddles-280"
+    ]
+   },
+   {
+    "id": "2100299700960370848",
+    "tags": [
+     "t10",
+     "app-fold-8-lines"
+    ]
+   },
+   {
+    "id": "2100299835433988437",
+    "tags": [
+     "t11",
+     "app-fold-9-lines"
+    ]
+   },
+   {
+    "id": "2100299967806263515",
+    "tags": [
+     "t12",
+     "app-fold-10-lines"
+    ]
+   },
+   {
+    "id": "2100300134030746111",
+    "tags": [
+     "t13",
+     "30-lines"
+    ]
+   },
+   {
+    "id": "2100300298313183628",
+    "tags": [
+     "t14",
+     "blank-lines"
+    ]
+   },
+   {
+    "id": "2100300464600633836",
+    "tags": [
+     "t15",
+     "long-unbroken-word"
+    ]
+   },
+   {
+    "id": "2100300597098688990",
+    "tags": [
+     "t16",
+     "hyphens"
+    ]
+   },
+   {
+    "id": "2100300746269008191",
+    "tags": [
+     "t17",
+     "repeated-spaces"
+    ]
+   },
+   {
+    "id": "2100650875857629266",
+    "tags": [
+     "t07",
+     "long-link-straddles-280"
+    ]
+   },
+   {
+    "id": "2100651092556333450",
+    "tags": [
+     "t20",
+     "large-card-trailing-link"
+    ]
+   },
+   {
+    "id": "2100651232109142223",
+    "tags": [
+     "t21",
+     "large-card-mid-link"
+    ]
+   },
+   {
+    "id": "2100651368239513946",
+    "tags": [
+     "t22",
+     "small-card"
+    ]
+   },
+   {
+    "id": "2100651502826410031",
+    "tags": [
+     "t23",
+     "no-card"
+    ]
+   },
+   {
+    "id": "2100651637895528592",
+    "tags": [
+     "t24",
+     "og-only"
+    ]
+   },
+   {
+    "id": "2100651772096422319",
+    "tags": [
+     "t25",
+     "two-cards"
+    ]
+   },
+   {
+    "id": "2100651909187240216",
+    "tags": [
+     "t26",
+     "two-cards-reversed"
+    ]
+   },
+   {
+    "id": "2100652042847211844",
+    "tags": [
+     "t27",
+     "card-then-plain"
+    ]
+   },
+   {
+    "id": "2100652180256837990",
+    "tags": [
+     "t28",
+     "three-links"
+    ]
+   },
+   {
+    "id": "2100652317301477696",
+    "tags": [
+     "t29",
+     "long-link-display"
+    ]
+   },
+   {
+    "id": "2100652452194459838",
+    "tags": [
+     "t30",
+     "bare-domains"
+    ]
+   },
+   {
+    "id": "2100652600748327317",
+    "tags": [
+     "t31",
+     "link-punctuation"
+    ]
+   },
+   {
+    "id": "2100652733972074764",
+    "tags": [
+     "t32",
+     "email"
+    ]
+   },
+   {
+    "id": "2100661546485768548",
+    "tags": [
+     "t40",
+     "post-link-trailing"
+    ]
+   },
+   {
+    "id": "2100661699259089326",
+    "tags": [
+     "t41",
+     "post-link-mid"
+    ]
+   },
+   {
+    "id": "2100661969854529868",
+    "tags": [
+     "t47a",
+     "reply-to-text-post"
+    ]
+   },
+   {
+    "id": "2100662183369801798",
+    "tags": [
+     "t47b",
+     "reply-to-card-post"
+    ]
+   },
+   {
+    "id": "2100662395349962818",
+    "tags": [
+     "t47c",
+     "reply-with-link"
+    ]
+   },
+   {
+    "id": "2100662935148536159",
+    "tags": [
+     "t46",
+     "article-link"
+    ]
+   },
+   {
+    "id": "2100663298148762063",
+    "tags": [
+     "t47",
+     "self-reply"
+    ]
+   },
+   {
+    "id": "2100663568354144336",
+    "tags": [
+     "t48",
+     "leading-mention"
+    ]
+   },
+   {
+    "id": "2100663799900721554",
+    "tags": [
+     "t49",
+     "dot-leading-mention"
+    ]
+   },
+   {
+    "id": "2100668055517003869",
+    "tags": [
+     "t42",
+     "quote-text-post"
+    ]
+   },
+   {
+    "id": "2100668333914030498",
+    "tags": [
+     "t43",
+     "quote-card-post"
+    ]
+   },
+   {
+    "id": "2100668421813960865",
+    "tags": [
+     "t45",
+     "quote-plus-link"
+    ]
+   },
+   {
+    "id": "2102784124830507151",
+    "tags": [
+     "t50",
+     "photo-beats-card"
+    ]
+   },
+   {
+    "id": "2102784276173648304",
+    "tags": [
+     "t51",
+     "portrait-photo"
+    ]
+   },
+   {
+    "id": "2102784476229366142",
+    "tags": [
+     "t52",
+     "two-photos"
+    ]
+   },
+   {
+    "id": "2102784652847337479",
+    "tags": [
+     "t53",
+     "three-photos"
+    ]
+   },
+   {
+    "id": "2102784753879716159",
+    "tags": [
+     "t54",
+     "four-photos"
+    ]
+   },
+   {
+    "id": "2102784970435825828",
+    "tags": [
+     "t55",
+     "gif"
+    ]
+   },
+   {
+    "id": "2102785066304946588",
+    "tags": [
+     "t56",
+     "video"
+    ]
+   },
+   {
+    "id": "2102785196269731968",
+    "tags": [
+     "t57",
+     "poll-4-text"
+    ]
+   },
+   {
+    "id": "2102785373109907527",
+    "tags": [
+     "t58",
+     "photo-alt-text"
+    ]
+   },
+   {
+    "id": "2102790843342221559",
+    "tags": [
+     "t57b",
+     "poll-4-images"
+    ]
+   },
+   {
+    "id": "2102798291289378944",
+    "tags": [
+     "t59b",
+     "mixed-photo-video"
+    ]
+   },
+   {
+    "id": "2102798501671485704",
+    "tags": [
+     "t59c",
+     "mixed-photo-gif-video-photo"
+    ]
+   },
+   {
+    "id": "2102798540888244642",
+    "tags": [
+     "t44",
+     "quote-of-photo-post"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,29 @@
+{
+  "id_str": "2098520148391190575",
+  "text": "Someone minted roughly 4,000 BTC out of thin air on Liquid and bridged it out before anyone could see.\n\nThey gave 3,400 back, kept 600, and are negotiating with Blockstream in OP_RETURN messages.\n\nPlus Trezor's leak grows to 80,000 customers and the Genesis Bond sells out ↓\n\nOn https://t.co/oSr726EafI",
+  "display_text_range": [
+    0,
+    278
+  ],
+  "note_tweet": true,
+  "full_text": "Someone minted roughly 4,000 BTC out of thin air on Liquid and bridged it out before anyone could see.\n\nThey gave 3,400 back, kept 600, and are negotiating with Blockstream in OP_RETURN messages.\n\nPlus Trezor's leak grows to 80,000 customers and the Genesis Bond sells out ↓\n\nOn the show, @marshallmixing and @katemparkman get into:\n\n• Liquid was exploited for roughly 4,000 BTC: a dormant bug in Elements' confidential transactions got a fix that introduced a new one, and the attacker minted BTC nobody could see, then bridged it out. They returned 3,400 BTC, kept 600, and negotiated with Blockstream through OP_RETURN messages demanding a 10% bounty. Blockstream says no ransom, calls it theft, and shipped a patched Elements on Wednesday.\n\n• @Trezor's data leak got worse: shipping vendor ShipMonk kept customer records past its 90-day deletion policy, and another 67,000 U.S. customers had names, emails, phone numbers, and shipping addresses exposed. Total affected is now about 80,000.\n\n• The @Stacks Genesis Bond sold out in 24 hours: 230 BTC time-locked on Bitcoin's L1, no bridge, paired with STX to target a 3% yield over six months. @UTXOmgmt, HashKey Cloud, Cypher Capital, and 21Shares anchored the first round. Also: @Bullish listed STX and sBTC.\n\n• Clarity Act crunch: Senator Cynthia Lummis says if the Senate doesn't pass it next week there's no realistic shot before the end of the decade. The bill grew from 616 to 630 pages with 100+ Democrat-requested changes. @polymarket puts enactment in 2026 at 18%.\n\n• Quick headlines: SoFi and @krakenfx's parent Payward partner on 24/7 USD settlement, River argues Bitcoin could reach $840,000 within five years, @Square's parent Block applies for an OCC trust bank charter for Bitcoin custody, Hunter Biden's LAPTOP token crashes 99%, Luke Dashjr leaves Ocean, and Brian Armstrong tells CNBC $400K Bitcoin by 2030 is reasonable.\n\n• Treasury tracker: @strategy +4,603 BTC (845,050), its first buy since June, plus $167M of STRC bought back. @strive +1,375 (24,531), Boyaa Interactive +115 (4,316), @_ALCPB +376 (3,521), CleanSpark -228 (13,703).\n\n• Follow us @goodforbtc for clips all week.",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/oSr726EafI",
+        "expanded_url": "https://x.com/goodforbtc/status/2098520148391190575/video/1",
+        "indices": [
+          279,
+          302
+        ],
+        "url": "https://t.co/oSr726EafI"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id_str": "2098520161620042133",
+  "text": "Watch the full episode:\nhttps://t.co/doBxj57Kkm",
+  "display_text_range": [
+    0,
+    47
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "youtu.be/SQSD218TIU0",
+        "expanded_url": "https://youtu.be/SQSD218TIU0",
+        "indices": [
+          24,
+          47
+        ],
+        "url": "https://t.co/doBxj57Kkm"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/doBxj57Kkm"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

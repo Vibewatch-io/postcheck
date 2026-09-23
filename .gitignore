@@ -1,0 +1,30 @@
+node_modules
+.next
+out
+.env*
+!.env.example
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# editor and agent session files
+.claude/
+
+# saved x.com login for scripts/capture-web.mjs
+.auth/
+.fonts/
+
+# local working notes and agent config, never part of the repo
+CLAUDE*.md
+AGENTS.md
+REVIEW.md
+
+# raw device captures behind fixtures/app (evidence, not distributed)
+.captures/
+
+# compiled helpers (built from the .swift sources next to them)
+scripts/phone/tap
+scripts/phone/*.png
+scripts/ios/layout
+scripts/ios/measure

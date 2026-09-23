@@ -1,0 +1,37 @@
+{
+  "id_str": "2102785196269731968",
+  "text": "Test 57: poll with four options",
+  "display_text_range": [
+    0,
+    31
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "poll4choice_text_only",
+    "url": "card://2102785195934150656"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "One",
+      "image": false
+    },
+    {
+      "label": "Two",
+      "image": false
+    },
+    {
+      "label": "Three",
+      "image": false
+    },
+    {
+      "label": "Four",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

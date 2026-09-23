@@ -1,0 +1,31 @@
+{
+  "id_str": "2093715338768847095",
+  "text": "NEW: Vibewatch now reads your Discourse forum too, not just Discord and Telegram chat.\n\nForum posts carry the considered take: governance debates, long-form feedback. Chat tools miss half the conversation. We score it thread-aware, not reply-by-reply.\n\nhttps://t.co/RLB5xiUNpI",
+  "display_text_range": [
+    0,
+    276
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io/blog/community…",
+        "expanded_url": "https://vibewatch.io/blog/community-forum-monitoring?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260828-community-forum-monitoring",
+        "indices": [
+          253,
+          276
+        ],
+        "url": "https://t.co/RLB5xiUNpI"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/RLB5xiUNpI"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

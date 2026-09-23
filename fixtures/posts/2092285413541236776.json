@@ -1,0 +1,39 @@
+{
+  "id_str": "2092285413541236776",
+  "text": "OrdinalsBot is winding down.\n\nFirst place you could inscribe without running a node. The shop behind Runestone and the Dog airdrop. Where Brandon minted his first ordinal.\n\n@ordinalsbot is taking bids to keep the brand alive. https://t.co/fYBG1USHpc",
+  "display_text_range": [
+    0,
+    225
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/fYBG1USHpc",
+        "expanded_url": "https://x.com/goodforbtc/status/2092285413541236776/video/1",
+        "indices": [
+          226,
+          249
+        ],
+        "url": "https://t.co/fYBG1USHpc"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "1620489921034346496",
+        "indices": [
+          173,
+          185
+        ],
+        "name": "OrdinalsBot ⚡",
+        "screen_name": "ordinalsbot"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

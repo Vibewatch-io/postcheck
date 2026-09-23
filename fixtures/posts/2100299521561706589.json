@@ -1,0 +1,17 @@
+{
+  "id_str": "2100299521561706589",
+  "text": "Long test 08: an emoji starts on character 280 and ends on 281. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog",
+  "display_text_range": [
+    0,
+    273
+  ],
+  "note_tweet": true,
+  "full_text": "Long test 08: an emoji starts on character 280 and ends on 281. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the..🚀 and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

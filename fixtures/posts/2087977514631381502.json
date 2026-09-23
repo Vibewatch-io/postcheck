@@ -1,0 +1,29 @@
+{
+  "id_str": "2087977514631381502",
+  "text": "NEW comparison: Vibewatch vs YouScan, for community sentiment.\n\nYouScan's Visual Insights finds your logo and products inside photos and video across the web — a real tool for brand marketing, sales-gated from $499/mo. It doesn't reach Discord or Telegram. Vibewatch scores every https://t.co/TY4V7GdEOa",
+  "display_text_range": [
+    0,
+    279
+  ],
+  "note_tweet": true,
+  "full_text": "NEW comparison: Vibewatch vs YouScan, for community sentiment.\n\nYouScan's Visual Insights finds your logo and products inside photos and video across the web — a real tool for brand marketing, sales-gated from $499/mo. It doesn't reach Discord or Telegram. Vibewatch scores every message 1–10 for sentiment inside both, self-serve from $19/mo.\n\nhttps://vibewatch.io/compare/vibewatch-vs-youscan?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260811-vibewatch-vs-youscan",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/TY4V7GdEOa",
+        "expanded_url": "https://x.com/Vibewatch_io/status/2087977514631381502/photo/1",
+        "indices": [
+          280,
+          303
+        ],
+        "url": "https://t.co/TY4V7GdEOa"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id_str": "2079672513936912480",
+  "text": "alpha → @vibewatch_io",
+  "display_text_range": [
+    0,
+    21
+  ],
+  "note_tweet": false,
+  "entities": {
+    "user_mentions": [
+      {
+        "id_str": "2078157187923505154",
+        "indices": [
+          8,
+          21
+        ],
+        "name": "Vibewatch",
+        "screen_name": "vibewatch_io"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "BrandonMarshall.btc",
+    "screen_name": "marshallmixing"
+  }
+}

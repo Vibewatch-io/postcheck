@@ -1,0 +1,29 @@
+{
+  "id_str": "2089427094224974124",
+  "text": "NEW: How to measure Discord community health, without member count.\n\nGrowing member count and rising message volume can still mean a community is quietly dying. Five signals actually tell you: polarity, velocity, volume in context, extremity, and engagement quality, weighted like https://t.co/pZVueJinj4",
+  "display_text_range": [
+    0,
+    280
+  ],
+  "note_tweet": true,
+  "full_text": "NEW: How to measure Discord community health, without member count.\n\nGrowing member count and rising message volume can still mean a community is quietly dying. Five signals actually tell you: polarity, velocity, volume in context, extremity, and engagement quality, weighted like a Fear & Greed index for your server.\n\nhttps://vibewatch.io/blog/how-to-measure-discord-community-health?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260814-how-to-measure-discord-community-health",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/pZVueJinj4",
+        "expanded_url": "https://x.com/Vibewatch_io/status/2089427094224974124/photo/1",
+        "indices": [
+          281,
+          304
+        ],
+        "url": "https://t.co/pZVueJinj4"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id_str": "2091582829981466834",
+  "text": "\"Two markets, two currencies, two investor bases, one balance sheet compounding.\"\n\n@Metaplanet CEO @gerovich is taking a controlling stake in Super League Enterprise, renaming it SuperPlanet (ticker SUPA), seeded with 2,100 of Metaplanet's own BTC. Closes Q4. https://t.co/Wsx69t1gC6",
+  "display_text_range": [
+    0,
+    259
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/Wsx69t1gC6",
+        "expanded_url": "https://x.com/goodforbtc/status/2091582829981466834/video/1",
+        "indices": [
+          260,
+          283
+        ],
+        "url": "https://t.co/Wsx69t1gC6"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "3074976818",
+        "indices": [
+          83,
+          94
+        ],
+        "name": "Metaplanet Inc.",
+        "screen_name": "Metaplanet"
+      },
+      {
+        "id_str": "419597056",
+        "indices": [
+          99,
+          108
+        ],
+        "name": "Simon Gerovich",
+        "screen_name": "gerovich"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

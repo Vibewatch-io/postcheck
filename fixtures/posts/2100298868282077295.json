@@ -1,0 +1,16 @@
+{
+  "id_str": "2100298868282077295",
+  "text": "Emoji test: family emoji count as two 👨‍👩‍👧‍👦 flags too 🇺🇸 skin tones 👍🏽 and this line runs right up to the limit ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok 🚀",
+  "display_text_range": [
+    0,
+    292
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

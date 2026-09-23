@@ -1,0 +1,17 @@
+{
+  "id_str": "2100299215364931868",
+  "text": "Long test 05: the word before Show more ends exactly on character 280. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog",
+  "display_text_range": [
+    0,
+    280
+  ],
+  "note_tweet": true,
+  "full_text": "Long test 05: the word before Show more ends exactly on character 280. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

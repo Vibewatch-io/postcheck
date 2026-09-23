@@ -1,0 +1,28 @@
+{
+  "id_str": "2093757415825248606",
+  "text": "The bug reports were AI-generated. The vulnerabilities were real.\n\nCore Lightning is shipping emergency fixes under a two-week embargo and telling every node operator to go offline until they land. Brandon and Kate on the closest call Bitcoin has had. https://t.co/z3mhTnZbaQ",
+  "display_text_range": [
+    0,
+    251
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/z3mhTnZbaQ",
+        "expanded_url": "https://x.com/goodforbtc/status/2093757415825248606/video/1",
+        "indices": [
+          252,
+          275
+        ],
+        "url": "https://t.co/z3mhTnZbaQ"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

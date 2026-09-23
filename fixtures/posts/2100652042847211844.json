@@ -1,0 +1,40 @@
+{
+  "id_str": "2100652042847211844",
+  "text": "Card then no card https://t.co/bnTbndxC74 and https://t.co/fRwqum3HsS",
+  "display_text_range": [
+    0,
+    69
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          18,
+          41
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      },
+      {
+        "display_url": "example.com",
+        "expanded_url": "https://example.com",
+        "indices": [
+          46,
+          69
+        ],
+        "url": "https://t.co/fRwqum3HsS"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/bnTbndxC74"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

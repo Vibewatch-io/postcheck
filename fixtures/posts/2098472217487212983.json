@@ -1,0 +1,31 @@
+{
+  "id_str": "2098472217487212983",
+  "text": "Keep your BTC on the L1 https://t.co/lHwjt86Zjw",
+  "display_text_range": [
+    0,
+    47
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/i/broadcasts/1…",
+        "expanded_url": "https://x.com/i/broadcasts/1AGRnZgZYMaGl",
+        "indices": [
+          24,
+          47
+        ],
+        "url": "https://t.co/lHwjt86Zjw"
+      }
+    ]
+  },
+  "card": {
+    "name": "745291183405076480:broadcast",
+    "url": "https://t.co/lHwjt86Zjw"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

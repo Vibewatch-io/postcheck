@@ -1,0 +1,50 @@
+{
+  "id_str": "2092648171961041203",
+  "text": "Announcing first-class support for https://t.co/HpWUab83ab by @blocks.\n\n🐝 Ask your Vibewatch agent questions with full context across a dozen social integrations.\n\n🐝 Receive automatic weekly reports about what your community is saying on socials.\n\nAvailable today. https://t.co/LUGPKd3VbF",
+  "display_text_range": [
+    0,
+    266
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/LUGPKd3VbF",
+        "expanded_url": "https://x.com/Vibewatch_io/status/2092648171961041203/video/1",
+        "indices": [
+          265,
+          288
+        ],
+        "url": "https://t.co/LUGPKd3VbF"
+      }
+    ],
+    "urls": [
+      {
+        "display_url": "buzz.xyz",
+        "expanded_url": "https://buzz.xyz",
+        "indices": [
+          35,
+          58
+        ],
+        "url": "https://t.co/HpWUab83ab"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "1449098672252198921",
+        "indices": [
+          62,
+          69
+        ],
+        "name": "Block",
+        "screen_name": "blocks"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id_str": "2100651909187240216",
+  "text": "Two cards, reversed https://t.co/bnTbndxC74 and https://t.co/kGfVUwtxwc",
+  "display_text_range": [
+    0,
+    71
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          20,
+          43
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      },
+      {
+        "display_url": "github.com/vercel/next.js",
+        "expanded_url": "https://github.com/vercel/next.js",
+        "indices": [
+          48,
+          71
+        ],
+        "url": "https://t.co/kGfVUwtxwc"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/bnTbndxC74"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

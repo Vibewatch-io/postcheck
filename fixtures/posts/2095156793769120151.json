@@ -1,0 +1,42 @@
+{
+  "id_str": "2095156793769120151",
+  "text": "The @Stacks Vibe Index is live 🟠\n\nA real-time sentiment dashboard built from a dozen different Stacks communities (including the Discords and Telegrams that other sentiment tools can't touch)\n\nReal-time updates. Query via API + MCP 👀\nhttps://t.co/0roTiJkAmH",
+  "display_text_range": [
+    0,
+    259
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "stacks.vibewatch.io/?utm_source=x&…",
+        "expanded_url": "https://stacks.vibewatch.io/?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260901-stacks-vibe-index",
+        "indices": [
+          234,
+          257
+        ],
+        "url": "https://t.co/0roTiJkAmH"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "3285797414",
+        "indices": [
+          4,
+          11
+        ],
+        "name": "stacks.btc",
+        "screen_name": "Stacks"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/0roTiJkAmH"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

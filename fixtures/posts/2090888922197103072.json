@@ -1,0 +1,31 @@
+{
+  "id_str": "2090888922197103072",
+  "text": "The Treasury doubled its bond buybacks and Bitcoin surged 7% in a day, its biggest move since March.\n\nPlus Bullish IPOs holding more BTC than Coinbase, MetaPlanet lands in the US as SuperPlanet, and OrdinalsBot winds down ↓\nhttps://t.co/IvKV6PR8k1",
+  "display_text_range": [
+    0,
+    247
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "youtu.be/aZl5IsNKXQ4",
+        "expanded_url": "https://youtu.be/aZl5IsNKXQ4",
+        "indices": [
+          224,
+          247
+        ],
+        "url": "https://t.co/IvKV6PR8k1"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/IvKV6PR8k1"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

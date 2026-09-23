@@ -1,0 +1,16 @@
+{
+  "id_str": "2100663298148762063",
+  "text": "Reply test 47: a reply to post 01 from the same account",
+  "display_text_range": [
+    0,
+    55
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "id_str": "2100652600748327317",
+  "text": "Punctuation (https://t.co/bnTbndxC74). And https://t.co/bnTbndxC74, then \"https://t.co/fRwqum3HsS\"",
+  "display_text_range": [
+    0,
+    98
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          13,
+          36
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      },
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          43,
+          66
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      },
+      {
+        "display_url": "example.com",
+        "expanded_url": "https://example.com",
+        "indices": [
+          74,
+          97
+        ],
+        "url": "https://t.co/fRwqum3HsS"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/bnTbndxC74"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

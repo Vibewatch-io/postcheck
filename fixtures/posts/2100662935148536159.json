@@ -1,0 +1,28 @@
+{
+  "id_str": "2100662935148536159",
+  "text": "Link to an X article https://t.co/N58IgxFPXB",
+  "display_text_range": [
+    0,
+    44
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/i/article/2094…",
+        "expanded_url": "https://x.com/i/article/2094473900864520192",
+        "indices": [
+          21,
+          44
+        ],
+        "url": "https://t.co/N58IgxFPXB"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

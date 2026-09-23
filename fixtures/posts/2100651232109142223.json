@@ -1,0 +1,31 @@
+{
+  "id_str": "2100651232109142223",
+  "text": "Large card, link https://t.co/kGfVUwtxwc in the middle of the sentence",
+  "display_text_range": [
+    0,
+    70
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "github.com/vercel/next.js",
+        "expanded_url": "https://github.com/vercel/next.js",
+        "indices": [
+          17,
+          40
+        ],
+        "url": "https://t.co/kGfVUwtxwc"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/kGfVUwtxwc"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id_str": "2090928716063060310",
+  "text": "$1.4 billion in shorts, liquidated in four hours.\n\nThe Treasury doubled its long-end buybacks after yields hit a 2007 high, the dollar sank, gold cleared $4,500, and Bitcoin put in its biggest single-day move since March.\n\n@katemparkman walks the chain reaction. https://t.co/Fu91V8KrxG",
+  "display_text_range": [
+    0,
+    262
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/Fu91V8KrxG",
+        "expanded_url": "https://x.com/goodforbtc/status/2090928716063060310/video/1",
+        "indices": [
+          263,
+          286
+        ],
+        "url": "https://t.co/Fu91V8KrxG"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "1442875821710925825",
+        "indices": [
+          223,
+          236
+        ],
+        "name": "kateparkman.btc ✨",
+        "screen_name": "katemparkman"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

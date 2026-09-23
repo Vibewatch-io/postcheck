@@ -1,0 +1,16 @@
+{
+  "id_str": "2100300298313183628",
+  "text": "Blank lines test 14: one blank line below.\n\nThree blank lines below this paragraph.\n\nLast paragraph.",
+  "display_text_range": [
+    0,
+    100
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

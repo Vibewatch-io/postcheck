@@ -1,0 +1,48 @@
+{
+  "id_str": "2095546954688380962",
+  "text": "Would you lock up 2.5x your down payment in BTC to buy a house without selling it?\n\n@coinbase's crypto mortgage is live nationwide: conforming Fannie Mae first mortgage, a second loan against your coins, no margin calls when price drops. @katemparkman runs through who it's for. https://t.co/sfbtuO2gKz",
+  "display_text_range": [
+    0,
+    278
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/sfbtuO2gKz",
+        "expanded_url": "https://x.com/goodforbtc/status/2095546954688380962/video/1",
+        "indices": [
+          279,
+          302
+        ],
+        "url": "https://t.co/sfbtuO2gKz"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "574032254",
+        "indices": [
+          84,
+          93
+        ],
+        "name": "Coinbase 🛡️",
+        "screen_name": "coinbase"
+      },
+      {
+        "id_str": "1442875821710925825",
+        "indices": [
+          238,
+          251
+        ],
+        "name": "kateparkman.btc ✨",
+        "screen_name": "katemparkman"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

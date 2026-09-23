@@ -1,0 +1,39 @@
+{
+  "id_str": "2094461503110000723",
+  "text": "Quantum-proofing Bitcoin was supposed to need a fork. @StarkWareLtd just got a quantum-resistant transaction mined on mainnet without one, submitted through Marathon's Slipstream since most miners won't accept the non-standard format. $150 a transaction, and it works today. https://t.co/EMVr3YR0bl",
+  "display_text_range": [
+    0,
+    274
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/EMVr3YR0bl",
+        "expanded_url": "https://x.com/goodforbtc/status/2094461503110000723/video/1",
+        "indices": [
+          275,
+          298
+        ],
+        "url": "https://t.co/EMVr3YR0bl"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "953893947822280704",
+        "indices": [
+          54,
+          67
+        ],
+        "name": "StarkWare 🥷",
+        "screen_name": "StarkWareLtd"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

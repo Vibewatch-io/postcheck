@@ -1,0 +1,40 @@
+{
+  "id_str": "2100651772096422319",
+  "text": "Two cards https://t.co/kGfVUwtxwc and https://t.co/bnTbndxC74",
+  "display_text_range": [
+    0,
+    61
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "github.com/vercel/next.js",
+        "expanded_url": "https://github.com/vercel/next.js",
+        "indices": [
+          10,
+          33
+        ],
+        "url": "https://t.co/kGfVUwtxwc"
+      },
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          38,
+          61
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/kGfVUwtxwc"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

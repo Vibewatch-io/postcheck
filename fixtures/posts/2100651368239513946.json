@@ -1,0 +1,31 @@
+{
+  "id_str": "2100651368239513946",
+  "text": "Small card https://t.co/O2acCl8jGZ",
+  "display_text_range": [
+    0,
+    34
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "developer.mozilla.org/en-US/docs/Web…",
+        "expanded_url": "https://developer.mozilla.org/en-US/docs/Web/HTML",
+        "indices": [
+          11,
+          34
+        ],
+        "url": "https://t.co/O2acCl8jGZ"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary",
+    "url": "https://t.co/O2acCl8jGZ"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

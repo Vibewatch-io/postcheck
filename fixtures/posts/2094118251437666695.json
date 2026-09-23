@@ -1,0 +1,39 @@
+{
+  "id_str": "2094118251437666695",
+  "text": "$1.59 billion. Added to @strategy's USD reserve in a week, without touching their Bitcoin.\n\nBrandon breaks down the mechanism: print new MSTR shares, sell them at the market. Shareholders shrug — the stock is up over 40% in a month and STRC is back near $98. https://t.co/jcNZe8UINu",
+  "display_text_range": [
+    0,
+    258
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/jcNZe8UINu",
+        "expanded_url": "https://x.com/goodforbtc/status/2094118251437666695/video/1",
+        "indices": [
+          259,
+          282
+        ],
+        "url": "https://t.co/jcNZe8UINu"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "12764472",
+        "indices": [
+          24,
+          33
+        ],
+        "name": "Strategy",
+        "screen_name": "Strategy"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

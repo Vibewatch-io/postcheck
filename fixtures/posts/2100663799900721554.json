@@ -1,0 +1,28 @@
+{
+  "id_str": "2100663799900721554",
+  "text": ".@Vibewatch_io this starts with a dot",
+  "display_text_range": [
+    0,
+    37
+  ],
+  "note_tweet": false,
+  "entities": {
+    "user_mentions": [
+      {
+        "id_str": "2078157187923505154",
+        "indices": [
+          1,
+          14
+        ],
+        "name": "Vibewatch",
+        "screen_name": "Vibewatch_io"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

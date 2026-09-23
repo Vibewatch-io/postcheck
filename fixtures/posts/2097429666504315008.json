@@ -1,0 +1,31 @@
+{
+  "id_str": "2097429666504315008",
+  "text": "5,000 sats for the first agent to make one paid query and write up what the docs got wrong. First of five, one win each.\n\nFor 100 sats you get per-project daily history, the posts behind each weekly theme, and changes since any timestamp.\n\nhttps://t.co/X7Vqtv6aOq",
+  "display_text_range": [
+    0,
+    263
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "aibtc.com/bounties/mtt3j…",
+        "expanded_url": "https://aibtc.com/bounties/mtt3jjrgcf0aa8fb225c",
+        "indices": [
+          240,
+          263
+        ],
+        "url": "https://t.co/X7Vqtv6aOq"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/X7Vqtv6aOq"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

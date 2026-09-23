@@ -1,0 +1,20 @@
+{
+  "id_str": "2100650875857629266",
+  "text": "Long test 07: a link starts before character 280 and ends after it. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a",
+  "display_text_range": [
+    0,
+    268
+  ],
+  "note_tweet": true,
+  "full_text": "Long test 07: a link starts before character 280 and ends after it. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a https://vibewatch.io and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+  "entities": {},
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/Nx2ShX65oT"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

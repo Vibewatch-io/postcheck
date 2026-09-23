@@ -1,0 +1,45 @@
+{
+  "id_str": "2102784652847337479",
+  "text": "Test 53: three photos https://t.co/lEzc0V2iJV",
+  "display_text_range": [
+    0,
+    21
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/lEzc0V2iJV",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102784652847337479/photo/1",
+        "indices": [
+          22,
+          45
+        ],
+        "url": "https://t.co/lEzc0V2iJV"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 3,
+  "media": [
+    {
+      "type": "photo",
+      "width": 1200,
+      "height": 1200
+    },
+    {
+      "type": "photo",
+      "width": 1200,
+      "height": 1200
+    },
+    {
+      "type": "photo",
+      "width": 1200,
+      "height": 1200
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

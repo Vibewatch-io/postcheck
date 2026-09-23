@@ -1,0 +1,17 @@
+{
+  "id_str": "2100299387255902230",
+  "text": "Long test 06: character 280 falls in the middle of a long word here. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a",
+  "display_text_range": [
+    0,
+    269
+  ],
+  "note_tweet": true,
+  "full_text": "Long test 06: character 280 falls in the middle of a long word here. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a extraordinarily and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "id_str": "2100652180256837990",
+  "text": "Three links https://t.co/fRwqum3HsS https://t.co/bnTbndxC74 https://t.co/WeVn4pfPjI",
+  "display_text_range": [
+    0,
+    83
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "example.com",
+        "expanded_url": "https://example.com",
+        "indices": [
+          12,
+          35
+        ],
+        "url": "https://t.co/fRwqum3HsS"
+      },
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          36,
+          59
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      },
+      {
+        "display_url": "news.ycombinator.com",
+        "expanded_url": "https://news.ycombinator.com",
+        "indices": [
+          60,
+          83
+        ],
+        "url": "https://t.co/WeVn4pfPjI"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

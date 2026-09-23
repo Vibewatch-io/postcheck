@@ -1,0 +1,31 @@
+{
+  "id_str": "2093398716619370983",
+  "text": "Getting rugged at Lightning speed https://t.co/Qw9GRxxvts",
+  "display_text_range": [
+    0,
+    57
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/i/broadcasts/1…",
+        "expanded_url": "https://x.com/i/broadcasts/1kKzDPoVNEDJv",
+        "indices": [
+          34,
+          57
+        ],
+        "url": "https://t.co/Qw9GRxxvts"
+      }
+    ]
+  },
+  "card": {
+    "name": "745291183405076480:broadcast",
+    "url": "https://t.co/Qw9GRxxvts"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

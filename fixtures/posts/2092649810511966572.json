@@ -1,0 +1,28 @@
+{
+  "id_str": "2092649810511966572",
+  "text": "September 15: the Senate votes cloture on Clarity. It needs 60 votes and Republicans hold 53 seats, so seven Democrats have to cross the aisle.\n\nBrandon's ask is simple. Call your senator. https://t.co/weLG73XZ2E",
+  "display_text_range": [
+    0,
+    188
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/weLG73XZ2E",
+        "expanded_url": "https://x.com/goodforbtc/status/2092649810511966572/video/1",
+        "indices": [
+          189,
+          212
+        ],
+        "url": "https://t.co/weLG73XZ2E"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

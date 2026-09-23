@@ -1,0 +1,29 @@
+{
+  "id_str": "2087554813450203482",
+  "text": "NEW comparison: Vibewatch vs Junction Bot, for team sentiment.\n\nJunction Bot digests a Telegram feed by topic for one person, with no sentiment scoring and no delivery outside Telegram. Vibewatch scores every message 1–10 for sentiment and relevance across 12 platforms, delivered https://t.co/NJVao5cseW",
+  "display_text_range": [
+    0,
+    280
+  ],
+  "note_tweet": true,
+  "full_text": "NEW comparison: Vibewatch vs Junction Bot, for team sentiment.\n\nJunction Bot digests a Telegram feed by topic for one person, with no sentiment scoring and no delivery outside Telegram. Vibewatch scores every message 1–10 for sentiment and relevance across 12 platforms, delivered to Slack, email, or Notion. From $19/mo.\n\nhttps://vibewatch.io/compare/junction-bot-alternative?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260811-junction-bot-alternative",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/NJVao5cseW",
+        "expanded_url": "https://x.com/Vibewatch_io/status/2087554813450203482/photo/1",
+        "indices": [
+          281,
+          304
+        ],
+        "url": "https://t.co/NJVao5cseW"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

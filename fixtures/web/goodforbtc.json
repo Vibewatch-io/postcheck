@@ -1,0 +1,316 @@
+{
+"source": "x.com/goodforbtc profile timeline, logged in, 600px column, captured 2026-09-11",
+"capturedAt": "2026-09-11",
+"posts": [
+{
+"id": "2098520148391190575",
+"lines": [
+"Someone minted roughly 4,000 BTC out of thin air on Liquid and bridged it",
+"out before anyone could see.",
+"They gave 3,400 back, kept 600, and are negotiating with Blockstream in",
+"OP_RETURN messages.",
+"Plus Trezor's leak grows to 80,000 customers and the Genesis Bond sells",
+"out ↓",
+"On"
+],
+"rowCount": 11,
+"showMore": true,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2098520161620042133",
+"lines": [
+"Watch the full episode:"
+],
+"rowCount": 1,
+"showMore": false,
+"card": "large",
+"photo": false,
+"video": false,
+"quote": false
+},
+{
+"id": "2098472217487212983",
+"lines": [
+"Keep your BTC on the L1"
+],
+"rowCount": 1,
+"showMore": false,
+"card": "large",
+"photo": false,
+"video": true,
+"quote": false
+},
+{
+"id": "2095546954688380962",
+"lines": [
+"Would you lock up 2.5x your down payment in BTC to buy a house without",
+"selling it?",
+"@coinbase 's crypto mortgage is live nationwide: conforming Fannie Mae",
+"first mortgage, a second loan against your coins, no margin calls when",
+"price drops. @katemparkman runs through who it's for."
+],
+"rowCount": 7,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2095184760285135059",
+"lines": [
+"Brandon gives you until about 2029 to get your quantum ducks in a row.",
+"Kate figures you just have to survive Coldcard and Lightning until then.",
+"Brandon would rather take out a mortgage and let Coinbase deal with it."
+],
+"rowCount": 6,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2094822883201868125",
+"lines": [
+"Bitcoin just printed the largest weekly dollar gain in its history, per",
+"@galaxyhq .",
+"Kate wouldn't have guessed it. Brandon barely felt it. Hold Bitcoin long",
+"enough and a record week lands as 'of course it went up.'",
+"Up only. Let's go."
+],
+"rowCount": 8,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2094461503110000723",
+"lines": [
+"Quantum-proofing Bitcoin was supposed to need a fork. @StarkWareLtd",
+"just got a quantum-resistant transaction mined on mainnet without one,",
+"submitted through Marathon's Slipstream since most miners won't accept",
+"the non-standard format. $150 a transaction, and it works today."
+],
+"rowCount": 4,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2094118251437666695",
+"lines": [
+"$1.59 billion. Added to @strategy 's USD reserve in a week, without touching",
+"their Bitcoin.",
+"Brandon breaks down the mechanism: print new MSTR shares, sell them at",
+"the market. Shareholders shrug — the stock is up over 40% in a month and",
+"STRC is back near $98."
+],
+"rowCount": 7,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2093757415825248606",
+"lines": [
+"The bug reports were AI-generated. The vulnerabilities were real.",
+"Core Lightning is shipping emergency fixes under a two-week embargo and",
+"telling every node operator to go offline until they land. Brandon and Kate",
+"on the closest call Bitcoin has had."
+],
+"rowCount": 6,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2093440498879152216",
+"lines": [
+"Core Lightning node operators are being told to go offline while a two-week",
+"embargo holds.",
+"Plus the first quantum-resistant Bitcoin transaction mined on mainnet,",
+"Coinbase's Bitcoin-backed mortgage goes nationwide, and Strategy adds",
+"$1.59B to its reserve ↓",
+"Today,"
+],
+"rowCount": 9,
+"showMore": true,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2093440511298384031",
+"lines": [
+"Watch the full episode:"
+],
+"rowCount": 1,
+"showMore": false,
+"card": "large",
+"photo": false,
+"video": false,
+"quote": false
+},
+{
+"id": "2093398716619370983",
+"lines": [
+"Getting rugged at Lightning speed"
+],
+"rowCount": 1,
+"showMore": false,
+"card": "large",
+"photo": false,
+"video": true,
+"quote": false
+},
+{
+"id": "2093010435872280622",
+"lines": [
+"OrdinalsBot's shutdown reads like an obituary for Ordinals.",
+"@katemparkman isn't buying it: the market dried up with the bear, same as",
+"NFTs, and it comes back when retail does."
+],
+"rowCount": 3,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2092649810511966572",
+"lines": [
+"September 15: the Senate votes cloture on Clarity. It needs 60 votes and",
+"Republicans hold 53 seats, so seven Democrats have to cross the aisle.",
+"Brandon's ask is simple. Call your senator."
+],
+"rowCount": 4,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2092285413541236776",
+"lines": [
+"OrdinalsBot is winding down.",
+"First place you could inscribe without running a node. The shop behind",
+"Runestone and the Dog airdrop. Where Brandon minted his first ordinal.",
+"@ordinalsbot is taking bids to keep the brand alive."
+],
+"rowCount": 7,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2091923825818812586",
+"lines": [
+"Was the Coldcard hack this cycle's FTX?",
+"Every cycle bottoms on a black swan. Last time it was an exchange; this",
+"time Bitcoiners lost their cold storage and the price barely moved. Brandon",
+"reads that as the bottom, unless 50k says otherwise."
+],
+"rowCount": 6,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2091582829981466834",
+"lines": [
+"\"Two markets, two currencies, two investor bases, one balance sheet",
+"compounding.\"",
+"@Metaplanet CEO @gerovich is taking a controlling stake in Super League",
+"Enterprise, renaming it SuperPlanet (ticker SUPA), seeded with 2,100 of",
+"Metaplanet's own BTC. Closes Q4."
+],
+"rowCount": 7,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2091219882197266775",
+"lines": [
+"A newly public company holds more Bitcoin than Coinbase.",
+"@Bullish IPO'd and the filing revealed 24,300 BTC, the sixth-largest public",
+"company stack, ahead of Strive, SpaceX, and Coinbase."
+],
+"rowCount": 4,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2090928716063060310",
+"lines": [
+"$1.4 billion in shorts, liquidated in four hours.",
+"The Treasury doubled its long-end buybacks after yields hit a 2007 high,",
+"the dollar sank, gold cleared $4,500, and Bitcoin put in its biggest single-",
+"day move since March.",
+"@katemparkman walks the chain reaction."
+],
+"rowCount": 8,
+"showMore": false,
+"card": null,
+"photo": true,
+"video": true,
+"quote": false
+},
+{
+"id": "2090888922197103072",
+"lines": [
+"The Treasury doubled its bond buybacks and Bitcoin surged 7% in a day, its",
+"biggest move since March.",
+"Plus Bullish IPOs holding more BTC than Coinbase, MetaPlanet lands in the",
+"US as SuperPlanet, and OrdinalsBot winds down ↓"
+],
+"rowCount": 6,
+"showMore": false,
+"card": "large",
+"photo": false,
+"video": false,
+"quote": false
+},
+{
+"id": "2090888939360203059",
+"lines": [
+"On the show, @marshallmixing and @katemparkman get into:",
+"• The Treasury yield hit 5.34%, the highest since 2007, and the Treasury",
+"responded by doubling long-end bond buybacks from $2B to $4B per",
+"operation starting September 9. The dollar hit a 2.5-month low, gold rallied",
+"past"
+],
+"rowCount": 7,
+"showMore": true,
+"card": null,
+"photo": true,
+"video": false,
+"quote": false
+}
+]
+}

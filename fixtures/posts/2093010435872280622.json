@@ -1,0 +1,39 @@
+{
+  "id_str": "2093010435872280622",
+  "text": "OrdinalsBot's shutdown reads like an obituary for Ordinals. @katemparkman isn't buying it: the market dried up with the bear, same as NFTs, and it comes back when retail does. https://t.co/eQu38eU5nG",
+  "display_text_range": [
+    0,
+    175
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/eQu38eU5nG",
+        "expanded_url": "https://x.com/goodforbtc/status/2093010435872280622/video/1",
+        "indices": [
+          176,
+          199
+        ],
+        "url": "https://t.co/eQu38eU5nG"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "1442875821710925825",
+        "indices": [
+          60,
+          73
+        ],
+        "name": "kateparkman.btc ✨",
+        "screen_name": "katemparkman"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

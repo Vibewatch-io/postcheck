@@ -1,0 +1,28 @@
+{
+  "id_str": "2091238167513014497",
+  "text": "The entire @Stacks ecosystem benefits from listening to their users on a consistent basis.",
+  "display_text_range": [
+    0,
+    90
+  ],
+  "note_tweet": false,
+  "entities": {
+    "user_mentions": [
+      {
+        "id_str": "3285797414",
+        "indices": [
+          11,
+          18
+        ],
+        "name": "stacks.btc",
+        "screen_name": "Stacks"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "BrandonMarshall.btc",
+    "screen_name": "marshallmixing"
+  }
+}

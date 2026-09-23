@@ -1,0 +1,35 @@
+{
+  "id_str": "2102784970435825828",
+  "text": "Test 55: a GIF https://t.co/tAOOGopUt3",
+  "display_text_range": [
+    0,
+    14
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/tAOOGopUt3",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102784970435825828/photo/1",
+        "indices": [
+          15,
+          38
+        ],
+        "url": "https://t.co/tAOOGopUt3"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "media": [
+    {
+      "type": "animated_gif",
+      "width": 480,
+      "height": 270
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

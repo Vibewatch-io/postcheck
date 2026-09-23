@@ -1,0 +1,29 @@
+{
+  "id_str": "2093440498879152216",
+  "text": "Core Lightning node operators are being told to go offline while a two-week embargo holds.\n\nPlus the first quantum-resistant Bitcoin transaction mined on mainnet, Coinbase's Bitcoin-backed mortgage goes nationwide, and Strategy adds $1.59B to its reserve ↓\n\nToday, https://t.co/JoCnlrHY5J",
+  "display_text_range": [
+    0,
+    264
+  ],
+  "note_tweet": true,
+  "full_text": "Core Lightning node operators are being told to go offline while a two-week embargo holds.\n\nPlus the first quantum-resistant Bitcoin transaction mined on mainnet, Coinbase's Bitcoin-backed mortgage goes nationwide, and Strategy adds $1.59B to its reserve ↓\n\nToday, @marshallmixing and @katemparkman dig into:\n\n• Critical vulnerabilities in Core Lightning: maintainers told every node operator to upgrade or restart with the --offline flag. Details under a two-week embargo — the bugs surfaced through AI-generated vulnerability reports that proved real. If you run a Lightning node, act now.\n\n• The first quantum-resistant Bitcoin transaction was mined on mainnet: @StarkWareLtd submitted it through Marathon's Slipstream service and shared the news live at Bitcoin Asia. Non-standard transactions that work today at roughly $150 each.\n\n• @coinbase's Bitcoin-backed mortgage is live nationwide: pledge 250% of the down payment in BTC, get a conforming Fannie Mae first mortgage plus a second loan against the coins. No margin calls just because the price drops.\n\n• Pakistan released a full licensing framework for crypto exchanges, custody, lending, and derivatives: apply by September 5 or cease operations.\n\n• Quick headlines: JPMorgan is considering its own stablecoin per the Wall Street Journal, HashKey Cloud joins Bitcoin staking on @Stacks, and @galaxyhq says last week's rise was Bitcoin's largest weekly dollar gain ever.\n\n• Treasury tracker: @strive +1,110 BTC (21,356), @EMPD_BTC -100 (1,179). Pipeline: Alpha Modus signed a $254M PIPE for 3,170 BTC, Genius Group plans $827M over five years, @_ALCPB raising €21M. @strategy: no buys, no sells; +$1.59B USD reserve, $136M more STRC bought back.\n\n• Follow us @goodforbtc for clips all week.",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/JoCnlrHY5J",
+        "expanded_url": "https://x.com/goodforbtc/status/2093440498879152216/video/1",
+        "indices": [
+          265,
+          288
+        ],
+        "url": "https://t.co/JoCnlrHY5J"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id_str": "2092329594993234037",
+  "text": "Today, we're sharing a preview of our @Stacks ecosystem weekly reports. These reports will be published weekly, with a live Stacks ecosystem sentiment dashboard available very soon.\n\nPlease share your feedback with us! https://t.co/8SqFdAZdEO",
+  "display_text_range": [
+    0,
+    242
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/i/article/2092…",
+        "expanded_url": "https://x.com/i/article/2092310645429686272",
+        "indices": [
+          219,
+          242
+        ],
+        "url": "https://t.co/8SqFdAZdEO"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "3285797414",
+        "indices": [
+          38,
+          45
+        ],
+        "name": "stacks.btc",
+        "screen_name": "Stacks"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

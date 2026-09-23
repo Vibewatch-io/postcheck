@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tracking per loaded font, calibrated against x.com (web pane) and the app's
+   own Chirp (app pane); see scripts/ios/README.md. Stamped by font-tier.tsx. */
+:root { --ls-web: 0px; --ls-app: -0.32px; }
+html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.196px; }
+html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; }
+
+/* Chirp, X's own typeface, loaded from X's CDN the same way x.com loads it.
+   Two builds are in play (measured 2026-09-11): x.com's web client ships a
+   newer cut (responsive-web/client-web/Chirp-*.woff2, ~2.3% wider) while the
+   iOS app's metrics match the older fonts/v2 files. "TwitterChirpWeb" is used
+   for the web previews and falls back to v2 if the hashed URL ever goes away;
+   "TwitterChirp" (v2) is used for the phone previews. The fallbacks after that
+   are the stack x.com declares. */
+@font-face { font-family: "TwitterChirpWeb"; font-weight: 400; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/responsive-web/client-web/Chirp-Regular.80fda27a.woff2") format("woff2"), url("https://abs.twimg.com/fonts/v2/chirp-regular-web.woff2") format("woff2"); }
+@font-face { font-family: "TwitterChirpWeb"; font-weight: 500; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/responsive-web/client-web/Chirp-Medium.f8e2739a.woff2") format("woff2"), url("https://abs.twimg.com/fonts/v2/chirp-medium-web.woff2") format("woff2"); }
+@font-face { font-family: "TwitterChirpWeb"; font-weight: 700; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/responsive-web/client-web/Chirp-Bold.ebb56aba.woff2") format("woff2"), url("https://abs.twimg.com/fonts/v2/chirp-bold-web.woff2") format("woff2"); }
+@font-face { font-family: "TwitterChirpWeb"; font-weight: 800; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/responsive-web/client-web/Chirp-Heavy.f44ae4ea.woff2") format("woff2"), url("https://abs.twimg.com/fonts/v2/chirp-heavy-web.woff2") format("woff2"); }
+/* GT America (Grilli Type), the typeface Chirp was derived from. Licensed to
+   Vibewatch (web licence); served same-origin by /fonts/[file] and never
+   committed. Sits behind Chirp in every stack so a blocked X CDN degrades to
+   it. A fork without the files gets the system font instead. */
+@font-face { font-family: "GTAmerica"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/GT-America-Standard-Regular.woff2") format("woff2"); }
+@font-face { font-family: "GTAmerica"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/GT-America-Standard-Bold.woff2") format("woff2"); }
+@font-face { font-family: "TwitterChirp"; font-weight: 400; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/fonts/v2/chirp-regular-web.woff2") format("woff2"); }
+@font-face { font-family: "TwitterChirp"; font-weight: 500; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/fonts/v2/chirp-medium-web.woff2") format("woff2"); }
+@font-face { font-family: "TwitterChirp"; font-weight: 700; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/fonts/v2/chirp-bold-web.woff2") format("woff2"); }
+@font-face { font-family: "TwitterChirp"; font-weight: 800; font-style: normal; font-display: swap;
+  src: url("https://abs.twimg.com/fonts/v2/chirp-heavy-web.woff2") format("woff2"); }
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: #f9f8f5;
+  color: #141412;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Composer editor (TipTap). Tailwind's preflight strips list styling. */
+.composer p { margin: 0; }
+.composer ul { list-style: disc; padding-left: 1.25rem; margin: 0; }
+
+/* X's organization / government avatar: rounded-xs = 4px × --x-radius-m, 1.8 with a squircle where supported (x.com styles). */
+.x-avatar-square { border-radius: 4px; }
+@supports (corner-shape: squircle) {
+  .x-avatar-square { border-radius: 7.2px; corner-shape: squircle; }
+}

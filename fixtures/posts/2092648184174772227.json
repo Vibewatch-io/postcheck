@@ -1,0 +1,28 @@
+{
+  "id_str": "2092648184174772227",
+  "text": "Created by @blocks, Buzz is a workspace platform where people and agents coexist.\n\nOur team is already using it internally. And we quickly saw the value in building a \"native\" Vibewatch agent into Buzz.\n\nVibewatch already integrates with Nostr. So Buzz was a natural fit 💚",
+  "display_text_range": [
+    0,
+    273
+  ],
+  "note_tweet": false,
+  "entities": {
+    "user_mentions": [
+      {
+        "id_str": "1449098672252198921",
+        "indices": [
+          11,
+          18
+        ],
+        "name": "Block",
+        "screen_name": "blocks"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

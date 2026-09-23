@@ -1,0 +1,31 @@
+{
+  "id_str": "2096976856780329081",
+  "text": "Ask a social-listening tool what your community says on Discord and it comes back empty. A server has no public index and no search API returning every mention across it.\n\nThe only way in is a bot with real server membership.\n\nWhat that actually requires: https://t.co/JtIPaCWHUB",
+  "display_text_range": [
+    0,
+    279
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io/blog/discord-r…",
+        "expanded_url": "https://vibewatch.io/blog/discord-reputation-monitoring?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260904-discord-reputation-monitoring",
+        "indices": [
+          256,
+          279
+        ],
+        "url": "https://t.co/JtIPaCWHUB"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/JtIPaCWHUB"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

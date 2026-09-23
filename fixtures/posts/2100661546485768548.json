@@ -1,0 +1,28 @@
+{
+  "id_str": "2100661546485768548",
+  "text": "Link to a post at the end https://t.co/mhYKiiWtIk",
+  "display_text_range": [
+    0,
+    49
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/Postcheck_test…",
+        "expanded_url": "https://x.com/Postcheck_test/status/2100298548843872339",
+        "indices": [
+          26,
+          49
+        ],
+        "url": "https://t.co/mhYKiiWtIk"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

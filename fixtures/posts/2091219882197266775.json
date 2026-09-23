@@ -1,0 +1,39 @@
+{
+  "id_str": "2091219882197266775",
+  "text": "A newly public company holds more Bitcoin than Coinbase.\n\n@Bullish IPO'd and the filing revealed 24,300 BTC, the sixth-largest public company stack, ahead of Strive, SpaceX, and Coinbase. https://t.co/60FOjZU68A",
+  "display_text_range": [
+    0,
+    187
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/60FOjZU68A",
+        "expanded_url": "https://x.com/goodforbtc/status/2091219882197266775/video/1",
+        "indices": [
+          188,
+          211
+        ],
+        "url": "https://t.co/60FOjZU68A"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "772963621206917120",
+        "indices": [
+          58,
+          66
+        ],
+        "name": "Bullish",
+        "screen_name": "Bullish"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

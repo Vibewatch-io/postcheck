@@ -1,0 +1,28 @@
+{
+  "id_str": "2100651502826410031",
+  "text": "No card tags https://t.co/fRwqum3HsS",
+  "display_text_range": [
+    0,
+    36
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "example.com",
+        "expanded_url": "https://example.com",
+        "indices": [
+          13,
+          36
+        ],
+        "url": "https://t.co/fRwqum3HsS"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

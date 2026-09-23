@@ -1,0 +1,50 @@
+{
+  "id_str": "2097746764560552262",
+  "text": "NEW: Featuring the top @Stacks voices ✨\n\nEvery week, the 10 most active public voices in the Stacks ecosystem, ranked by message volume across the panel.\n\nShout out to the current top 10 💚\n\nSee the list live ↓\nhttps://t.co/ObPPU0SnXH https://t.co/IcxP8kVQP7",
+  "display_text_range": [
+    0,
+    234
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/IcxP8kVQP7",
+        "expanded_url": "https://x.com/Vibewatch_io/status/2097746764560552262/photo/1",
+        "indices": [
+          234,
+          257
+        ],
+        "url": "https://t.co/IcxP8kVQP7"
+      }
+    ],
+    "urls": [
+      {
+        "display_url": "stacks.vibewatch.io/?utm_source=x&…",
+        "expanded_url": "https://stacks.vibewatch.io/?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260909-stacks-top-voices",
+        "indices": [
+          210,
+          233
+        ],
+        "url": "https://t.co/ObPPU0SnXH"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "3285797414",
+        "indices": [
+          23,
+          30
+        ],
+        "name": "stacks.btc",
+        "screen_name": "Stacks"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

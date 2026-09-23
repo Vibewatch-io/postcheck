@@ -1,0 +1,39 @@
+{
+  "id_str": "2084374988690542942",
+  "text": "Vibewatch in the top 5 tools of the day:\nhttps://t.co/UTXekLN2Py https://t.co/S2OJCx8fDa",
+  "display_text_range": [
+    0,
+    64
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/S2OJCx8fDa",
+        "expanded_url": "https://x.com/marshallmixing/status/2084374988690542942/photo/1",
+        "indices": [
+          65,
+          88
+        ],
+        "url": "https://t.co/S2OJCx8fDa"
+      }
+    ],
+    "urls": [
+      {
+        "display_url": "newsletter.theresanaiforthat.com/p/ai-beats-458…",
+        "expanded_url": "https://newsletter.theresanaiforthat.com/p/ai-beats-458-of-526-human-teams?utm_source=newsletter.theresanaiforthat.com&utm_medium=newsletter&utm_campaign=ai-beats-458-of-526-human-teams",
+        "indices": [
+          41,
+          64
+        ],
+        "url": "https://t.co/UTXekLN2Py"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "user": {
+    "name": "BrandonMarshall.btc",
+    "screen_name": "marshallmixing"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id_str": "2094476199401775577",
+  "text": "🟠 Stacks Vibe Index\n\nWith Bitcoin staking and the Genesis Bond weeks away, @Stacks led @CoinMarketCap gainers as STX roughly doubled.\n\nRead the full weekly report ⬇️ https://t.co/WLk1dyIlW8",
+  "display_text_range": [
+    0,
+    190
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/i/article/2094…",
+        "expanded_url": "https://x.com/i/article/2094473900864520192",
+        "indices": [
+          166,
+          189
+        ],
+        "url": "https://t.co/WLk1dyIlW8"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "3285797414",
+        "indices": [
+          75,
+          82
+        ],
+        "name": "stacks.btc",
+        "screen_name": "Stacks"
+      },
+      {
+        "id_str": "2260491445",
+        "indices": [
+          87,
+          101
+        ],
+        "name": "CoinMarketCap",
+        "screen_name": "CoinMarketCap"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Vibewatch",
+    "screen_name": "Vibewatch_io"
+  }
+}

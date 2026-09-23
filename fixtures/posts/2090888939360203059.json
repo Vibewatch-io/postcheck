@@ -1,0 +1,49 @@
+{
+  "id_str": "2090888939360203059",
+  "text": "On the show, @marshallmixing and @katemparkman get into:\n\n• The Treasury yield hit 5.34%, the highest since 2007, and the Treasury responded by doubling long-end bond buybacks from $2B to $4B per operation starting September 9. The dollar hit a 2.5-month low, gold rallied past https://t.co/oWTwQGmbAd",
+  "display_text_range": [
+    0,
+    277
+  ],
+  "note_tweet": true,
+  "full_text": "On the show, @marshallmixing and @katemparkman get into:\n\n• The Treasury yield hit 5.34%, the highest since 2007, and the Treasury responded by doubling long-end bond buybacks from $2B to $4B per operation starting September 9. The dollar hit a 2.5-month low, gold rallied past $4,500, and Bitcoin surged 7% in a day, its biggest move since March, with $1.4B in shorts liquidated in four hours and $517M in ETF inflows.\n\n• @Bullish IPO'd and revealed 24,300 BTC, the sixth-largest public company Bitcoin holder, ahead of @strive, @SpaceX, and @coinbase.\n\n• @Metaplanet is coming to America: a controlling stake in Super League Enterprise, renamed SuperPlanet (SUPA), seeded with 2,100 of its own BTC. Expected to close Q4.\n\n• The SEC proposed Regulation Crypto Assets: a one-time $5M exemption over four years, a $75M annual exemption, and a safe harbor for qualifying crypto assets.\n\n• Clarity gets its Senate cloture vote September 15: 60 votes needed, at least seven Democrats have to cross the aisle.\n\n• OrdinalsBot is winding down and looking for bids to keep the brand alive. End of an era.\n\n• Treasury tracker: @strive +79 BTC (20,246), Gemini +1,698 revealed (5,528), @_ALCPB +5 (3,145), Canaan +2 (1,917), Remixpoint +9.98 (1,501). @strategy: no buys, no sells; +$150M USD reserve and $132M of STRC bought back.\n\n• Follow the show on X: @goodforbtc.",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/oWTwQGmbAd",
+        "expanded_url": "https://x.com/goodforbtc/status/2090888939360203059/photo/1",
+        "indices": [
+          278,
+          301
+        ],
+        "url": "https://t.co/oWTwQGmbAd"
+      }
+    ],
+    "user_mentions": [
+      {
+        "id_str": "402485171",
+        "indices": [
+          13,
+          28
+        ],
+        "name": "BrandonMarshall.btc",
+        "screen_name": "marshallmixing"
+      },
+      {
+        "id_str": "1442875821710925825",
+        "indices": [
+          33,
+          46
+        ],
+        "name": "kateparkman.btc ✨",
+        "screen_name": "katemparkman"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

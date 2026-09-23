@@ -1,0 +1,40 @@
+{
+  "id_str": "2102784476229366142",
+  "text": "Test 52: two photos https://t.co/XcGD4IzpVG",
+  "display_text_range": [
+    0,
+    19
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/XcGD4IzpVG",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102784476229366142/photo/1",
+        "indices": [
+          20,
+          43
+        ],
+        "url": "https://t.co/XcGD4IzpVG"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 2,
+  "media": [
+    {
+      "type": "photo",
+      "width": 1200,
+      "height": 1200
+    },
+    {
+      "type": "photo",
+      "width": 1200,
+      "height": 1200
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

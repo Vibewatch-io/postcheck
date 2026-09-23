@@ -1,0 +1,37 @@
+{
+  "id_str": "2102790843342221559",
+  "text": "Test 57b: poll with an image on each choice",
+  "display_text_range": [
+    0,
+    43
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "1906814671912599552:poll_choice_images",
+    "url": "card://2102790842943770624"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "One",
+      "image": true
+    },
+    {
+      "label": "Two",
+      "image": true
+    },
+    {
+      "label": "Three",
+      "image": true
+    },
+    {
+      "label": "Four",
+      "image": true
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

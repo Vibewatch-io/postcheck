@@ -1,0 +1,40 @@
+{
+  "id_str": "2100668421813960865",
+  "text": "Native quote with a link https://t.co/bnTbndxC74 https://t.co/mhYKiiWtIk",
+  "display_text_range": [
+    0,
+    72
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          25,
+          48
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      },
+      {
+        "display_url": "x.com/Postcheck_test…",
+        "expanded_url": "https://x.com/Postcheck_test/status/2100298548843872339",
+        "indices": [
+          49,
+          72
+        ],
+        "url": "https://t.co/mhYKiiWtIk"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/bnTbndxC74"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

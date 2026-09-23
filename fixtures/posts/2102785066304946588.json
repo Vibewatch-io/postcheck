@@ -1,0 +1,36 @@
+{
+  "id_str": "2102785066304946588",
+  "text": "Test 56: a short video https://t.co/cUnORoBxme",
+  "display_text_range": [
+    0,
+    22
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/cUnORoBxme",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102785066304946588/video/1",
+        "indices": [
+          23,
+          46
+        ],
+        "url": "https://t.co/cUnORoBxme"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "media": [
+    {
+      "type": "video",
+      "width": 1280,
+      "height": 720,
+      "duration_ms": 6000
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

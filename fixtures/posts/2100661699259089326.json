@@ -1,0 +1,28 @@
+{
+  "id_str": "2100661699259089326",
+  "text": "Link to a post https://t.co/mhYKiiWtIk in the middle",
+  "display_text_range": [
+    0,
+    52
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/Postcheck_test…",
+        "expanded_url": "https://x.com/Postcheck_test/status/2100298548843872339",
+        "indices": [
+          15,
+          38
+        ],
+        "url": "https://t.co/mhYKiiWtIk"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

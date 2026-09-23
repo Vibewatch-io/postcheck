@@ -1,0 +1,16 @@
+{
+  "id_str": "2100300464600633836",
+  "text": "Long word test 15: Supercalifragilisticexpialidocious-and-then-some-more-letters sits in the middle of this sentence to see where it wraps.",
+  "display_text_range": [
+    0,
+    139
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

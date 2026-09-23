@@ -1,0 +1,28 @@
+{
+  "id_str": "2088425755307073765",
+  "text": "@hodlstxbtc is there any chance of getting one of the main Korean Stacks groups added in here? Vibewatch speaks every language and adding more of the Korean community would really help tell the full story of ecosystem sentiment!",
+  "display_text_range": [
+    0,
+    228
+  ],
+  "note_tweet": false,
+  "entities": {
+    "user_mentions": [
+      {
+        "id_str": "1435772965640093698",
+        "indices": [
+          0,
+          11
+        ],
+        "name": "hodLNothing.btc 🟧",
+        "screen_name": "hodlstxbtc"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "BrandonMarshall.btc",
+    "screen_name": "marshallmixing"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id_str": "2091923825818812586",
+  "text": "Was the Coldcard hack this cycle's FTX?\n\nEvery cycle bottoms on a black swan. Last time it was an exchange; this time Bitcoiners lost their cold storage and the price barely moved. Brandon reads that as the bottom, unless 50k says otherwise. https://t.co/30Byy7nYVS",
+  "display_text_range": [
+    0,
+    241
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/30Byy7nYVS",
+        "expanded_url": "https://x.com/goodforbtc/status/2091923825818812586/video/1",
+        "indices": [
+          242,
+          265
+        ],
+        "url": "https://t.co/30Byy7nYVS"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}

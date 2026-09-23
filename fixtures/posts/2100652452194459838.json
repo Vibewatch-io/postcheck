@@ -1,0 +1,49 @@
+{
+  "id_str": "2100652452194459838",
+  "text": "Bare domain https://t.co/bnTbndxC74 and https://t.co/epaaNxYzZb and https://t.co/gqBuyFYUeQ",
+  "display_text_range": [
+    0,
+    91
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          12,
+          35
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      },
+      {
+        "display_url": "example.ai",
+        "expanded_url": "https://example.ai",
+        "indices": [
+          40,
+          63
+        ],
+        "url": "https://t.co/epaaNxYzZb"
+      },
+      {
+        "display_url": "file.zip",
+        "expanded_url": "https://file.zip",
+        "indices": [
+          68,
+          91
+        ],
+        "url": "https://t.co/gqBuyFYUeQ"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/bnTbndxC74"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

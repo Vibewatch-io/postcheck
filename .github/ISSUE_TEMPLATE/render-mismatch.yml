@@ -1,0 +1,53 @@
+name: Post rendered differently
+description: A real post that doesn't match the Postcheck preview 1:1
+labels: [render-mismatch]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Post URL
+      placeholder: https://x.com/user/status/123…
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where you saw it
+      options:
+        - x.com timeline
+        - x.com post page
+        - iOS app timeline
+        - iOS app post page
+        - Android app timeline
+        - Android app post page
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device or window width
+      placeholder: iPhone 15 Pro, Pixel 8, 1280px window…
+  - type: textarea
+    id: real
+    attributes:
+      label: Screenshot of the real post
+      description: Drag the image in. Keep the whole post visible, including any Show more.
+    validations:
+      required: true
+  - type: textarea
+    id: preview
+    attributes:
+      label: What Postcheck showed
+      description: The PNG export or a screenshot, and which words or lines differ.
+    validations:
+      required: true
+  - type: dropdown
+    id: font
+    attributes:
+      label: Font tier shown above the preview
+      options:
+        - No banner (Chirp loaded)
+        - GT America banner
+        - System font banner
+    validations:
+      required: true

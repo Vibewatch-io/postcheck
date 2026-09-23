@@ -1,0 +1,28 @@
+{
+  "id_str": "2095184760285135059",
+  "text": "Brandon gives you until about 2029 to get your quantum ducks in a row.\n\nKate figures you just have to survive Coldcard and Lightning until then.\n\nBrandon would rather take out a mortgage and let Coinbase deal with it. https://t.co/ab0bbAnq0K",
+  "display_text_range": [
+    0,
+    217
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/ab0bbAnq0K",
+        "expanded_url": "https://x.com/goodforbtc/status/2095184760285135059/video/1",
+        "indices": [
+          218,
+          241
+        ],
+        "url": "https://t.co/ab0bbAnq0K"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Good For Bitcoin",
+    "screen_name": "goodforbtc"
+  }
+}
