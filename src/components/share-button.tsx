@@ -69,9 +69,9 @@ export function ShareButton({ preview }: { preview: () => SharedPreview }) {
       >
         Share
       </button>
-      {status.kind === "copied" && (
+      {(status.kind === "working" || status.kind === "copied") && (
         <div role="status" className="absolute right-0 top-10 z-20 whitespace-nowrap rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-[13px] text-brand-warm-dark shadow-md">
-          Link copied
+          {status.kind === "working" ? "Making link…" : "Link copied"}
         </div>
       )}
       {status.kind === "note" && (
