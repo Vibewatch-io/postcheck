@@ -56,13 +56,15 @@ Line breaks are measured, not estimated: every word is wrapped in a span, the bo
 
 ## Privacy
 
-The post you type never leaves your browser. Three things do:
+The post you type stays in your browser unless you share it. Three things do leave it:
 
 - **Links** in your post go to `/api/unfurl` on the server so it can fetch the page's Open Graph tags for the card preview. The server fetches the page, not your browser.
 - **A username** you look up goes to `/api/profile`, which asks FxTwitter's public API (`api.fxtwitter.com`) for the name, avatar and badge.
 - **Font requests** go to X's CDN (`abs.twimg.com`), because the previews render in Chirp loaded exactly the way x.com loads it. X sees the same request it would see from any page that embeds a post.
 
-The only analytics is Vercel Web Analytics, a cookieless page-view counter with no cross-site tracking. It is there because the fallback font's licence requires a monthly unique-visitor count (see Fonts), and it does nothing outside Vercel.
+**Share** copies a link that holds the preview itself: the text, its styling, the name, handle and check, the device and theme, and JPEG copies of your photo and attached image shrunk in the browser (the image steps down in size until the link fits under 38,000 characters, or is left out). It is all compressed into the part of the link after `#`, which browsers never send to a server, so nothing is uploaded or stored and there is nothing for us to delete. Anyone who has the link can see the preview. Opening a shared post that contains a link fetches its card through `/api/unfurl`, the same as typing it would.
+
+The only analytics is Vercel Web Analytics, a cookieless page-view counter with no cross-site tracking. It is there because the fallback font's licence requires a monthly unique-visitor count (see Fonts), and it does nothing outside Vercel. It records the page address without the `#` part, so a share link's contents never reach it.
 
 ## Fonts
 

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Syne } from "next/font/google";
 import localFont from "next/font/local";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@/components/analytics";
 import "./globals.css";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", weight: ["600", "700"] });

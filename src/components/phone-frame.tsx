@@ -31,12 +31,15 @@ function useClock(): string | null {
   return `${now.getHours() % 12 || 12}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
+/** Bezel around the screen on every side. */
+export const PHONE_BEZEL = 12;
+
 /** A phone bezel with the app's status bar, header, tabs and bottom bar around the post. */
 export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
   const island = device.island ?? "none";
   const statusH = island === "dynamic-island" ? 54 : island === "notch" ? 47 : island === "punch-hole" ? 40 : 20;
   const radius = device.radius ?? 0;
-  const bezel = 12;
+  const bezel = PHONE_BEZEL;
   // Rendered on the client only, so the server's clock never shows up in the page.
   const clock = useClock() ?? "";
   const light = theme.id === "light";
@@ -50,10 +53,9 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
     const postArea = postRef.current;
     const cell = postArea?.firstElementChild;
     if (!postArea || !cell) return;
-    // The post area is flex-1, so measure the post itself, not the space it was given.
-    const measure = () => setPostHeight(Math.ceil(cell.getBoundingClientRect().height));
-    measure();
-    const ro = new ResizeObserver(measure);
+    // The post area is flex-1, so measure the post itself, not the space it was given. The observer
+    // reports layout pixels, so the scale the preview may draw the phone at doesn't leak in here.
+    const ro = new ResizeObserver(([entry]) => setPostHeight(Math.ceil(entry.borderBoxSize[0].blockSize)));
     ro.observe(cell);
     return () => ro.disconnect();
   }, []);

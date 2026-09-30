@@ -14,7 +14,11 @@ export default function Page() {
           </h1>
           <p className="text-sm text-brand-warm-gray">We&apos;ve seen a lot of bad posts. Here&apos;s how to fix yours.</p>
         </div>
-        <div id="theme-slot" className="shrink-0" />
+        {/* The preview's controls live up here so the phone gets the full height of the window. */}
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <div id="preview-controls" className="contents" />
+          <div id="theme-slot" className="contents" />
+        </div>
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col">
@@ -30,7 +34,7 @@ export default function Page() {
           .
         </span>
         <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>Previews never leave your browser.</span>
+          <span>Previews stay in your browser. A share link carries the post inside the link.</span>
           <a href={REPO} className="hover:text-brand-warm-dark hover:underline" rel="noopener noreferrer" target="_blank">
             Open source on GitHub
           </a>
