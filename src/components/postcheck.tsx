@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { DEVICES, DEFAULT_DEVICE, type Device } from "@/lib/devices";
 import { THEMES, type ThemeId } from "@/lib/theme";
@@ -11,9 +11,11 @@ import { draftToDoc, serializeDoc, trimDraft, type Draft, type DocNode } from "@
 import { ComposerField, FormatBar, useComposer } from "./composer";
 import { buildAdvice, type Advice, type DeviceLines } from "@/lib/advice";
 import { XPost, type Badge, type Identity } from "./x-post";
-import { PhoneFrame } from "./phone-frame";
+import { PHONE_BEZEL, PhoneFrame } from "./phone-frame";
 import { SearchIcon } from "./icons";
 import { LineProbes } from "./line-probe";
+import { ShareButton } from "./share-button";
+import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 
 const SAMPLE =
   "@jack we've seen a lot of bad posts. The hook goes first so it survives the 280 cut, the link goes last so only the card shows, and nobody leaves one lonely word dangling on the last line.\n\nhttps://vibewatch.io";
@@ -53,8 +55,93 @@ export function Postcheck() {
   const [cards, setCards] = useState<Record<string, CardState>>({});
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
+  const [view, setView] = useState<"app" | "web">("app");
   const theme = THEMES[themeId];
   const fontTier = useFontTier();
+
+  // A share link (#s=…) opens as the preview alone; "Edit a copy" loads it into the composer.
+  const [shared, setShared] = useState<SharedPreview | null>(null);
+  // A damaged link leaves a notice over the composer, holding the draft text it appeared over: it
+  // goes away as soon as the draft changes or a good link opens.
+  const [shareError, setShareError] = useState<string | null>(null);
+  // True while a link is being read, so the composer doesn't show first. Set in a layout effect, so
+  // it is in place from the first paint after hydration; the server-rendered page before that
+  // can't see the fragment and still shows the composer for a moment.
+  const [opening, setOpening] = useState(false);
+  // What the page showed before a share took over, so going Back (or to a damaged link) returns to
+  // it. `latest` mirrors the current state for the hashchange listener, which is bound once.
+  const latest = useRef({ draft, identity, media, phoneDevice, webDevice, themeId, themeChosen, view });
+  useLayoutEffect(() => {
+    latest.current = { draft, identity, media, phoneDevice, webDevice, themeId, themeChosen, view };
+  });
+  const beforeShare = useRef<typeof latest.current | null>(null);
+  useLayoutEffect(() => {
+    let live = true;
+    let reads = 0;
+    const leave = () => {
+      const b = beforeShare.current;
+      beforeShare.current = null;
+      setShared(null);
+      if (!b) return;
+      setDraft(b.draft);
+      setIdentity(b.identity);
+      setMedia(b.media);
+      setPhoneDevice(b.phoneDevice);
+      setWebDevice(b.webDevice);
+      setThemeChosen(b.themeChosen);
+      setThemeId(b.themeId);
+      setView(b.view);
+    };
+    const open = () => {
+      // Only the newest read counts: a slow decode must not land after the hash has moved on.
+      const read = ++reads;
+      if (!location.hash.startsWith(SHARE_PREFIX)) {
+        setOpening(false);
+        leave();
+        return;
+      }
+      setOpening(true);
+      void decodeShare(location.hash).catch(() => null).then((p) => {
+        if (!live || read !== reads) return;
+        if (p) {
+          beforeShare.current ??= latest.current;
+          setShareError(null);
+          setShared(p);
+          setDraft({ text: p.text, styles: p.styles });
+          setIdentity(p.identity);
+          setMedia(p.media);
+          setPhoneDevice(DEVICES.find((d) => d.id === p.phone) ?? DEVICES[2]);
+          setWebDevice(DEVICES.find((d) => d.id === p.web) ?? DEFAULT_DEVICE);
+          setThemeChosen(true);
+          setThemeId(p.theme);
+          setView(p.view);
+        } else {
+          // The notice sits over the draft the page returns to.
+          setShareError((beforeShare.current ?? latest.current).draft.text);
+          history.replaceState(null, "", location.pathname + location.search);
+          leave();
+        }
+        setOpening(false);
+      });
+    };
+    open();
+    window.addEventListener("hashchange", open);
+    return () => {
+      live = false;
+      window.removeEventListener("hashchange", open);
+    };
+  }, []);
+  const previewOnly = shared !== null || opening;
+  // Once the draft moves on from the text the notice appeared over, the notice is done for good.
+  if (shareError !== null && shareError !== draft.text) setShareError(null);
+  const editCopy = useCallback(() => {
+    if (!shared) return;
+    editor?.commands.setContent(draftToDoc(shared.text, shared.styles));
+    // The copy is now yours: Back no longer restores what was here before.
+    beforeShare.current = null;
+    setShared(null);
+    history.replaceState(null, "", location.pathname + location.search);
+  }, [editor, shared]);
 
   // What X will actually post: outer whitespace trimmed, bold / italic as style runs over the plain text.
   const formatted = useMemo(() => trimDraft(draft.text.trim() ? draft : { text: SAMPLE, styles: [] }), [draft]);
@@ -225,11 +312,27 @@ export function Postcheck() {
   const previewArea = widestPreview + TIPS_GAP + tipsWidth;
   // Too narrow for the composer beside a true-size preview: stack them and let the page scroll.
   // (The same width is the page's breakpoint in page.tsx, where the window lock comes off.)
-  const narrow = rowWidth !== null && rowWidth < COMPOSER_W + COLUMN_GAP + widestPreview;
+  // A shared link shows the preview alone, so only the preview has to fit.
+  const narrow = rowWidth !== null && rowWidth < (previewOnly ? 0 : COMPOSER_W + COLUMN_GAP) + widestPreview;
 
   // Tips only appear for the user's own draft, and only when there's something to say. The column
   // keeps its space either way, so nothing shifts when they come and go.
-  const showTips = draft.text.trim() !== "" && advice.length > 0;
+  const showTips = !previewOnly && draft.text.trim() !== "" && advice.length > 0;
+
+  // Nothing typed yet shares an empty draft: the recipient sees the same sample, still as a
+  // placeholder, and "Edit a copy" starts them empty rather than with the sample as real text.
+  const typed = draft.text.trim() !== "";
+  const sharePreview = useCallback(
+    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, theme: themeId, phone: phoneDevice.id, web: webDevice.id, view }),
+    [typed, post, styles, identity, media, themeId, phoneDevice.id, webDevice.id, view],
+  );
+  const actions = shared ? (
+    <button type="button" onClick={editCopy} className="h-8 flex-none whitespace-nowrap rounded-lg bg-brand-warm-dark px-3 text-[13px] font-medium text-white hover:bg-brand-warm-dark/90">
+      Edit a copy
+    </button>
+  ) : (
+    <ShareButton preview={sharePreview} />
+  );
   const hints = showTips && (
     <div className={tipsAside ? "" : "mt-4 border-t border-brand-warm-border pt-3"}>
       <h2 className="font-syne text-sm font-semibold lining-nums text-brand-warm-dark">
@@ -256,11 +359,19 @@ export function Postcheck() {
       <ThemeToggle themeId={themeId} onChange={(t) => { setThemeChosen(true); setThemeId(t); }} />
       <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} devices={DEVICES} onMeasure={setLineSets} styles={styles} />
 
-      {/* Composer on the left; scrolls on its own if it outgrows the window. */}
+      {/* Composer on the left; scrolls on its own if it outgrows the window. On a shared link it
+          stays mounted but hidden, ready for "Edit a copy". */}
       <section
+        data-composer=""
+        hidden={previewOnly}
         className={`max-h-full min-h-0 overflow-y-auto rounded-2xl border border-brand-warm-border bg-white/75 p-4 shadow-[0_1px_2px_rgba(20,20,18,0.04)] backdrop-blur-xs ${narrow ? "w-full max-w-[560px]" : "flex-none"}`}
         style={narrow ? undefined : { width: COMPOSER_W }}
       >
+        {shareError !== null && (
+          <p className="mb-3 rounded-lg border border-brand-orange/40 bg-orange-50 px-3 py-2 text-sm text-brand-warm-dark" role="status">
+            That share link is incomplete or damaged, so there was nothing to show. Ask for the link again.
+          </p>
+        )}
         {/* Identity in one row, handle first: it doubles as the lookup that fills in the rest. */}
         <form
           className="mb-3 flex flex-wrap items-center gap-2"
@@ -343,7 +454,11 @@ export function Postcheck() {
       <Preview
         stacked={narrow}
         tips={tipsAside ? hints : null}
-        areaWidth={narrow ? Math.min(rowWidth ?? 0, Math.max(phoneDevice.width + 24, webDevice.width)) : tipsAside ? previewArea : Math.max(phoneDevice.width + 24, webDevice.width)}
+        areaWidth={narrow ? Math.min(rowWidth ?? 0, widestPreview) : tipsAside && !previewOnly ? previewArea : widestPreview}
+        view={view}
+        setView={setView}
+        actions={actions}
+        centred={previewOnly}
         fontTier={fontTier}
         fontBanner={
           fontTier && fontTier !== "chirp" ? (
@@ -375,8 +490,10 @@ export function Postcheck() {
   );
 }
 
-/** The toolbar above the preview, which the phone has to leave room for. */
+/** The toolbar above the preview when it is stacked under the composer (wide windows put it in the header). */
 const TOOLBAR_H = 48;
+/** The phone shrinks to fit a short window, down to this scale; below it the phone sheds app furniture instead. */
+const MIN_PHONE_SCALE = 0.7;
 const COMPOSER_W = 560;
 const COLUMN_GAP = 24;
 /** Tips sit close to the preview, like notes in its margin. */
@@ -405,34 +522,49 @@ interface PreviewProps {
   web: React.ReactNode;
   /** The phone, given the height it may take (it sheds app furniture to fit, never the post). */
   app: (maxHeight: number | undefined) => React.ReactNode;
+  view: "app" | "web";
+  setView: (v: "app" | "web") => void;
+  /** Extra toolbar buttons (Share, or Edit a copy on a shared link). */
+  actions: React.ReactNode;
+  /** The preview alone on the page (a shared link): centre it rather than pin it left. */
+  centred: boolean;
 }
 
 /**
- * One preview at a time, at true size, behind a Mobile / Web switch. Mobile is the default: it's how
- * most people read X.
+ * One preview at a time behind a Mobile / Web switch. Mobile is the default: it's how most people
+ * read X. The web view is always true size. The phone is laid out at true size and, in a short
+ * window, drawn smaller as a whole (a transform, so line breaks can't move) to keep its real shape.
  */
-function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, themeId, web, app }: PreviewProps) {
+function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, themeId, web, app, view, setView, actions, centred }: PreviewProps) {
   const areaRef = useRef<HTMLDivElement>(null);
+  const noticeRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<"app" | "web">("app");
   const [room, setRoom] = useState<number | null>(null);
-  // Whichever preview is showing is centred vertically; switching views slides it into place.
+  // The stage's layout height (unscaled). Whichever preview is showing is centred vertically;
+  // switching views slides it into place.
   const [stageHeight, setStageHeight] = useState<number | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const controlsSlot = useSlot("preview-controls");
 
   useEffect(() => {
     const area = areaRef.current;
-    if (!area) return;
-    const measure = () => setRoom(area.getBoundingClientRect().height - TOOLBAR_H);
+    const notice = noticeRef.current;
+    if (!area || !notice) return;
+    const measure = () => setRoom(area.getBoundingClientRect().height - notice.getBoundingClientRect().height);
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(area);
+    ro.observe(notice);
     return () => ro.disconnect();
   }, []);
 
+  // The phone's natural height with its bezel; it shrinks until it fits, then sheds furniture.
+  const phoneHeight = (phoneDevice.height ?? 0) + PHONE_BEZEL * 2;
+  const scale = view === "app" && !stacked && room !== null && room > 0 ? Math.min(1, Math.max(MIN_PHONE_SCALE, room / phoneHeight)) : 1;
+
   // Tips start level with the post (inside the phone, or at the top of the web cell). The post's
-  // offset changes as the phone sheds furniture, so it's measured.
+  // offset changes as the phone sheds furniture, so it's measured (in drawn pixels, after scaling).
   const [postTop, setPostTop] = useState(0);
   useEffect(() => {
     const stage = stageRef.current;
@@ -440,7 +572,7 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     const measure = () => {
       const post = stage.querySelector("article");
       if (post) setPostTop(Math.round(post.getBoundingClientRect().top - stage.getBoundingClientRect().top));
-      setStageHeight(Math.round(stage.getBoundingClientRect().height));
+      setStageHeight(stage.offsetHeight);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -452,10 +584,11 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
       ro.disconnect();
       mo.disconnect();
     };
-  }, [view]);
+  }, [view, scale]);
 
   const device = view === "app" ? phoneDevice : webDevice;
-  const width = view === "app" ? phoneDevice.width + 24 : webDevice.width;
+  const width = view === "app" ? phoneDevice.width + PHONE_BEZEL * 2 : webDevice.width;
+  const drawnHeight = stageHeight === null ? null : stageHeight * scale;
 
   const exportAllowed = fontTier !== "gt";
   const exportPng = useCallback(async () => {
@@ -479,49 +612,65 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     }
   }, [device, themeId, exporting, exportAllowed]);
 
-  const select = "h-8 min-w-0 rounded-lg border border-brand-warm-border bg-white px-2 text-[13px] text-brand-warm-dark";
+  // One width for both device lists, so the buttons after it never move when you switch views. A
+  // select sizes to its widest option; the widest label, "iPhone 17 Pro Max · post", needs 185px.
+  const select = "h-8 w-[190px] min-w-0 shrink rounded-lg border border-brand-warm-border bg-white px-2 text-[13px] text-brand-warm-dark";
   const segment = (on: boolean) => `px-3 text-[13px] font-medium transition ${on ? "bg-brand-warm-dark text-white" : "text-brand-warm-gray hover:text-brand-warm-dark"}`;
 
-  return (
-    // Left-aligned in a fixed-width area: the switch stays under your cursor when you change views.
-    <div
-      ref={areaRef}
-      className={`flex min-h-0 max-w-full flex-none flex-col justify-start transition-[padding] duration-300 ease-out ${stacked ? "items-center" : "h-full items-start"}`}
-      style={{ width: stacked ? "100%" : areaWidth, paddingTop: !stacked && room !== null && stageHeight !== null ? Math.max(0, Math.floor((room - stageHeight) / 2)) : 0 }}
-    >
-      {fontBanner}
-      <div className="mb-3 flex max-w-full flex-none items-center gap-2" style={{ height: TOOLBAR_H - 12, width }}>
-        <div className="flex h-8 flex-none overflow-hidden rounded-lg border border-brand-warm-border bg-white" role="tablist" aria-label="Preview">
-          <button type="button" role="tab" aria-selected={view === "app"} onClick={() => setView("app")} className={segment(view === "app")}>Mobile</button>
-          <button type="button" role="tab" aria-selected={view === "web"} onClick={() => setView("web")} className={segment(view === "web")}>Web</button>
-        </div>
-        {view === "app" ? (
-          <select value={phoneDevice.id} onChange={(e) => setPhoneDevice(PHONE_DEVICES.find((d) => d.id === e.target.value) ?? PHONE_DEVICES[0])} aria-label="App device" className={select}>
-            {PHONE_DEVICES.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-          </select>
-        ) : (
-          <select value={webDevice.id} onChange={(e) => setWebDevice(WEB_DEVICES.find((d) => d.id === e.target.value) ?? WEB_DEVICES[0])} aria-label="Web device" className={select}>
-            {WEB_DEVICES.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-          </select>
-        )}
+  const toolbar = (
+    <div className={`flex max-w-full items-center gap-2 ${stacked ? "mb-3 flex-none" : ""}`} style={stacked ? { height: TOOLBAR_H - 12, width } : undefined}>
+      <div className="flex h-8 flex-none overflow-hidden rounded-lg border border-brand-warm-border bg-white" role="tablist" aria-label="Preview">
+        <button type="button" role="tab" aria-selected={view === "app"} onClick={() => setView("app")} className={segment(view === "app")}>Mobile</button>
+        <button type="button" role="tab" aria-selected={view === "web"} onClick={() => setView("web")} className={segment(view === "web")}>Web</button>
+      </div>
+      {view === "app" ? (
+        <select value={phoneDevice.id} onChange={(e) => setPhoneDevice(PHONE_DEVICES.find((d) => d.id === e.target.value) ?? PHONE_DEVICES[0])} aria-label="App device" className={select}>
+          {PHONE_DEVICES.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+        </select>
+      ) : (
+        <select value={webDevice.id} onChange={(e) => setWebDevice(WEB_DEVICES.find((d) => d.id === e.target.value) ?? WEB_DEVICES[0])} aria-label="Web device" className={select}>
+          {WEB_DEVICES.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+        </select>
+      )}
+      <span className={`flex items-center gap-2 ${stacked ? "ml-auto" : ""}`}>
+        {actions}
         {exportAllowed ? (
-          <button type="button" onClick={() => void exportPng()} disabled={exporting} className="ml-auto h-8 flex-none whitespace-nowrap rounded-lg bg-brand-teal px-3 text-[13px] font-medium text-brand-warm-dark shadow-xs transition hover:bg-brand-teal-light disabled:opacity-60">
+          <button type="button" onClick={() => void exportPng()} disabled={exporting} className="h-8 min-w-[96px] flex-none whitespace-nowrap rounded-lg bg-brand-teal px-3 text-[13px] font-medium text-brand-warm-dark shadow-xs transition hover:bg-brand-teal-light disabled:opacity-60">
             {exporting ? "Rendering…" : "Export PNG"}
           </button>
         ) : (
-          <span className="ml-auto min-w-0 text-right text-[12px] leading-tight text-brand-warm-secondary" title="Grilli Type's web licence doesn't allow saving GT America into images.">
+          <span className="min-w-0 max-w-[190px] text-right text-[12px] leading-tight text-brand-warm-secondary" title="Grilli Type's web licence doesn't allow saving GT America into images.">
             Export is off while GT America stands in for Chirp.
           </span>
         )}
+      </span>
+    </div>
+  );
+
+  return (
+    // Left-aligned in a fixed-width area, so the preview doesn't jump sideways when you change views.
+    <div
+      ref={areaRef}
+      className={`flex min-h-0 max-w-full flex-none flex-col justify-start transition-[padding] duration-300 ease-out ${stacked ? "items-center" : centred ? "h-full items-center" : "h-full items-start"}`}
+      style={{ width: stacked ? "100%" : areaWidth, paddingTop: !stacked && room !== null && drawnHeight !== null ? Math.max(0, Math.floor((room - drawnHeight) / 2)) : 0 }}
+    >
+      <div ref={noticeRef} className="max-w-full flex-none">
+        {fontBanner}
+        {exportError && <p className="mb-3 text-sm text-brand-orange">{exportError}</p>}
       </div>
-      {exportError && <p className="mb-3 text-sm text-brand-orange">{exportError}</p>}
-      {/* True size, never scaled. */}
-      <div className={`flex min-h-0 max-w-full gap-5 overflow-auto flex-row items-start`}>
-        <div ref={stageRef} className="flex-none" style={{ display: "inline-block", width }}>
-          {view === "app" ? app(stacked ? undefined : (room ?? undefined)) : web}
+      {/* Wide windows keep the controls in the page header; stacked, they sit over the preview. */}
+      {stacked ? toolbar : controlsSlot && createPortal(toolbar, controlsSlot)}
+      <div className="flex min-h-0 max-w-full flex-row items-start gap-5 overflow-auto">
+        {/* The box takes the drawn size; the preview inside keeps its true-size layout (export reads that). */}
+        <div className="flex-none" style={{ width: width * scale, height: drawnHeight ?? undefined }}>
+          <div style={scale < 1 ? { width, transform: `scale(${scale})`, transformOrigin: "top left" } : { width }}>
+            <div ref={stageRef} style={{ display: "inline-block", width }}>
+              {view === "app" ? app(stacked || room === null ? undefined : room / scale) : web}
+            </div>
+          </div>
         </div>
         {tips && (
-          <aside className="flex-none" style={{ width: Math.min(TIPS_MAX_MOBILE, areaWidth - width - TIPS_GAP), marginTop: postTop }}>
+          <aside className="flex-none" style={{ width: Math.min(TIPS_MAX_MOBILE, areaWidth - width * scale - TIPS_GAP), marginTop: postTop }}>
             {tips}
           </aside>
         )}
@@ -530,16 +679,21 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
   );
 }
 
+/** A slot in the page header (page.tsx) that the tool renders controls into. */
+function useSlot(id: string): HTMLElement | null {
+  return useSyncExternalStore(
+    () => () => {},
+    () => document.getElementById(id),
+    () => null,
+  );
+}
+
 const WEB_DEVICES = DEVICES.filter((d) => d.kind !== "phone");
 const PHONE_DEVICES = DEVICES.filter((d) => d.kind === "phone");
 
 /** Light / dark switch for the previews, rendered into the page header's slot. */
 function ThemeToggle({ themeId, onChange }: { themeId: ThemeId; onChange: (t: ThemeId) => void }) {
-  const slot = useSyncExternalStore(
-    () => () => {},
-    () => document.getElementById("theme-slot"),
-    () => null,
-  );
+  const slot = useSlot("theme-slot");
   const dark = themeId === "dark";
   const control = (
     <button
