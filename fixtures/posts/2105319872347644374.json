@@ -1,0 +1,16 @@
+{
+  "id_str": "2105319872347644374",
+  "text": "Mention of an account that doesn't exist @zz_no_such_q9",
+  "display_text_range": [
+    0,
+    55
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
