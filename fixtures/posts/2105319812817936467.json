@@ -1,0 +1,46 @@
+{
+  "id_str": "2105319812817936467",
+  "text": "Mentions @Vibewatch_io, @marshallmixing's and @Vibewatch_io.",
+  "display_text_range": [
+    0,
+    60
+  ],
+  "note_tweet": false,
+  "entities": {
+    "user_mentions": [
+      {
+        "id_str": "2078157187923505154",
+        "indices": [
+          9,
+          22
+        ],
+        "name": "Vibewatch",
+        "screen_name": "Vibewatch_io"
+      },
+      {
+        "id_str": "402485171",
+        "indices": [
+          24,
+          39
+        ],
+        "name": "BrandonMarshall.btc",
+        "screen_name": "marshallmixing"
+      },
+      {
+        "id_str": "2078157187923505154",
+        "indices": [
+          46,
+          59
+        ],
+        "name": "Vibewatch",
+        "screen_name": "Vibewatch_io"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

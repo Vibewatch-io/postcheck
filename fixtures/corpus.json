@@ -667,6 +667,48 @@
      "t44",
      "quote-of-photo-post"
     ]
+   },
+   {
+    "id": "2105319468801065017",
+    "tags": [
+     "t60",
+     "hashtags-numeric-cjk-accent"
+    ]
+   },
+   {
+    "id": "2105319781729743202",
+    "tags": [
+     "t61",
+     "cashtags-7-letters-digit-lowercase"
+    ]
+   },
+   {
+    "id": "2105319812817936467",
+    "tags": [
+     "t62",
+     "mentions-comma-possessive-period"
+    ]
+   },
+   {
+    "id": "2105319842027131225",
+    "tags": [
+     "t63",
+     "mention-16-chars"
+    ]
+   },
+   {
+    "id": "2105319872347644374",
+    "tags": [
+     "t64",
+     "mention-nonexistent"
+    ]
+   },
+   {
+    "id": "2105319905948316143",
+    "tags": [
+     "t65",
+     "at-after-letter"
+    ]
    }
   ]
  }

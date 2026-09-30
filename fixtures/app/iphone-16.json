@@ -1,5 +1,5 @@
 {
- "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice",
+ "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #",
  "device": "iphone-16",
  "posts": [
   {
@@ -1033,6 +1033,52 @@
     ],
     "alt": 0
    }
+  },
+  {
+   "id": "2105319468801065017",
+   "lines": [
+    "Hashtags #postcheck #test_underscore #123 #",
+    "日本語 #émoji and #end."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2105319781729743202",
+   "lines": [
+    "Cashtags $BTC $STX $QWERTYU $1 and $btc"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2105319812817936467",
+   "lines": [
+    "Mentions @Vibewatch_io, @marshallmixing's",
+    "and @Vibewatch_io."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2105319842027131225",
+   "lines": [
+    "A 16-character handle @zzpostchecknone1",
+    "does not link"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2105319872347644374",
+   "lines": [
+    "Mention of an account that doesn't exist",
+    "@zz_no_such_q9"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2105319905948316143",
+   "lines": [
+    "a@Vibewatch_io and hi@Vibewatch_io"
+   ],
+   "showMore": false
   }
  ]
 }

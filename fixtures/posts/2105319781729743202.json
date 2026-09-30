@@ -1,0 +1,47 @@
+{
+  "id_str": "2105319781729743202",
+  "text": "Cashtags $BTC $STX $QWERTYU $1 and $btc",
+  "display_text_range": [
+    0,
+    39
+  ],
+  "note_tweet": false,
+  "entities": {
+    "symbols": [
+      {
+        "indices": [
+          9,
+          13
+        ],
+        "text": "BTC"
+      },
+      {
+        "indices": [
+          14,
+          18
+        ],
+        "text": "STX"
+      },
+      {
+        "indices": [
+          19,
+          27
+        ],
+        "text": "QWERTYU"
+      },
+      {
+        "indices": [
+          35,
+          39
+        ],
+        "text": "btc"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

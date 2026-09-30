@@ -55,7 +55,9 @@ const BARE_URL_RE = new RegExp(
 
 const MENTION_RE = /(^|[^A-Za-z0-9_!#$%&*@＠])@([A-Za-z0-9_]{1,15})(?![A-Za-z0-9_@＠])/g;
 const HASHTAG_RE = /(^|[^&\p{L}\p{N}_])#([\p{L}\p{N}_]*\p{L}[\p{L}\p{N}_]*)/gu;
-const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,6}(?:[._][A-Za-z]{1,2})?)(?![A-Za-z0-9_$])/g;
+// twitter-text caps cashtags at 6 letters, but X links $QWERTYU (7) since at
+// least 2026-09 (test 61). Longer ones are untested.
+const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,7}(?:[._][A-Za-z]{1,2})?)(?![A-Za-z0-9_$])/g;
 
 /** Emoji (incl. ZWJ sequences, skin tones, flags, keycaps). */
 export const EMOJI_RE =

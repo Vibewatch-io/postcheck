@@ -1,0 +1,54 @@
+{
+  "id_str": "2105319468801065017",
+  "text": "Hashtags #postcheck #test_underscore #123 #日本語 #émoji and #end.",
+  "display_text_range": [
+    0,
+    63
+  ],
+  "note_tweet": false,
+  "entities": {
+    "hashtags": [
+      {
+        "indices": [
+          9,
+          19
+        ],
+        "text": "postcheck"
+      },
+      {
+        "indices": [
+          20,
+          36
+        ],
+        "text": "test_underscore"
+      },
+      {
+        "indices": [
+          42,
+          46
+        ],
+        "text": "日本語"
+      },
+      {
+        "indices": [
+          47,
+          53
+        ],
+        "text": "émoji"
+      },
+      {
+        "indices": [
+          58,
+          62
+        ],
+        "text": "end"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
