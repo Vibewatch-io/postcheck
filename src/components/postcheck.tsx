@@ -612,7 +612,9 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     }
   }, [device, themeId, exporting, exportAllowed]);
 
-  const select = "h-8 min-w-0 rounded-lg border border-brand-warm-border bg-white px-2 text-[13px] text-brand-warm-dark";
+  // One width for both device lists, so the buttons after it never move when you switch views. A
+  // select sizes to its widest option; the widest label, "iPhone 17 Pro Max · post", needs 185px.
+  const select = "h-8 w-[190px] min-w-0 shrink rounded-lg border border-brand-warm-border bg-white px-2 text-[13px] text-brand-warm-dark";
   const segment = (on: boolean) => `px-3 text-[13px] font-medium transition ${on ? "bg-brand-warm-dark text-white" : "text-brand-warm-gray hover:text-brand-warm-dark"}`;
 
   const toolbar = (
@@ -633,7 +635,7 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
       <span className={`flex items-center gap-2 ${stacked ? "ml-auto" : ""}`}>
         {actions}
         {exportAllowed ? (
-          <button type="button" onClick={() => void exportPng()} disabled={exporting} className="h-8 flex-none whitespace-nowrap rounded-lg bg-brand-teal px-3 text-[13px] font-medium text-brand-warm-dark shadow-xs transition hover:bg-brand-teal-light disabled:opacity-60">
+          <button type="button" onClick={() => void exportPng()} disabled={exporting} className="h-8 min-w-[96px] flex-none whitespace-nowrap rounded-lg bg-brand-teal px-3 text-[13px] font-medium text-brand-warm-dark shadow-xs transition hover:bg-brand-teal-light disabled:opacity-60">
             {exporting ? "Rendering…" : "Export PNG"}
           </button>
         ) : (

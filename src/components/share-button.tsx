@@ -61,11 +61,19 @@ export function ShareButton({ preview }: { preview: () => SharedPreview }) {
       <button
         type="button"
         onClick={share}
+        aria-busy={status.kind === "working"}
         title="Copy a link to this preview. The post travels inside the link; nothing is uploaded."
-        className="h-8 flex-none whitespace-nowrap rounded-lg border border-brand-warm-border bg-white px-3 text-[13px] font-medium text-brand-warm-dark hover:bg-brand-warm-surface"
+        // The label never changes, so nothing beside the button moves; progress and "Link copied"
+        // show below it instead.
+        className={`h-8 flex-none whitespace-nowrap rounded-lg border border-brand-warm-border bg-white px-3 text-[13px] font-medium text-brand-warm-dark hover:bg-brand-warm-surface ${status.kind === "working" ? "cursor-progress opacity-60" : ""}`}
       >
-        {status.kind === "working" ? "Making link…" : status.kind === "copied" ? "Link copied" : "Share"}
+        Share
       </button>
+      {status.kind === "copied" && (
+        <div role="status" className="absolute right-0 top-10 z-20 whitespace-nowrap rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-[13px] text-brand-warm-dark shadow-md">
+          Link copied
+        </div>
+      )}
       {status.kind === "note" && (
         <div role="status" className="absolute right-0 top-10 z-20 w-80 rounded-lg border border-brand-warm-border bg-white p-3 text-[13px] leading-snug text-brand-warm-dark shadow-md">
           <p>{status.text}</p>
