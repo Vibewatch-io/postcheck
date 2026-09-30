@@ -161,9 +161,10 @@ tests (59a, 59d) were dropped. Posted 2026-09-23.
 | # | Text | Tests |
 |---|---|---|
 | 60 | `Hashtags #postcheck #test_underscore #123 #日本語 #émoji and #end.` | Which hashtags link (numbers-only doesn't), CJK and accented tags, trailing punctuation. |
-| 61 | `Cashtags $BTC $STX $ABCDEFG $1 and $btc` | 1–6 letters link, 7 don't, digits don't, lowercase? |
+| 61 | `Cashtags $BTC $STX $QWERTYU $1 and $btc` | Cashtag letter limit, digits, lowercase. Result: 7 letters link (`$QWERTYU`), `$1` doesn't, lowercase `$btc` does. (Posted with `$QWERTYU`: X's composer rewrites `$ABCDEFG` to `$abcdefg`.) |
+| 61b | `Long cashtags $ABCDEFGH $ABCDEFGHIJ $ABCDEFGHIJKLMNO $QWERTYU.A $QWERTY.AB` | Where the cashtag length limit really is (8, 10, 15), and whether the `.X` suffix works at 7 and 6 letters. |
 | 62 | `Mentions @Vibewatch_io, @marshallmixing's and @Vibewatch_io.` | Trailing comma, possessive, period. |
-| 63 | `A 16-character handle @abcdefghijklmnop does not link` | 15-character limit. |
+| 63 | `A 16-character handle @zzpostchecknone1 does not link` | 15-character limit. (Its first 15 characters are no account; `@abcdefghijklmno` is a real one.) |
 | 64 | `Mention of an account that doesn't exist @zz_no_such_q9` | Does X link non-existent handles? |
 | 65 | `a@Vibewatch_io and hi@Vibewatch_io` | `@` preceded by a letter. |
 

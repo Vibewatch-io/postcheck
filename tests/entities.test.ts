@@ -9,7 +9,7 @@ interface Fixture {
   text: string;
   display_text_range?: [number, number];
   note_tweet: boolean;
-  entities?: { urls?: Array<{ display_url: string; expanded_url: string; indices: [number, number]; url: string }>; media?: Array<{ indices: [number, number] }>; user_mentions?: Array<{ screen_name: string; indices: [number, number] }>; hashtags?: Array<{ text: string }> };
+  entities?: { urls?: Array<{ display_url: string; expanded_url: string; indices: [number, number]; url: string }>; media?: Array<{ indices: [number, number] }>; user_mentions?: Array<{ screen_name: string; indices: [number, number] }>; hashtags?: Array<{ text: string }>; symbols?: Array<{ text: string }> };
 }
 
 const dir = join(__dirname, "..", "fixtures", "posts");
@@ -55,6 +55,12 @@ for (const f of fixtures) {
     for (const m of f.entities?.user_mentions ?? []) {
       assert.ok(entities.some((e) => e.type === "mention" && e.text.toLowerCase() === `@${m.screen_name.toLowerCase()}`), `missing @${m.screen_name}`);
     }
+  });
+
+  test(`${f.id_str}: hashtags and cashtags are exactly X's`, () => {
+    const ours = (type: string) => entities.filter((e) => e.type === type).map((e) => e.text.slice(1));
+    assert.deepEqual(ours("hashtag"), (f.entities?.hashtags ?? []).map((h) => h.text));
+    assert.deepEqual(ours("cashtag"), (f.entities?.symbols ?? []).map((s) => s.text));
   });
 
   test(`${f.id_str}: weighted length agrees with X's 280 rule`, () => {
