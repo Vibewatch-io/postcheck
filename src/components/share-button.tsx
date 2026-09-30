@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SHARE_LINK_BUDGET, encodeShare, type SharedPreview } from "@/lib/share";
+import { SHARE_LINK_BUDGET, SHARE_MAX_TEXT, encodeShare, type SharedPreview } from "@/lib/share";
 
 /** Attached image sizes to try, largest first, until the link fits the budget. */
 const MEDIA_STEPS: Array<[maxEdge: number, quality: number]> = [
@@ -46,10 +46,12 @@ export function ShareButton({ preview }: { preview: () => SharedPreview }) {
         : made.then((m) => (m.url ? navigator.clipboard.writeText(m.url) : undefined));
     void Promise.allSettled([made, write]).then(([m, w]) => {
       if (m.status === "rejected") return setStatus({ kind: "note", text: "This browser can't make share links. Try a current Chrome, Safari or Firefox." });
-      const { url, dropped } = m.value;
+      const { url, left } = m.value;
       if (!url) return setStatus({ kind: "note", text: "This post is too long to fit in a link." });
-      if (w.status === "rejected") return setStatus({ kind: "note", text: "Copy this link to share the preview.", url });
-      if (dropped) return setStatus({ kind: "note", text: `Link copied. ${dropped}` });
+      // Whatever the link couldn't carry is named, whichever way the link reaches the user.
+      const without = left.length ? ` It leaves out the ${left.join(" and ")}.` : "";
+      if (w.status === "rejected") return setStatus({ kind: "note", text: `Copy this link to share the preview.${without}`, url });
+      if (without) return setStatus({ kind: "note", text: `Link copied.${without}` });
       setStatus({ kind: "copied" });
     });
   };
@@ -83,9 +85,14 @@ export function ShareButton({ preview }: { preview: () => SharedPreview }) {
   );
 }
 
-/** `dropped` names what had to be left out to fit the budget, for the note after copying. */
-async function makeLink(p: SharedPreview): Promise<{ url: string | null; dropped: string | null }> {
+/**
+ * `left` names what the link doesn't carry: an image that didn't fit the budget, or one the
+ * browser couldn't redraw. A post longer than a shared page will read gets no link at all.
+ */
+async function makeLink(p: SharedPreview): Promise<{ url: string | null; left: string[] }> {
+  if (p.text.length > SHARE_MAX_TEXT) return { url: null, left: [] };
   const avatar = p.identity.avatar ? await shrink(p.identity.avatar, AVATAR_EDGE, 0.8, true).catch(() => null) : null;
+  const photoLost = Boolean(p.identity.avatar) && !avatar;
   const base = { ...p, identity: { ...p.identity, avatar } };
   const at = (fragment: string) => `${location.origin}${location.pathname}${fragment}`;
   if (p.media) {
@@ -93,21 +100,18 @@ async function makeLink(p: SharedPreview): Promise<{ url: string | null; dropped
       const media = await shrink(p.media, edge, quality).catch(() => null);
       if (!media) break;
       const url = at(await encodeShare({ ...base, media }));
-      if (url.length <= SHARE_LINK_BUDGET) return { url, dropped: null };
+      if (url.length <= SHARE_LINK_BUDGET) return { url, left: photoLost ? ["profile photo"] : [] };
     }
   }
   // Last resorts before refusing: no attached image, then no photo either.
-  const withoutMedia = p.media ? "The image was too big for a link, so it's left out." : null;
-  for (const [identity, dropped] of [
-    [base.identity, withoutMedia],
-    [{ ...base.identity, avatar: null }, p.media ? "The image and profile photo were too big for a link, so they're left out." : "The profile photo was too big for a link, so it's left out."],
-  ] as const) {
-    if (identity === base.identity || base.identity.avatar) {
-      const url = at(await encodeShare({ ...base, identity, media: null }));
-      if (url.length <= SHARE_LINK_BUDGET) return { url, dropped };
-    }
+  const image = p.media ? ["image"] : [];
+  const attempts: Array<[SharedPreview["identity"], string[]]> = [[base.identity, [...image, ...(photoLost ? ["profile photo"] : [])]]];
+  if (avatar) attempts.push([{ ...base.identity, avatar: null }, [...image, "profile photo"]]);
+  for (const [identity, left] of attempts) {
+    const url = at(await encodeShare({ ...base, identity, media: null }));
+    if (url.length <= SHARE_LINK_BUDGET) return { url, left };
   }
-  return { url: null, dropped: null };
+  return { url: null, left: [] };
 }
 
 /** Redraws an image as a JPEG no larger than `edge` on its long side (or a centred square). */

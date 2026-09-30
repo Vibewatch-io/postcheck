@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { SHARE_PREFIX, decodeShare, encodeShare, jpegSize, parseWire, sharedImage, type SharedPreview } from "../src/lib/share";
+import { SHARE_MAX_TEXT, SHARE_PREFIX, decodeShare, encodeShare, jpegSize, parseWire, sharedImage, withoutFragment, type SharedPreview } from "../src/lib/share";
 
 /** The header of a JPEG (SOI, APP0, SOF0) claiming the given size: all jpegSize and sharedImage read. */
 function jpeg(width: number, height: number): string {
@@ -68,4 +68,19 @@ test("only JPEG data URLs Share could have made are shown", () => {
   assert.equal(sharedImage(jpeg(20_000, 20_000)), null);
   assert.equal(sharedImage("data:image/jpeg;base64,/9j/" + "A".repeat(300_000)), null);
   assert.deepEqual(jpegSize(Uint8Array.from(Buffer.from(jpeg(720, 405).split(",")[1], "base64"))), { width: 720, height: 405 });
+});
+
+test("analytics never records a share link's fragment", async () => {
+  const url = "https://postcheck.vibewatch.io/" + (await encodeShare(preview));
+  assert.equal(withoutFragment(url), "https://postcheck.vibewatch.io/");
+  assert.equal(withoutFragment("https://postcheck.vibewatch.io/?utm_source=x#s=abc"), "https://postcheck.vibewatch.io/?utm_source=x");
+  assert.equal(withoutFragment("https://postcheck.vibewatch.io/"), "https://postcheck.vibewatch.io/");
+});
+
+// Such text fits the link budget yet a shared page can't open it, which is why Share refuses it first.
+test("text past the shared page's limit compresses small but never opens", async () => {
+  const long = { ...preview, text: "a".repeat(SHARE_MAX_TEXT + 1), styles: [] };
+  const hash = await encodeShare(long);
+  assert.ok(hash.length < 1_000, "compresses far below the link budget");
+  assert.equal(await decodeShare(hash), null);
 });

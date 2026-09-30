@@ -55,7 +55,12 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
     if (!postArea || !cell) return;
     // The post area is flex-1, so measure the post itself, not the space it was given. The observer
     // reports layout pixels, so the scale the preview may draw the phone at doesn't leak in here.
-    const ro = new ResizeObserver(([entry]) => setPostHeight(Math.ceil(entry.borderBoxSize[0].blockSize)));
+    // Browsers from before 2021 give borderBoxSize as a bare object or not at all; offsetHeight is
+    // layout pixels too, rounded.
+    const ro = new ResizeObserver(([entry]) => {
+      const box = entry.borderBoxSize?.[0]?.blockSize;
+      setPostHeight(Math.ceil(box ?? (cell as HTMLElement).offsetHeight));
+    });
     ro.observe(cell);
     return () => ro.disconnect();
   }, []);

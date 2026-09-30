@@ -13,8 +13,9 @@ export const SHARE_LINK_BUDGET = 38_000;
 /** Longest fragment a shared page will read, and the most JSON it will inflate from it. */
 const MAX_FRAGMENT = 64_000;
 const MAX_JSON_BYTES = 512_000;
-/** X's own ceiling for a Premium post, in UTF-16 units with room to spare. */
-const MAX_TEXT = 30_000;
+/** X's own ceiling for a Premium post, in UTF-16 units with room to spare. Share refuses longer
+ *  text rather than make a link the shared page would reject. */
+export const SHARE_MAX_TEXT = 30_000;
 const MAX_STYLE_RUNS = 2_000;
 /** Shared images are JPEGs Share made itself; anything bigger than these was not. */
 const MAX_IMAGE_BYTES = 200_000;
@@ -90,7 +91,7 @@ export async function decodeShare(hash: string): Promise<SharedPreview | null> {
 export function parseWire(raw: unknown): SharedPreview | null {
   if (!raw || typeof raw !== "object") return null;
   const w = raw as Partial<Record<keyof Wire, unknown>>;
-  if (w.v !== 1 || typeof w.text !== "string" || w.text.length > MAX_TEXT) return null;
+  if (w.v !== 1 || typeof w.text !== "string" || w.text.length > SHARE_MAX_TEXT) return null;
   const text = w.text;
   const styles: StyleRun[] = [];
   if (Array.isArray(w.styles) && w.styles.length <= MAX_STYLE_RUNS) {
@@ -162,6 +163,12 @@ export function jpegSize(b: Uint8Array): { width: number; height: number } | nul
     i += 2 + ((b[i + 2] << 8) | b[i + 3]);
   }
   return null;
+}
+
+/** A page address as analytics may record it: without the fragment, which holds a share link's post. */
+export function withoutFragment(url: string): string {
+  const hash = url.indexOf("#");
+  return hash === -1 ? url : url.slice(0, hash);
 }
 
 async function inflateCapped(bytes: Uint8Array, cap: number): Promise<string | null> {
