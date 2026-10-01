@@ -56,6 +56,10 @@ export function Postcheck() {
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
+  // Clicking Show more expands that preview in place, the way x.com does, keyed by device id. Any
+  // change to the text folds every preview again (see below); bold / italic alone don't, and a
+  // device stays expanded if you switch away and back.
+  const [expanded, setExpanded] = useState<Record<string, true>>({});
   const theme = THEMES[themeId];
   const fontTier = useFontTier();
 
@@ -147,6 +151,13 @@ export function Postcheck() {
   const formatted = useMemo(() => trimDraft(draft.text.trim() ? draft : { text: SAMPLE, styles: [] }), [draft]);
   const post = formatted.text;
   const styles = formatted.styles;
+  // Reset during render rather than in an effect, so an edit never paints an expanded frame and
+  // undoing back to the text that was expanded doesn't expand it again.
+  const [expandedText, setExpandedText] = useState(post);
+  if (expandedText !== post) {
+    setExpandedText(post);
+    setExpanded({});
+  }
   const styleCuts = useMemo(() => styles.flatMap((r) => [r.start, r.end]), [styles]);
   const entities = useMemo(() => extractEntities(post), [post]);
   const length = useMemo(() => weightedLength(post, entities), [post, entities]);
@@ -187,7 +198,8 @@ export function Postcheck() {
   const renderFor = useCallback(
     (d: Device) => {
       // The post page (web and app) always shows the whole text: no 280 fold, no line fold.
-      if (d.kind === "focal" || d.view === "post") return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
+      // So does a timeline post once its Show more has been clicked.
+      if (d.kind === "focal" || d.view === "post" || expanded[d.id]) return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
       const clamp = clampFor(d);
       // The app folds by rendered lines only: a long post shows its first 9 lines, not X's 280 cut
       // (Write/status/1646674962055565319 on an iPhone 15 Pro). Under 10 lines it shows everything it has.
@@ -202,8 +214,9 @@ export function Postcheck() {
       const ents = entities.filter((e) => e.end <= cut);
       return { tokens: tokenize(visible, ents, styleCuts), showMore: cut < post.length, cut };
     },
-    [clampFor, cut280, post, entities, styleCuts],
+    [clampFor, cut280, post, entities, styleCuts, expanded],
   );
+  const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: true })), []);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
   const phoneClamp = clampFor(phoneDevice);
@@ -476,12 +489,12 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
           </div>
         }
         app={(maxHeight) => (
           <PhoneFrame device={phoneDevice} theme={theme} maxHeight={maxHeight}>
-            <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
+            <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
           </PhoneFrame>
         )}
       />
@@ -596,6 +609,18 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     if (!node || exporting || !exportAllowed) return;
     setExporting(true);
     setExportError(null);
+    // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
+    // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
+    // the image is what the screen shows; the screen itself looks the same throughout.
+    const restore = [...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
+      const top = el.scrollTop;
+      const cell = el.firstElementChild as HTMLElement | null;
+      if (!top || !cell) return [];
+      const margin = cell.style.marginTop;
+      cell.style.marginTop = `${-top}px`;
+      el.scrollTop = 0;
+      return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
+    });
     try {
       await document.fonts.ready;
       const { toPng } = await import("html-to-image");
@@ -608,6 +633,7 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     } catch {
       setExportError("Export didn't finish. Try again, or screenshot the preview.");
     } finally {
+      restore.forEach((undo) => undo());
       setExporting(false);
     }
   }, [device, themeId, exporting, exportAllowed]);
