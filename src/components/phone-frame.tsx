@@ -151,7 +151,7 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
           </>
         )}
         {/* A post taller than the screen (an expanded long post) scrolls, like the feed; no scrollbar, as on the phone. */}
-        <div ref={postRef} style={{ flex: 1, minHeight: 0, overflowX: "hidden", overflowY: "auto", scrollbarWidth: "none" }}>{children}</div>
+        <div ref={postRef} data-screen-scroll="1" style={{ flex: 1, minHeight: 0, overflowX: "hidden", overflowY: "auto", scrollbarWidth: "none" }}>{children}</div>
         {post && !dropTabs ? (
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderTop: `1px solid ${theme.border}` }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: "#CFD9DE", flexShrink: 0 }} />

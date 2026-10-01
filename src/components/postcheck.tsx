@@ -609,6 +609,18 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     if (!node || exporting || !exportAllowed) return;
     setExporting(true);
     setExportError(null);
+    // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
+    // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
+    // the image is what the screen shows; the screen itself looks the same throughout.
+    const restore = [...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
+      const top = el.scrollTop;
+      const cell = el.firstElementChild as HTMLElement | null;
+      if (!top || !cell) return [];
+      const margin = cell.style.marginTop;
+      cell.style.marginTop = `${-top}px`;
+      el.scrollTop = 0;
+      return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
+    });
     try {
       await document.fonts.ready;
       const { toPng } = await import("html-to-image");
@@ -621,6 +633,7 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     } catch {
       setExportError("Export didn't finish. Try again, or screenshot the preview.");
     } finally {
+      restore.forEach((undo) => undo());
       setExporting(false);
     }
   }, [device, themeId, exporting, exportAllowed]);
