@@ -56,10 +56,10 @@ export function Postcheck() {
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
-  // Clicking Show more expands that preview in place, the way x.com does: the device it was clicked
-  // on, mapped to the text it was clicked on. Changing the text folds it again; bold / italic alone
-  // don't, and the device stays expanded if you switch away and back with the text unchanged.
-  const [expanded, setExpanded] = useState<Record<string, string>>({});
+  // Clicking Show more expands that preview in place, the way x.com does, keyed by device id. Any
+  // change to the text folds every preview again (see below); bold / italic alone don't, and a
+  // device stays expanded if you switch away and back.
+  const [expanded, setExpanded] = useState<Record<string, true>>({});
   const theme = THEMES[themeId];
   const fontTier = useFontTier();
 
@@ -151,6 +151,13 @@ export function Postcheck() {
   const formatted = useMemo(() => trimDraft(draft.text.trim() ? draft : { text: SAMPLE, styles: [] }), [draft]);
   const post = formatted.text;
   const styles = formatted.styles;
+  // Reset during render rather than in an effect, so an edit never paints an expanded frame and
+  // undoing back to the text that was expanded doesn't expand it again.
+  const [expandedText, setExpandedText] = useState(post);
+  if (expandedText !== post) {
+    setExpandedText(post);
+    setExpanded({});
+  }
   const styleCuts = useMemo(() => styles.flatMap((r) => [r.start, r.end]), [styles]);
   const entities = useMemo(() => extractEntities(post), [post]);
   const length = useMemo(() => weightedLength(post, entities), [post, entities]);
@@ -192,7 +199,7 @@ export function Postcheck() {
     (d: Device) => {
       // The post page (web and app) always shows the whole text: no 280 fold, no line fold.
       // So does a timeline post once its Show more has been clicked.
-      if (d.kind === "focal" || d.view === "post" || expanded[d.id] === post) return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
+      if (d.kind === "focal" || d.view === "post" || expanded[d.id]) return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
       const clamp = clampFor(d);
       // The app folds by rendered lines only: a long post shows its first 9 lines, not X's 280 cut
       // (Write/status/1646674962055565319 on an iPhone 15 Pro). Under 10 lines it shows everything it has.
@@ -209,7 +216,7 @@ export function Postcheck() {
     },
     [clampFor, cut280, post, entities, styleCuts, expanded],
   );
-  const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: post })), [post]);
+  const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: true })), []);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
   const phoneClamp = clampFor(phoneDevice);

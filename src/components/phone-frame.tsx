@@ -96,7 +96,7 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
 
   return (
     <div style={{ padding: bezel, backgroundColor: "#111113", borderRadius: radius ? radius + bezel : 28, width: device.width + bezel * 2, boxSizing: "border-box" }}>
-      {/* The screen is the device's real point size; a long post is clipped the way it is on the phone. */}
+      {/* The screen is the device's real point size; a post taller than it scrolls inside it, as the feed does. */}
       <div style={{ width: device.width, height: screenHeight, borderRadius: radius, overflow: "hidden", backgroundColor: theme.bg, position: "relative", fontFamily: X_FONT_STACK, color: theme.text, display: "flex", flexDirection: "column" }}>
         {/* status bar */}
         {!dropStatus && (
@@ -150,7 +150,8 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
             )}
           </>
         )}
-        <div ref={postRef} style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>{children}</div>
+        {/* A post taller than the screen (an expanded long post) scrolls, like the feed; no scrollbar, as on the phone. */}
+        <div ref={postRef} style={{ flex: 1, minHeight: 0, overflowX: "hidden", overflowY: "auto", scrollbarWidth: "none" }}>{children}</div>
         {post && !dropTabs ? (
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderTop: `1px solid ${theme.border}` }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: "#CFD9DE", flexShrink: 0 }} />
