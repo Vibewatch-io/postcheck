@@ -56,6 +56,10 @@ export function Postcheck() {
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
+  // Clicking Show more expands that preview in place, the way x.com does: the device it was clicked
+  // on, mapped to the text it was clicked on. Changing the text folds it again; bold / italic alone
+  // don't, and the device stays expanded if you switch away and back with the text unchanged.
+  const [expanded, setExpanded] = useState<Record<string, string>>({});
   const theme = THEMES[themeId];
   const fontTier = useFontTier();
 
@@ -187,7 +191,8 @@ export function Postcheck() {
   const renderFor = useCallback(
     (d: Device) => {
       // The post page (web and app) always shows the whole text: no 280 fold, no line fold.
-      if (d.kind === "focal" || d.view === "post") return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
+      // So does a timeline post once its Show more has been clicked.
+      if (d.kind === "focal" || d.view === "post" || expanded[d.id] === post) return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
       const clamp = clampFor(d);
       // The app folds by rendered lines only: a long post shows its first 9 lines, not X's 280 cut
       // (Write/status/1646674962055565319 on an iPhone 15 Pro). Under 10 lines it shows everything it has.
@@ -202,8 +207,9 @@ export function Postcheck() {
       const ents = entities.filter((e) => e.end <= cut);
       return { tokens: tokenize(visible, ents, styleCuts), showMore: cut < post.length, cut };
     },
-    [clampFor, cut280, post, entities, styleCuts],
+    [clampFor, cut280, post, entities, styleCuts, expanded],
   );
+  const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: post })), [post]);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
   const phoneClamp = clampFor(phoneDevice);
@@ -476,12 +482,12 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
           </div>
         }
         app={(maxHeight) => (
           <PhoneFrame device={phoneDevice} theme={theme} maxHeight={maxHeight}>
-            <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
+            <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
           </PhoneFrame>
         )}
       />

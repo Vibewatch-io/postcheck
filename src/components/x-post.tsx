@@ -34,6 +34,8 @@ interface Props {
   identity: Identity;
   tokens: Token[];
   showMore: boolean;
+  /** Called when Show more is clicked. */
+  onShowMore?: () => void;
   hiddenUrlStart: number | null;
   card: CardData | "loading" | null;
   quote: Entity | null;
@@ -92,7 +94,7 @@ function QuoteStub({ entity, theme, width, font }: { entity: Entity; theme: XThe
  * 12px → card → action row. The post page ("focal") variant runs the body at
  * 17px/24px under the header and adds the timestamp row.
  */
-export function XPost({ device, theme, identity, tokens, showMore, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
+export function XPost({ device, theme, identity, tokens, showMore, onShowMore, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
   const font = { fontFamily: fontStack(device.font), fontSize: 15, lineHeight: "20px" } as const;
   const handle = identity.handle.replace(/^@/, "") || "yourhandle";
   const name = identity.name || "Your name";
@@ -115,6 +117,7 @@ export function XPost({ device, theme, identity, tokens, showMore, hiddenUrlStar
       ref={bodyRef}
       tokens={tokens}
       showMoreAt={showMore ? tokens.length : -1}
+      onShowMore={onShowMore}
       hiddenUrlStart={hiddenUrlStart}
       theme={theme}
       fontSize={device.fontSize}

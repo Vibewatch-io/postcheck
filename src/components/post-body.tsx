@@ -9,6 +9,8 @@ interface Props {
   tokens: Token[];
   /** Tokens past this index are folded behind "Show more" (-1 = none). */
   showMoreAt: number;
+  /** Makes "Show more" a button; x.com's expands the whole text in place. */
+  onShowMore?: () => void;
   /** URL entity start offset whose text is hidden (trailing card link). */
   hiddenUrlStart: number | null;
   theme: XTheme;
@@ -40,7 +42,7 @@ function styleCss(st: { bold: boolean; italic: boolean }, app: boolean): React.C
 }
 
 export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
-  { tokens, showMoreAt, hiddenUrlStart, theme, fontSize, lineHeight, width, font, pane, styles = [] },
+  { tokens, showMoreAt, onShowMore, hiddenUrlStart, theme, fontSize, lineHeight, width, font, pane, styles = [] },
   ref,
 ) {
   let paragraph = 0;
@@ -101,7 +103,16 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
       {showMoreAt >= 0 && (
         <>
           {" "}
-          <span data-more="1" style={{ color: theme.link, display: "inline-block" }}>Show more</span>
+          <span
+            data-more="1"
+            role={onShowMore ? "button" : undefined}
+            tabIndex={onShowMore ? 0 : undefined}
+            onClick={onShowMore}
+            onKeyDown={onShowMore ? (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onShowMore()) : undefined}
+            style={{ color: theme.link, display: "inline-block", cursor: onShowMore ? "pointer" : undefined }}
+          >
+            Show more
+          </span>
         </>
       )}
     </div>
