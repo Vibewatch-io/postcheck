@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node node_modules/@typescript/native/bin/tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "verify": "node scripts/verify.mjs",
     "capture:web": "node scripts/capture-web.mjs"
@@ -39,12 +39,13 @@
     "@types/node": "^24.19.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.3.6",
     "playwright": "^1.63.0",
     "postcss": "^8",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }
