@@ -110,7 +110,7 @@ npm run capture:web              # re-capture x.com timeline cells (--login once
 node scripts/fetch-fixture.mjs   # refresh X's entities and display ranges for the corpus
 ```
 
-Where truth lives: `fixtures/corpus.json` and `fixtures/CORPUS.md` (the canonical posts), `fixtures/TEST-POSTS.md` (the edge-case posts on @postcheck_test, one rule per post), `fixtures/web` (x.com DOM captures), `fixtures/app` (iPhone captures), `fixtures/posts` (X's per-post data), `scripts/ios` (CoreText oracle, needs the app fonts locally), `scripts/phone` (iPhone Mirroring capture), and `QUIRKS.md` (every rule and its evidence; update it in the same commit as a rule change).
+Where truth lives: `fixtures/corpus.json` and `fixtures/CORPUS.md` (the canonical posts), `fixtures/TEST-POSTS.md` (the edge-case posts on @postcheck_test, one rule per post), `fixtures/web` (x.com DOM captures), `fixtures/app` (iPhone captures), `fixtures/posts` (X's per-post data), `scripts/ios` (CoreText oracle, needs the app fonts locally), `scripts/phone` (iPhone Mirroring capture), `scripts/android` (Android app capture over adb), and `QUIRKS.md` (every rule and its evidence; update it in the same commit as a rule change).
 
 The capture rigs run against your own logged-in X session, on your own machine, and only read. They never post, like, repost, reply or follow, and the code stays that way. Automating a browser against x.com is something you do under X's terms, at your own risk.
 
