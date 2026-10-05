@@ -228,6 +228,9 @@ capture is the voter view and the web capture (@Postcheck_test) is the results v
 | 96 | `Quote of a poll <ID 57>` | How a quoted poll renders. |
 | 97 | 12 lines (`one` … `twelve`) · `Fold` / `No fold` | The app's 9-line fold with a poll under the text. |
 
+Posted 2026-10-05 (batch 6). 91 lost its third choice in the composer and was re-posted as 91b. 94 posted twice
+(94b with the choices typed by hand): both times X stored the long post with no poll.
+
 ```text
 94
 Long poll test 94: a post over 280 characters with a poll under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.
@@ -272,7 +275,8 @@ Long media test 116: a post over 280 characters with a tall photo under it, to s
 |---|---|---|
 | 120 | `Video player card https://www.youtube.com/watch?v=jNQXAC9IVRw` | YouTube player card. |
 | 121 | `Audio card https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC` | Spotify link (its page serves `twitter:card=summary`, no player tag). |
-| 122 | `App card https://apps.apple.com/app/id333903271` | App Store card. |
+| 122 | `App card https://apps.apple.com/app/id333903271` | App Store card. Result: no card, link text visible. |
+| 122b | `App card, direct https://apps.apple.com/us/app/x/id333903271` | Same page without the 301: does the redirect cost the card, or does X withhold App Store cards? |
 | 123 | `Profile link https://x.com/Vibewatch_io` | Link to an X profile: card or plain? |
 | 124 | `International domain https://münchen.de` | IDN display (Unicode or punycode). |
 

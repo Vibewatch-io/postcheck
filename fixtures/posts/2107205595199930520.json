@@ -1,0 +1,37 @@
+{
+  "id_str": "2107205595199930520",
+  "text": "Poll choices at the 25-character limit",
+  "display_text_range": [
+    0,
+    38
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "poll4choice_text_only",
+    "url": "card://2107205594839134208"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "Twenty-five characters ok",
+      "image": false
+    },
+    {
+      "label": "Choice two is 25 chars ok",
+      "image": false
+    },
+    {
+      "label": "Third choice, 25 chars ok",
+      "image": false
+    },
+    {
+      "label": "Fourth choice 25 chars ok",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

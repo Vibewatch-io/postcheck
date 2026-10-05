@@ -55,10 +55,10 @@ const BARE_URL_RE = new RegExp(
 
 const MENTION_RE = /(^|[^A-Za-z0-9_!#$%&*@＠])@([A-Za-z0-9_]{1,15})(?![A-Za-z0-9_@＠])/g;
 const HASHTAG_RE = /(^|[^&\p{L}\p{N}_])#([\p{L}\p{N}_]*\p{L}[\p{L}\p{N}_]*)/gu;
-// twitter-text caps cashtags at 6 letters, but X links $QWERTYU (7) since at
-// least 2026-09 (test 61). Only the bare 7-letter form is measured: longer
-// tags and a 7-letter tag with a ".X" suffix stay plain, as before, until captured.
-const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,6}(?:[._][A-Za-z]{1,2})?|[A-Za-z]{7}(?![._][A-Za-z]))(?![A-Za-z0-9_$])/g;
+// twitter-text caps cashtags at 6 letters, but X links up to 15 (tests 61, 61b:
+// $QWERTYU, $ABCDEFGH, $ABCDEFGHIJ, $ABCDEFGHIJKLMNO), with a ".X"/".XX" suffix
+// at 6 and 7 letters too ($QWERTY.AB, $QWERTYU.A). 16+ letters is untested.
+const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,15}(?:[._][A-Za-z]{1,2})?)(?![A-Za-z0-9_$])/g;
 
 /** Emoji (incl. ZWJ sequences, skin tones, flags, keycaps). */
 export const EMOJI_RE =
@@ -79,18 +79,71 @@ function trimUrlTail(match: string): string {
 }
 
 /**
- * What X prints as the link text. Scheme and "www." are stripped, and the
- * path is cut to 15 characters with an ellipsis. Verified against live posts:
+ * What X prints as the link text. Scheme and "www." are stripped, and a link
+ * over 30 characters has its path cut to 15 with an ellipsis. Verified against live posts:
  * "techcrunch.com/2019/08/29/twi…", "nytimes.com/2021/01/20/us/…",
  * "newsletter.theresanaiforthat.com/p/ai-beats-458…" (all exactly 15 path chars).
  */
 export function displayUrl(raw: string): string {
   const s = raw.replace(/^https?:\/\//i, "").replace(/^www\./i, "");
   const cut = s.search(/[/?#]/);
-  if (cut === -1) return s;
-  const host = s.slice(0, cut);
+  if (cut === -1) return unicodeHost(s);
+  const host = unicodeHost(s.slice(0, cut));
   const rest = s.slice(cut);
-  return rest.length > 15 ? `${host}${rest.slice(0, 15)}…` : host + rest;
+  // Only a link longer than 30 characters is cut: "apps.apple.com/app/id333903271" (30, path 16)
+  // shows whole, "youtube.com/watch?v=jNQXAC…" (31) is cut (@postcheck_test tests 122, 120).
+  return s.length > 30 && rest.length > 15 ? `${host}${rest.slice(0, 15)}…` : host + rest;
+}
+
+/**
+ * X prints an internationalized domain in Unicode even when the link was stored as
+ * punycode: `https://xn--mnchen-3ya.de` shows as "münchen.de" (@postcheck_test test 124).
+ */
+function unicodeHost(host: string): string {
+  return host
+    .split(".")
+    .map((label) => {
+      if (!/^xn--/i.test(label)) return label;
+      try {
+        return punycodeDecode(label.slice(4).toLowerCase());
+      } catch {
+        return label;
+      }
+    })
+    .join(".");
+}
+
+/** RFC 3492 punycode decoder for one label (without its `xn--` prefix). */
+function punycodeDecode(input: string): string {
+  const base = 36, tMin = 1, tMax = 26, skew = 38, damp = 700;
+  const adapt = (delta: number, numPoints: number, first: boolean) => {
+    delta = first ? Math.floor(delta / damp) : delta >> 1;
+    delta += Math.floor(delta / numPoints);
+    let k = 0;
+    for (; delta > ((base - tMin) * tMax) >> 1; k += base) delta = Math.floor(delta / (base - tMin));
+    return k + Math.floor(((base - tMin + 1) * delta) / (delta + skew));
+  };
+  const digit = (c: number) => (c - 48 < 10 ? c - 22 : c - 65 < 26 ? c - 65 : c - 97 < 26 ? c - 97 : base);
+  const basicEnd = input.lastIndexOf("-");
+  const output = basicEnd > 0 ? [...input.slice(0, basicEnd)].map((c) => c.codePointAt(0)!) : [];
+  let n = 128, i = 0, bias = 72;
+  for (let idx = basicEnd > 0 ? basicEnd + 1 : 0; idx < input.length; ) {
+    const oldi = i;
+    for (let w = 1, k = base; ; k += base) {
+      if (idx >= input.length) throw new Error("bad punycode");
+      const d = digit(input.charCodeAt(idx++));
+      if (d >= base) throw new Error("bad punycode");
+      i += d * w;
+      const t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
+      if (d < t) break;
+      w *= base - t;
+    }
+    bias = adapt(i - oldi, output.length + 1, oldi === 0);
+    n += Math.floor(i / (output.length + 1));
+    i %= output.length + 1;
+    output.splice(i++, 0, n);
+  }
+  return String.fromCodePoint(...output);
 }
 
 export function hostOf(raw: string): string {

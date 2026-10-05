@@ -1,0 +1,54 @@
+{
+  "id_str": "2107204327194726878",
+  "text": "Long cashtags $ABCDEFGH $ABCDEFGHIJ $ABCDEFGHIJKLMNO $QWERTYU.A $QWERTY.AB",
+  "display_text_range": [
+    0,
+    74
+  ],
+  "note_tweet": false,
+  "entities": {
+    "symbols": [
+      {
+        "indices": [
+          14,
+          23
+        ],
+        "text": "ABCDEFGH"
+      },
+      {
+        "indices": [
+          24,
+          35
+        ],
+        "text": "ABCDEFGHIJ"
+      },
+      {
+        "indices": [
+          36,
+          52
+        ],
+        "text": "ABCDEFGHIJKLMNO"
+      },
+      {
+        "indices": [
+          53,
+          63
+        ],
+        "text": "QWERTYU.A"
+      },
+      {
+        "indices": [
+          64,
+          74
+        ],
+        "text": "QWERTY.AB"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id_str": "2107204350473044105",
+  "text": "Bullets as typed:\n• dot bullet\n- hyphen bullet\n1. numbered line\n* asterisk line",
+  "display_text_range": [
+    0,
+    79
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

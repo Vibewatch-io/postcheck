@@ -1,0 +1,31 @@
+{
+  "id_str": "2107205252403638707",
+  "text": "Picked ticker and a card link bitcoin:native https://t.co/kGfVUwtxwc",
+  "display_text_range": [
+    0,
+    68
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "github.com/vercel/next.js",
+        "expanded_url": "https://github.com/vercel/next.js",
+        "indices": [
+          45,
+          68
+        ],
+        "url": "https://t.co/kGfVUwtxwc"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/kGfVUwtxwc"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

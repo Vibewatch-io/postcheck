@@ -1,0 +1,31 @@
+{
+  "id_str": "2107204766220906940",
+  "text": "International domain https://t.co/632H7Vdna9",
+  "display_text_range": [
+    0,
+    44
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "münchen.de",
+        "expanded_url": "https://xn--mnchen-3ya.de",
+        "indices": [
+          21,
+          44
+        ],
+        "url": "https://t.co/632H7Vdna9"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/632H7Vdna9"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

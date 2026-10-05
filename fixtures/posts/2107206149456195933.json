@@ -1,0 +1,33 @@
+{
+  "id_str": "2107206149456195933",
+  "text": "Poll with three choices, take two",
+  "display_text_range": [
+    0,
+    33
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "poll3choice_text_only",
+    "url": "card://2107206148743147520"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "Red",
+      "image": false
+    },
+    {
+      "label": "Green",
+      "image": false
+    },
+    {
+      "label": "Blue",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

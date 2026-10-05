@@ -1,0 +1,31 @@
+{
+  "id_str": "2107204293661204490",
+  "text": "Length test B: text plus one link, where every link counts as 23 characters no matter how long it is. and so on and so on and so on and so on and so on and so on and so on and so on and so on and so on and so on and so on and so on and so on and so on and. https://t.co/bnTbndxC74",
+  "display_text_range": [
+    0,
+    280
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "vibewatch.io",
+        "expanded_url": "https://vibewatch.io",
+        "indices": [
+          257,
+          280
+        ],
+        "url": "https://t.co/bnTbndxC74"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/bnTbndxC74"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

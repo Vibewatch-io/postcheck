@@ -1,0 +1,17 @@
+{
+  "id_str": "2107205404967211163",
+  "text": "This has bold and italic and both",
+  "display_text_range": [
+    0,
+    33
+  ],
+  "note_tweet": true,
+  "full_text": "This has bold and italic and both",
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

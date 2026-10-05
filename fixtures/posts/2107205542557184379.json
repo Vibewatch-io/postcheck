@@ -1,0 +1,29 @@
+{
+  "id_str": "2107205542557184379",
+  "text": "Poll with three choices",
+  "display_text_range": [
+    0,
+    23
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "poll2choice_text_only",
+    "url": "card://2107205542217428992"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "Red",
+      "image": false
+    },
+    {
+      "label": "Green",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

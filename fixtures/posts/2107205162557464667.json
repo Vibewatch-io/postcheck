@@ -1,0 +1,26 @@
+{
+  "id_str": "2107205162557464667",
+  "text": "Two picked tickers bitcoin:native and $TSLA",
+  "display_text_range": [
+    0,
+    43
+  ],
+  "note_tweet": false,
+  "entities": {
+    "symbols": [
+      {
+        "indices": [
+          38,
+          43
+        ],
+        "text": "TSLA"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

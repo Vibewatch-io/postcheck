@@ -1,0 +1,16 @@
+{
+  "id_str": "2107204999889690882",
+  "text": "Price chart test bitcoin:native",
+  "display_text_range": [
+    0,
+    31
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
