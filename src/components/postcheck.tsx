@@ -173,7 +173,7 @@ export function Postcheck() {
   const attachmentEntity = quote ?? cardEntity;
   const hiddenUrlStart = attachmentEntity && hasAttachment && isTrailing(post, attachmentEntity) ? attachmentEntity.start : null;
 
-  // Probe text: the whole post, measured at every device width (the app folds by
+  // Probe text: the whole post, measured at every device width (the iOS app folds by
   // rendered lines regardless of the 280 cut, so line 9 may lie past it).
   const probeTokens = useMemo(() => tokenize(post, entities, styleCuts), [post, entities, styleCuts]);
   const showMore280 = cut280 < post.length;

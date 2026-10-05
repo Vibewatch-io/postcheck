@@ -109,7 +109,8 @@ export const DEVICES: Device[] = [
   { id: "web", label: "X web · timeline", kind: "web", width: 600, textWidth: 518, fontSize: 15, lineHeight: 20, pixelRatio: 2, font: "web", pane: "web" },
   { id: "web-post", label: "X web · post page", kind: "focal", width: 600, textWidth: 566, fontSize: 17, lineHeight: 24, pixelRatio: 2, font: "web", pane: "web" },
   ...PHONES,
-  ...PHONES.map(phonePost),
+  // The post screen is measured on iOS only; Android's has no capture yet (QUIRKS.md).
+  ...PHONES.filter((d) => d.platform === "ios").map(phonePost),
 ];
 
 export const DEFAULT_DEVICE = DEVICES[0];

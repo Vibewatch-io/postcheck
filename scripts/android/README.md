@@ -29,7 +29,7 @@ width the app sees:
 | `reset` | 440 | `sw392dp-w392dp-h741dp` | the phone's own default |
 
 Only the width matches; the Pixel 3 is shorter (2160 px), so fewer posts fit on a screen. Font scale
-stays 1.0 and Display size is whatever the override sets. `dp` restarts X so it lays out again.
+stays 1.0 and Display size is whatever the override sets. `dp` force-stops X so the next `open` lays it out fresh.
 **Run `android.sh dp reset` at the end of every session**: the override survives reboots.
 
 Captures are 3 px per dp at `dp 360` (density 480 / 160) and 2.625 px per dp at `dp 412`.
@@ -50,7 +50,7 @@ scripts/android/android.sh dp reset
 - `adb shell uiautomator dump` works on the X app: each post body is one node whose `text` is the
   full post and whose `bounds` locate it, handy to find a post while scrolling a profile.
 - `view` opens a live scrcpy mirror for watching.
-- Transcribe lines into `fixtures/app/galaxy-s25.json` (360 dp); move the screenshots to `.captures/android-pixel3/` (gitignored), as the iPhone's live in
+- Transcribe lines into `fixtures/app/galaxy-s25.json` (360 dp); move the screenshots to `.captures/android-pixel3/` (gitignored), like the iPhone captures in
   `.captures/iphone-15-pro/`. Never commit screenshots.
 
 **Navigation only**: open links, scroll, go back. Never tap like, repost, reply, follow, bookmark or
