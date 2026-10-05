@@ -1,6 +1,7 @@
 {
  "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 480 so the app lays out at 360x679 dp (scripts/android/README.md); @Postcheck_test search-result cells (test 12 also on the profile timeline, identical), captured 2026-10-05. Lines transcribed from captures; the last line of a showMore post is the line before the token. The 280 cut matches x.com's to the character on tests 05-08 (the text node reads the visible text plus \" Show more\").",
  "device": "galaxy-s25",
+ "platform": "android",
  "posts": [
   {
    "id": "2100299215364931868",

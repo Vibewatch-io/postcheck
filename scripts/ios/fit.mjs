@@ -23,7 +23,8 @@ function drawnText(f) {
   const wjBefore = (i) => (out.slice(0, i).replace(/(\p{L}|\p{N})-(\p{L}|\p{N})/gu, "$1-\u2060$2").length - i);
   return { t: joined, e: kept.map(([st, l]) => { const a = wjBefore(st); const b = wjBefore(st + l); return [st + a, l + (b - a)]; }) };
 }
-const fixtures = readdirSync("fixtures/app").map((f) => JSON.parse(readFileSync(`fixtures/app/${f}`, "utf8")));
+// iOS captures only: an Android fixture ("platform": "android") lays out in another column and tracking.
+const fixtures = readdirSync("fixtures/app").map((f) => JSON.parse(readFileSync(`fixtures/app/${f}`, "utf8"))).filter((fx) => (fx.platform ?? "ios") === "ios");
 const posts = fixtures.flatMap((fx) => fx.posts).map((p) => {
   const fx = JSON.parse(readFileSync(`fixtures/posts/${p.id}.json`, "utf8"));
   const drawn = drawnText(fx);

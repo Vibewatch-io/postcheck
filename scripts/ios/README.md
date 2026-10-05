@@ -25,7 +25,7 @@ axes. Its 2026-01 build is the newest file.
 ## Running
 
     swiftc -O scripts/ios/layout.swift -o scripts/ios/layout
-    node scripts/ios/fit.mjs                       # fonts × widths vs fixtures/app
+    node scripts/ios/fit.mjs                       # fonts × widths vs the iOS fixtures in fixtures/app
     FONTS=Chirp-UI-VF-With-Overriden-Emoji-202601.ttf AXES="2003265652=400,1869640570=15" WIDTHS=320,336,0.5 DIFF=1 node scripts/ios/fit.mjs
 
 `fit.mjs` draws text the way the app does: links as their display text, media
