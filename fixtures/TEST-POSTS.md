@@ -167,6 +167,10 @@ tests (59a, 59d) were dropped. Posted 2026-09-23.
 | 63 | `A 16-character handle @zzpostchecknone1 does not link` | 15-character limit. (Its first 15 characters are no account; `@abcdefghijklmno` is a real one.) |
 | 64 | `Mention of an account that doesn't exist @zz_no_such_q9` | Does X link non-existent handles? |
 | 65 | `a@Vibewatch_io and hi@Vibewatch_io` | `@` preceded by a letter. |
+| 66 | `Price chart test $BTC`, with `$BTC` picked from the composer's cashtag dropdown | Does a picked ticker attach a price-chart card? (Test 61's typed `$BTC` got none on web or app.) |
+| 66b | `Price chart test $TSLA`, picked from the dropdown | Same for a stock. |
+| 66c | `Two picked tickers $BTC and $TSLA`, both picked | Which ticker gets the chart. |
+| 66d | `Picked ticker and a card link $BTC https://github.com/vercel/next.js`, `$BTC` picked | Chart vs link card: which wins, or both? |
 
 ## 7. Text and formatting
 
@@ -177,6 +181,23 @@ tests (59a, 59d) were dropped. Posted 2026-09-23.
 | 72 | `مرحبا بالعالم Hello world שלום` | Mixed right-to-left text. Corpus gap. |
 | 73 | `ภาษาไทยไม่มีช่องว่างระหว่างคำ` repeated to 3 lines | Thai (no spaces) line breaking. |
 | 74 | `Unicode "bold" 𝐭𝐞𝐱𝐭 counts double` | Mathematical alphanumerics: weight 2 each (the tool must never generate these, but should count them right). |
+| 75 | `🚀🚀🚀` | Emoji-only post: same size as text, or enlarged? |
+| 76 | `مرحبا بالعالم، هذا اختبار للنص من اليمين إلى اليسار` | Right-to-left only: alignment and direction of the whole post. |
+| 77 | `हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच करता है` | Devanagari shaping and line breaking. |
+
+```text
+71
+Bullets as typed:
+• dot bullet
+- hyphen bullet
+1. numbered line
+* asterisk line
+```
+
+```text
+73  (six copies, no spaces, 174 characters)
+ภาษาไทยไม่มีช่องว่างระหว่างคำภาษาไทยไม่มีช่องว่างระหว่างคำภาษาไทยไม่มีช่องว่างระหว่างคำภาษาไทยไม่มีช่องว่างระหว่างคำภาษาไทยไม่มีช่องว่างระหว่างคำภาษาไทยไม่มีช่องว่างระหว่างคำ
+```
 
 ## 8. Identity and chrome
 
@@ -187,12 +208,88 @@ tests (59a, 59d) were dropped. Posted 2026-09-23.
 | C1 | Any text post, captured in light theme | Light colours on the logged-in client (open question 5). |
 | C2 | Same post, dark theme | Dark colours, already measured; re-confirm. |
 
+Post a short text post (`Display name test 80`, `Display name test 81`) after each rename so a fresh post
+sits at the top of the profile, capture it, then put the name back to `Postcheck test`.
+
+## 9. Polls
+
+Test 57 (4 text choices) and 57b (4 image choices) are posted. The author always sees a poll's results
+view; the voter view (choice buttons) only shows to another account, so the iPhone (@marshallmixing)
+capture is the voter view and the web capture (@Postcheck_test) is the results view.
+
+| # | Text and choices | Tests |
+|---|---|---|
+| 90 | `Poll with two choices` · `Yes` / `No` | Minimum poll. |
+| 91 | `Poll with three choices` · `Red` / `Green` / `Blue` | Odd count. |
+| 92 | `Poll choices at the 25-character limit` · `Twenty-five characters ok` / `Choice two is 25 chars ok` / `Third choice, 25 chars ok` / `Fourth choice 25 chars ok` | Longest choices: do they wrap or truncate on 393pt? |
+| 93 | `Poll that ends in five minutes` · `🚀 Rocket` / `🐢 Turtle`, duration 5 minutes | Emoji in choices, and the ended poll ("Final results") once it closes. |
+| 94 **P** | see block · `One` / `Two` | Show more above a poll. |
+| 95 | `Poll with a link https://github.com/vercel/next.js` · `Card` / `No card` | Poll vs link card. |
+| 96 | `Quote of a poll <ID 57>` | How a quoted poll renders. |
+| 97 | 12 lines (`one` … `twelve`) · `Fold` / `No fold` | The app's 9-line fold with a poll under the text. |
+
+```text
+94
+Long poll test 94: a post over 280 characters with a poll under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.
+```
+
+## 10. Threads, replies and post states
+
+| # | Action | Tests |
+|---|---|---|
+| 100 | Thread of three, composed at once with the composer's `+`: `Thread test 1/3`, `Thread test 2/3`, `Thread test 3/3` | Thread connector line and "Show this thread" in the profile timeline. |
+| 101 | `Reply settings: accounts I follow`, "Who can reply" set to Accounts you follow | The reply-restriction line on the post. |
+| 102 | `Reply settings: verified accounts`, set to Verified accounts | Same, other wording. |
+| 103 | `Reply settings: only @Vibewatch_io can reply`, set to Only accounts you mention | Same, with a mention. |
+| 104 **P** | Post `Edit test: this text will be edited`, then edit it to `Edit test: this text was edited once` | "Last edited" label and the pencil marker. |
+| 105 | Pin test 104 to the profile, capture, unpin | "Pinned" header above the post. |
+| 106 | Repost test 01 | "You reposted" header in the profile timeline. |
+| 107 | `Quote of a quote <ID 44>` | A quote whose quoted post is itself a quote. |
+
+## 11. More media
+
+Files are in `fixtures/media/` (t110–t116). Tag and flag only from the composer; mention-tag only
+`@Vibewatch_io` and `@marshallmixing`.
+
+| # | Content | Tests |
+|---|---|---|
+| 110 | `t110-tagged.jpg`, people tagged: @Vibewatch_io, @marshallmixing | The tagged-people line under the photo. |
+| 111 | `t111-sensitive.jpg`, flagged in the composer as sensitive | Content-warning overlay. |
+| 112 | `t112-panorama.jpg` (4:1) | Wide crop cap. |
+| 113 | `t113-square.jpg` (1:1) | Square photo box. |
+| 114 | `t114-portrait.mp4` (9:16, 6 s) | Portrait video box and duration badge. |
+| 115 | `t50-landscape.jpg` + `t51-portrait.jpg` | Two photos of different shapes side by side: crop. |
+| 116 **P** | `t116-tall.jpg` (1:4) with the block's text | Show more above media, and the tallest crop. |
+
+```text
+116
+Long media test 116: a post over 280 characters with a tall photo under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.
+```
+
+## 12. More link cards
+
+| # | Text | Tests |
+|---|---|---|
+| 120 | `Video player card https://www.youtube.com/watch?v=jNQXAC9IVRw` | YouTube player card. |
+| 121 | `Audio card https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC` | Spotify link (its page serves `twitter:card=summary`, no player tag). |
+| 122 | `App card https://apps.apple.com/app/id333903271` | App Store card. |
+| 123 | `Profile link https://x.com/Vibewatch_io` | Link to an X profile: card or plain? |
+| 124 | `International domain https://münchen.de` | IDN display (Unicode or punycode). |
+
+## 13. Composer extras (only if the web composer offers them)
+
+| # | Action | Tests |
+|---|---|---|
+| 130 | `Location test` with a location tagged | Location line on the post. |
+| 131 | `Paid partnership test` with the paid-partnership label on | Disclosure label. |
+
 ---
 
 ## What the tool can't draw yet
 
-Posts 42–45 (native quotes), 52–55 (multiple photos, GIF), 56 (video badge) and 57 (polls) test layouts
-the tool doesn't render today. Capture them anyway: they are the spec for building those features, and the
+Posts 42–45 (native quotes), 52–55 (multiple photos, GIF), 56 (video badge), 57 and group 9 (polls),
+66 (price charts), group 10 (thread, reply-restriction, edited, pinned and repost chrome), group 11 and
+120–122 (player and app cards) test layouts the tool doesn't render today. Capture them anyway: they are the spec for building those features, and the
 harness can check line breaks around them before the media itself is drawn.
 
 ## After capturing
