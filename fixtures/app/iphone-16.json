@@ -1,5 +1,5 @@
 {
- "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #",
+ "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #; @Postcheck_test batch 6 captured 2026-10-05 (02, 61b, 66–66d, 70–77, 90–97 with 91b/94b, 120–124): voter-view poll pills, 93 read after it closed; 66d shows the ticker tile and no link card; 70's timeline row shows no bold/italic (the post page does); 123 gets a large card here (small on the web)",
  "device": "iphone-16",
  "posts": [
   {
@@ -1079,6 +1079,258 @@
     "a@Vibewatch_io and hi@Vibewatch_io"
    ],
    "showMore": false
+  },
+  {
+   "id": "2107206541384565223",
+   "lines": [
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nin"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2107206471595503880",
+   "lines": [
+    "Quote of a poll"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107206419447775705",
+   "gap": "poll: a poll replaces the link card, so the link text stays visible; the tool has no polls yet",
+   "lines": [
+    "Poll with a link github.com/vercel/next.js"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107206287096459642",
+   "lines": [
+    "Long poll test 94, take two: a post over 280",
+    "characters with a poll under it, to see where",
+    "Show more lands. the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog and",
+    "this sentence keeps going past the cut so the",
+    "post needs Show more on the web timeline."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107206149456195933",
+   "lines": [
+    "Poll with three choices, take two"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205701617832412",
+   "lines": [
+    "Long poll test 94: a post over 280 characters",
+    "with a poll under it, to see where Show more",
+    "lands. the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog and this",
+    "sentence keeps going past the cut so the post",
+    "needs Show more on the web timeline."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205647146348590",
+   "lines": [
+    "Poll that ends in five minutes"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205595199930520",
+   "lines": [
+    "Poll choices at the 25-character limit"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205542557184379",
+   "lines": [
+    "Poll with three choices"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205492556886421",
+   "lines": [
+    "Poll with two choices"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205404967211163",
+   "lines": [
+    "This has bold and italic and both"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205252403638707",
+   "compose": "Picked ticker and a card link $BTC https://github.com/vercel/next.js",
+   "lines": [
+    "Picked ticker and a card link $BTC"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205162557464667",
+   "compose": "Two picked tickers $BTC and $TSLA",
+   "lines": [
+    "Two picked tickers $BTC and $TSLA"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107205076578406682",
+   "lines": [
+    "Price chart test $TSLA"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204999889690882",
+   "compose": "Price chart test $BTC",
+   "lines": [
+    "Price chart test $BTC"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204766220906940",
+   "lines": [
+    "International domain"
+   ],
+   "showMore": false,
+   "card": "large"
+  },
+  {
+   "id": "2107204732565832039",
+   "lines": [
+    "Profile link"
+   ],
+   "showMore": false,
+   "card": "large"
+  },
+  {
+   "id": "2107204699669795237",
+   "lines": [
+    "App card apps.apple.com/app/id333903271"
+   ],
+   "showMore": false,
+   "card": null,
+   "gap": "card: X built no card for this App Store link although the page has Open Graph tags; cause untested (122b)"
+  },
+  {
+   "id": "2107204666526515704",
+   "lines": [
+    "Audio card"
+   ],
+   "showMore": false,
+   "card": "small"
+  },
+  {
+   "id": "2107204632904888795",
+   "lines": [
+    "Video player card"
+   ],
+   "showMore": false,
+   "card": "large"
+  },
+  {
+   "id": "2107204600222888285",
+   "lines": [
+    "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच करता है"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204566764949613",
+   "lines": [
+    "مرحبا بالعالم، هذا اختبار للنص من اليمين إلى اليسار"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204533663477810",
+   "lines": [
+    "🚀🚀🚀"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204500482363788",
+   "lines": [
+    "Unicode \"bold\" 𝐭𝐞𝐱𝐭 counts double"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204467154419879",
+   "lines": [
+    "ภาษาไทยไม่มีช่องว่างระหว่างคำภาษาไทยไม่มีช่อง",
+    "ว่างระหว่างคำภาษาไทยไม่มีช่องว่างระหว่างคำภาษา",
+    "ไทยไม่มีช่องว่างระหว่างคำภาษาไทยไม่มีช่องว่าง",
+    "ระหว่างคำภาษาไทยไม่มีช่องว่างระหว่างคำ"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204434434605559",
+   "lines": [
+    "مرحبا بالعالم Hello world שלום"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204350473044105",
+   "lines": [
+    "Bullets as typed:",
+    "• dot bullet",
+    "- hyphen bullet",
+    "1. numbered line",
+    "* asterisk line"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204327194726878",
+   "lines": [
+    "Long cashtags $ABCDEFGH $ABCDEFGHIJ",
+    "$ABCDEFGHIJKLMNO $QWERTYU.A",
+    "$QWERTY.AB"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204293661204490",
+   "lines": [
+    "Length test B: text plus one link, where every",
+    "link counts as 23 characters no matter how long",
+    "it is. and so on and so on and so on and so on",
+    "and so on and so on and so on and so on and so",
+    "on and so on and so on and so on and so on and",
+    "so on and so on and."
+   ],
+   "showMore": false,
+   "card": "large"
   }
  ]
 }

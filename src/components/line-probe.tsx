@@ -84,7 +84,9 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, devices, onMeasur
             refs.current[i] = el;
           }}
         >
-          <PostBody tokens={tokens} showMoreAt={showMore ? tokens.length : -1} hiddenUrlStart={hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={d.lineHeight} width={d.textWidth} font={d.font} pane={d.pane} styles={styles} />
+          {/* The app never appends the web's 280-cut "Show more": a long post under 10 lines shows whole
+              there, so counting the token would push a full last line onto a 10th row (test 94). */}
+          <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={d.lineHeight} width={d.textWidth} font={d.font} pane={d.pane} styles={styles} />
           <span data-token style={{ position: "absolute", whiteSpace: "pre", fontFamily: fontStack(d.font), fontSize: d.fontSize, lineHeight: `${d.lineHeight}px`, letterSpacing: `var(--ls-${d.pane})` }}>
             {" Show more"}
           </span>

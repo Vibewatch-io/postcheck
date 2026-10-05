@@ -177,6 +177,7 @@ tests (59a, 59d) were dropped. Posted 2026-09-23.
 | # | Text | Tests |
 |---|---|---|
 | 70 **P** | `This has **bold** and __italic__ and **__both__**` (typed with the X composer's own B / I buttons) | Premium bold/italic: weight 700 on web and app, iOS italic shown as upright bold (seen once; confirm). |
+| 70b **P** | Test 94's long text with `quick` in bold and `lazy` in italic (Cmd+B / Cmd+I) | The iOS timeline showed test 70 (short) with no styling at all: does a long post keep its styling there? |
 | 71 | Lines starting `• `, `- ` and `1. ` | Bullet characters render as typed; no list styling. |
 | 72 | `مرحبا بالعالم Hello world שלום` | Mixed right-to-left text. Corpus gap. |
 | 73 | `ภาษาไทยไม่มีช่องว่างระหว่างคำ` repeated to 3 lines | Thai (no spaces) line breaking. |
