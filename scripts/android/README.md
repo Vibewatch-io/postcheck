@@ -50,7 +50,7 @@ scripts/android/android.sh dp reset
 - `adb shell uiautomator dump` works on the X app: each post body is one node whose `text` is the
   full post and whose `bounds` locate it, handy to find a post while scrolling a profile.
 - `view` opens a live scrcpy mirror for watching.
-- Move evidence captures to `.captures/android-pixel3/` (gitignored), as the iPhone's live in
+- Transcribe lines into `fixtures/app/galaxy-s25.json` (360 dp); move the screenshots to `.captures/android-pixel3/` (gitignored), as the iPhone's live in
   `.captures/iphone-15-pro/`. Never commit screenshots.
 
 **Navigation only**: open links, scroll, go back. Never tap like, repost, reply, follow, bookmark or
@@ -64,7 +64,11 @@ compose, and never the floating + button.
 
 ## Findings
 
-- 2026-10-05, X 12.31.0 on Android 12, `dp 360`: **the Android app does not fold by line count.**
-  Test 12 (2100299967806263515, 10 lines) shows all 10 lines with no Show more, on the profile timeline
-  and in search; test 11 (9 lines, profile) and test 13 (2100300134030746111, 30 lines, search) also show in full. The
-  iPhone app folds test 12 after line 9.
+Recorded in QUIRKS.md (Android rows) with `fixtures/app/galaxy-s25.json`, which `npm run verify` checks:
+
+- **No line fold.** The Android app shows a post under 280 whole however many lines it runs (tests 11,
+  12 and 13: 9, 10 and 30 lines). The iPhone app folds test 12 after line 9.
+- **The 280 cut, like x.com.** Long posts get Show more at the same character as the web (tests
+  05–08). The token wraps like a word.
+- **Cell geometry.** The body runs from 60 dp to width − 12 dp (column = width − 72) at x.com's web
+  tracking, 15/20.

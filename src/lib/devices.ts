@@ -18,6 +18,8 @@ export interface Device {
   /** The app folds the body behind Show more past this many rendered lines (see QUIRKS.md). */
   maxLines?: number;
   island?: "dynamic-island" | "notch" | "punch-hole" | "none";
+  /** Phones only: which X app. They fold long posts differently (see renderFor in postcheck.tsx). */
+  platform?: "ios" | "android";
   /** Phones only: the timeline cell or the post detail screen. */
   view?: "timeline" | "post";
   /** Which Chirp build lays the text out (see globals.css). */
@@ -32,8 +34,9 @@ export interface Device {
 // full 566px. Phone numbers assume the app's 16px inset, 40px avatar and 8px
 // gap, so body width = screen width − 80.
 /**
- * The app folds a post behind "Show more" past this many rendered lines, even
- * under 280 characters; the web shows all of it. Three iPhone samples from
+ * The iOS app folds a post behind "Show more" past this many rendered lines, even
+ * under 280 characters; the web shows all of it. The Android app has no line fold:
+ * it cuts at 280 like the web (@postcheck_test tests 05–08 and 11–13 on Android 12). Three iPhone samples from
  * Vibewatch_io: 8 lines → no fold; 10 and 12 lines → 9 shown. Exactly 9 lines
  * do not fold (@postcheck_test test 11); 10 fold after line 9 (test 12). See QUIRKS.md.
  */
@@ -46,6 +49,7 @@ const phone = (
   height: number,
   island: Device["island"],
   radius = 54,
+  platform: Device["platform"] = "ios",
 ): Device => ({
   id,
   label,
@@ -57,14 +61,18 @@ const phone = (
   // reproduces all 14 captured cells at 316–317px on a 393pt iPhone 15 Pro.
   // In the browser, x.com's current web Chirp with −0.32px tracking matches
   // that font's line widths to ±0.5px (77 lines, see scripts/ios/README.md).
-  textWidth: width - 77,
-  pane: "app",
+  // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 60dp to width − 12dp, so
+  // column = width − 72; four lines of test 05 match x.com's untracked web Chirp at 15px to within ink side
+  // bearings, and the line pitch is 20dp (scripts/android/README.md).
+  textWidth: platform === "ios" ? width - 77 : width - 72,
+  pane: platform === "ios" ? "app" : "web",
   fontSize: 15,
   lineHeight: 20,
   pixelRatio: 3,
   radius,
   island,
-  maxLines: APP_MAX_LINES,
+  maxLines: platform === "ios" ? APP_MAX_LINES : undefined,
+  platform,
   view: "timeline",
   font: "web",
 });
@@ -93,8 +101,8 @@ const PHONES: Device[] = [
   phone("iphone-17", "iPhone 17 / Pro", 402, 874, "dynamic-island"),
   phone("iphone-air", "iPhone Air", 420, 912, "dynamic-island", 58),
   phone("iphone-17-pro-max", "iPhone 17 Pro Max", 440, 956, "dynamic-island", 62),
-  phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36),
-  phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40),
+  phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36, "android"),
+  phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40, "android"),
 ];
 
 export const DEVICES: Device[] = [
