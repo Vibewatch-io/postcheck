@@ -1,5 +1,6 @@
 /** The site's own address and the title and description its meta tags give X and other unfurlers. */
-export const SITE_URL = "https://postcheck.vibewatch.io";
+/** NEXT_PUBLIC_SITE_URL (README: Deploying) for a deployment elsewhere; production otherwise. */
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://postcheck.vibewatch.io").replace(/\/+$/, "");
 export const SITE_HOST = new URL(SITE_URL).hostname;
 export const TITLE = "Postcheck";
 /** The header line; also the browser and search title after the name. */

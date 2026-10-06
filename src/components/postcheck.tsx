@@ -265,24 +265,28 @@ export function Postcheck() {
     const asked = requested.current;
     if (!cardKey || asked.has(cardKey)) return;
     const ctrl = new AbortController();
-    let started = false;
+    let inFlight = false;
     const timer = setTimeout(async () => {
-      started = true;
+      inFlight = true;
       asked.add(cardKey);
       setCards((c) => ({ ...c, [cardKey]: "loading" }));
       try {
         const res = await fetch("/api/unfurl", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: cardKey }), signal: ctrl.signal });
         const json = (await res.json()) as { card: CardData | null };
+        inFlight = false;
         setCards((c) => ({ ...c, [cardKey]: json.card }));
       } catch {
-        if (!ctrl.signal.aborted) setCards((c) => ({ ...c, [cardKey]: null }));
+        if (ctrl.signal.aborted) return;
+        inFlight = false;
+        setCards((c) => ({ ...c, [cardKey]: null }));
       }
     }, cardLinkDone ? 600 : 1500);
     return () => {
       clearTimeout(timer);
       // A fetch cut off mid-flight (typing after the link changes the wait) is forgotten here, before
       // the next run checks for it, so that run fetches the card again instead of leaving it loading.
-      if (started) asked.delete(cardKey);
+      // A finished lookup stays cached for the visit.
+      if (inFlight) asked.delete(cardKey);
       ctrl.abort();
     };
   }, [cardKey, cardLinkDone]);
@@ -753,6 +757,7 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
     // The right half; the preview is centred in it (in the whole row on a shared link).
     <div
       ref={areaRef}
+      data-preview=""
       className={`flex min-h-0 max-w-full flex-col items-center justify-start transition-[padding] duration-300 ease-out ${stacked ? "w-full" : "h-full min-w-0 flex-1 basis-0"}`}
       style={{ minWidth: stacked ? undefined : minWidth, paddingTop: !stacked && room !== null && drawnHeight !== null ? Math.max(0, Math.floor((room - drawnHeight) / 2)) : 0 }}
     >
@@ -875,7 +880,10 @@ function TipMarks({ advice, deviceId, stageRef, boxRef, inside }: { advice: Advi
  */
 function useThisPhone(): Device | null {
   const [device, setDevice] = useState<Device | null>(null);
-  useEffect(() => {
+  // Before paint, so the first hydrated frame already shows this phone; globals.css hides the preview
+  // on phone-width touch screens until data-phone-checked is set, so the server-rendered listed phone
+  // never shows there either.
+  useLayoutEffect(() => {
     const read = () => {
       const short = Math.min(screen.width, screen.height);
       if (!matchMedia("(hover: none) and (pointer: coarse)").matches || short >= 500) {
@@ -890,6 +898,7 @@ function useThisPhone(): Device | null {
       setDevice((d) => (d && d.width === width && d.platform === platform ? d : thisPhone(width, height, platform)));
     };
     read();
+    document.documentElement.dataset.phoneChecked = "";
     window.addEventListener("resize", read);
     return () => window.removeEventListener("resize", read);
   }, []);

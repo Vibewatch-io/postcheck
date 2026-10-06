@@ -41,6 +41,12 @@
 html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.196px; }
 html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; }
 
+/* On a phone the preview becomes that phone once the page knows its width (useThisPhone); until then
+   it stays hidden, so the server-rendered listed phone never flashes first. */
+@media (hover: none) and (pointer: coarse) and (max-width: 499px) {
+  html:not([data-phone-checked]) [data-preview] { visibility: hidden; }
+}
+
 /* Chirp, X's own typeface, loaded from X's CDN the same way x.com loads it.
    Two builds are in play (measured 2026-09-11): x.com's web client ships a
    newer cut (responsive-web/client-web/Chirp-*.woff2, ~2.3% wider) while the

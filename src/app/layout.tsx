@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   applicationName: TITLE,
   alternates: { canonical: "/" },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || SITE_URL),
+  metadataBase: new URL(SITE_URL),
   openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/", siteName: TITLE, locale: "en_US" },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, site: X_HANDLE, creator: X_HANDLE },
 };
