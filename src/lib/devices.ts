@@ -110,11 +110,11 @@ const phonePost = (d: Device): Device => ({
 const PHONES: Device[] = [
   phone("iphone-17", "iPhone 17 / 16–18 Pro", 402, 874, "dynamic-island"),
   phone("iphone-16", "iPhone 15 / 16 / 14–15 Pro", 393, 852, "dynamic-island"),
-  phone("iphone-13", "iPhone 12–14 / 16e / 17e", 390, 844, "notch", 47),
+  phone("iphone-13", "iPhone 12 / 13 / 14 / 16e / 17e", 390, 844, "notch", 47),
   phone("iphone-17-pro-max", "iPhone 16–18 Pro Max", 440, 956, "dynamic-island", 62),
   phone("iphone-16-plus", "iPhone 15–16 Plus / 14–15 Pro Max", 430, 932, "dynamic-island", 55),
   phone("iphone-air", "iPhone Air", 420, 912, "dynamic-island", 58),
-  phone("iphone-se", "iPhone SE", 375, 667, "none", 0),
+  phone("iphone-se", "iPhone SE / 12–13 mini", 375, 667, "none", 0),
   phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36, "android"),
   phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40, "android"),
 ];
@@ -136,7 +136,8 @@ export function thisPhone(width: number, height: number, platform: "ios" | "andr
 
 /** The listed phone a share link names when it was made in this-phone mode: same platform, nearest width. */
 export function nearestListedPhone(d: Device): Device {
-  const listed = PHONES.filter((p) => p.platform === d.platform);
+  const same = PHONES.filter((p) => p.platform === d.platform);
+  const listed = same.length ? same : PHONES;
   return listed.reduce((best, p) => (Math.abs(p.width - d.width) < Math.abs(best.width - d.width) ? p : best), listed[0]);
 }
 

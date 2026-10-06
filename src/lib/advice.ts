@@ -224,7 +224,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
 
   // Dangling words: a paragraph whose last rendered line holds a single short word. One tip per
   // word, marked on every preview where it dangles.
-  const orphans = new Map<string, Mark[]>();
+  const orphans = new Map<string, { tip: Advice; marks: Mark[]; where: string[] }>();
   for (const set of lineSets) {
     if (set.view === "post") continue;
     const byPara = new Map<number, LineInfo[]>();
@@ -239,21 +239,23 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       const last = lines[lines.length - 1];
       if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "") {
         const key = last.words[0];
-        let marks = orphans.get(key);
-        if (!marks) {
-          marks = [];
-          orphans.set(key, marks);
-          out.push({
-            id: `orphan-${key}`,
-            severity: "tip",
-            title: `"${key}" dangles on its own line`,
-            detail: `On ${set.deviceLabel} that paragraph wraps so the last line is just "${key}". Cut a word or add a few so the line break lands somewhere useful.`,
-            marks,
-          });
+        let orphan = orphans.get(key);
+        if (!orphan) {
+          const marks: Mark[] = [];
+          orphan = { tip: { id: `orphan-${key}`, severity: "tip", title: `"${key}" dangles on its own line`, detail: "", marks }, marks, where: [] };
+          orphans.set(key, orphan);
+          out.push(orphan.tip);
         }
-        if (last.spans[0]) marks.push({ at: last.spans[0].start, devices: [set.deviceId] });
+        if (!orphan.where.includes(set.deviceLabel)) orphan.where.push(set.deviceLabel);
+        if (last.spans[0]) orphan.marks.push({ at: last.spans[0].start, devices: [set.deviceId] });
       }
     }
+  }
+
+  // The text names every preview the dots appear on, so the two never disagree.
+  for (const [key, { tip, where }] of orphans) {
+    const on = where.length === 1 ? where[0] : where.length === 2 ? `${where[0]} and ${where[1]}` : `${where[0]} and ${where.length - 1} other previews`;
+    tip.detail = `On ${on} that paragraph wraps so the last line is just "${key}". Cut a word or add a few so the line break lands somewhere useful.`;
   }
 
   if (input.hasStyles) {

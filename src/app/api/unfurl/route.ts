@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { HTML_CAP, NO_STORE, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
+import { HTML_CAP, NO_STORE, postOnly, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
 import type { CardData } from "@/lib/card";
 
 /**
@@ -14,10 +14,8 @@ export const runtime = "nodejs";
 
 const TIMEOUT_MS = 6000;
 
-/** The lookup takes a POST body only. A stray GET (say, an old link with the URL in its address) gets a 405 that no cache keeps. */
-export function GET() {
-  return new NextResponse(null, { status: 405, headers: { ...NO_STORE, allow: "POST" } });
-}
+/** POST only: a stray GET gets an uncacheable 405 (see postOnly). */
+export const GET = postOnly;
 
 function decodeEntities(s: string): string {
   return s

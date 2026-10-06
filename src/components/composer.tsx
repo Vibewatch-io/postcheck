@@ -64,7 +64,7 @@ export function ComposerField({ editor, placeholder }: { editor: Editor | null; 
       className="grid cursor-text rounded-xl border border-brand-warm-border bg-white focus-within:border-brand-teal"
       // A click in the box below the text still lands in the editor.
       onMouseDown={(e) => {
-        if ((e.target as HTMLElement).closest(".ProseMirror")) return;
+        if (e.button !== 0 || (e.target as HTMLElement).closest(".ProseMirror")) return;
         e.preventDefault();
         editor?.commands.focus("end");
       }}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { NO_STORE, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
+import { NO_STORE, postOnly, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
 
 /**
  * Looks up an X account's name, avatar and verified badge by username through
@@ -13,10 +13,8 @@ export const runtime = "nodejs";
 /** Largest FxTwitter profile answer read (they run a few KB). */
 const PROFILE_JSON_CAP = 256 * 1024;
 
-/** The lookup takes a POST body only. A stray GET (say, an old link with the handle in its address) gets a 405 that no cache keeps. */
-export function GET() {
-  return new NextResponse(null, { status: 405, headers: { ...NO_STORE, allow: "POST" } });
-}
+/** POST only: a stray GET gets an uncacheable 405 (see postOnly). */
+export const GET = postOnly;
 
 export interface Profile {
   name: string;

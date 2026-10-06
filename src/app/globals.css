@@ -21,10 +21,11 @@
   --color-brand-warm-border: #e4e1da;
   --color-brand-warm-border-hover: #d4d0c8;
   --color-brand-warm-surface: #f2f0eb;
-  /* Tip severity, in the tip list and the marks beside the preview: fix = error, tip = warning, note = info. */
+  /* Tip severity, in the tip list and the marks beside the preview: fix = error, tip = warning, note = info.
+     Each holds at least 3:1 against every ground a mark sits on (ivory page, white or black cell, bezel). */
   --color-severity-fix: #e5484d;
-  --color-severity-tip: #f5a623;
-  --color-severity-note: #a8a39b;
+  --color-severity-tip: #c27a0a;
+  --color-severity-note: #8a867e;
 }
 
 /* Tailwind 4 gives buttons the default cursor; keep the pointer. */
