@@ -46,8 +46,9 @@ const URL_LEAD = String.raw`(^|[^A-Za-z0-9@$#\u202A-\u202E])`;
 // With a scheme, any plausible domain links, Unicode labels included: X linked a typed
 // "https://münchen.de" (@postcheck_test test 124). Without a scheme, the TLD must be real.
 const SCHEME_URL_RE = new RegExp(
-  URL_LEAD + String.raw`(https?:\/\/(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+\p{L}{2,24}(?![\p{L}\p{N}-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
-  "giu",
+  URL_LEAD + String.raw`([hH][tT][tT][pP][sS]?:\/\/(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+\p{L}{2,24}(?![\p{L}\p{N}-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
+  // No "i": with "u" it case-folds "ſ" to "s" and "K" (Kelvin) to "k", so "httpſ://" would pass.
+  "gu",
 );
 const BARE_URL_RE = new RegExp(
   URL_LEAD + String.raw`((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:${TLD_ALT})(?![a-z0-9-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,

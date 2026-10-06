@@ -211,3 +211,8 @@ test("a typed Unicode host links and prints in Unicode (test 124)", () => {
 test("a malformed punycode label is printed as stored, not decoded to control characters", () => {
   assert.equal(displayUrl("https://xn--mnchen-3y+a.de"), "xn--mnchen-3y+a.de");
 });
+
+test("a scheme only matches ASCII letters: httpſ:// is not a scheme", () => {
+  const urls = extractEntities("see httpſ://example.com and HTTPS://Example.com").filter((e) => e.type === "url").map((e) => e.text);
+  assert.deepEqual(urls, ["example.com", "HTTPS://Example.com"]);
+});
