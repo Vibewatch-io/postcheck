@@ -47,7 +47,7 @@ const ROWS = (deviceLast, quote = false) => `(() => {
   const body = first.parentElement; const top = body.getBoundingClientRect().top; const rows = {};
   const lh = parseFloat(getComputedStyle(body).lineHeight) || 20;
   const shown = Math.round(body.getBoundingClientRect().height / lh);
-  for (const w of body.querySelectorAll('[data-w]')) { const r = [...w.getClientRects()].filter((c) => Math.round((c.top - top) / lh) < shown); if (!r.length) continue;
+  for (const w of body.querySelectorAll('[data-w]')) { const r = w.getClientRects(); if (!r.length || Math.round((r[0].top - top) / lh) >= shown) continue;
     if (r.length === 1) { const k = Math.round((r[0].top - top) / lh); (rows[k] = rows[k] || []).push(w.textContent); continue; }
     // A word that wraps inside its span (after a hyphen, or CJK): split it by character.
     const node = [...w.childNodes].find((c) => c.nodeType === 3) || w.firstChild?.firstChild; if (!node) continue;
@@ -55,13 +55,14 @@ const ROWS = (deviceLast, quote = false) => `(() => {
       const k = Math.round((cr[0].top - top) / lh); rows[k] = rows[k] || []; if (k === curK) rows[k][rows[k].length - 1] += node.nodeValue[i]; else { rows[k].push(node.nodeValue[i]); curK = k; } } }
   return { rows: Object.keys(rows).sort((a,b)=>a-b).filter((k) => k < shown).map(k => rows[k].join(' ')), more: !!body.querySelector('[data-more]') };
 })()`;
-/** The quote embed's box, and its photo's and "Show this poll" line's, relative to the embed. */
+/** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
 const QUOTE_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
   const q = art.querySelector('[data-quote]'); if (!q) return null; const b = q.getBoundingClientRect();
   const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
-  return { box: [Math.round(b.width), Math.round(b.height)], photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
+  const text = [...q.querySelectorAll('[data-w]')][0]?.parentElement;
+  return { box: [Math.round(b.width), Math.round(b.height)], avatar: rel(q.querySelector('img, svg')), text: rel(text), photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
 })()`;
 
 const browser = await chromium.launch();
@@ -203,6 +204,8 @@ async function quoteDiff(label, deviceLast, id, want) {
     const exp = want.lines.map(norm);
     if (exp.join("\n") !== rows.join("\n")) problems.push(`lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`);
     if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
+    if (want.avatar && !near(got.avatar, want.avatar)) problems.push(`avatar X ${want.avatar} / tool ${got.avatar}`);
+    if (want.text && !near(got.text, want.text)) problems.push(`text box X ${want.text} / tool ${got.text}`);
     if (want.photo && !near(got.photo, want.photo)) problems.push(`photo X ${want.photo} / tool ${got.photo}`);
     if (!!want.poll !== !!got.poll || (want.poll && !near(got.poll.slice(0, 2), want.poll.slice(0, 2)))) problems.push(`poll line X ${want.poll} / tool ${got.poll}`);
   } else {

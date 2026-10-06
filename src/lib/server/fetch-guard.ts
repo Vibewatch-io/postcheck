@@ -76,10 +76,14 @@ export async function readCapped(res: Response, cap: number): Promise<Uint8Array
   return out;
 }
 
-/** fetch() with manual redirects so every hop is re-validated. */
-export async function guardedFetch(start: URL, accept: string, signal: AbortSignal): Promise<{ res: Response; url: URL }> {
+/**
+ * fetch() with manual redirects so every hop is re-validated: public addresses only, and when
+ * `allow` is given, only the URLs it accepts (an allowlisted host can't redirect off the list).
+ */
+export async function guardedFetch(start: URL, accept: string, signal: AbortSignal, allow?: (url: URL) => boolean): Promise<{ res: Response; url: URL }> {
   let url = start;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (allow && !allow(url)) throw new Error("host");
     await assertPublic(url);
     const res = await fetch(url, {
       redirect: "manual",
@@ -98,10 +102,10 @@ export async function guardedFetch(start: URL, accept: string, signal: AbortSign
   throw new Error("too many redirects");
 }
 
-/** Fetches an image and returns it as a data URL, or null on any failure or past `cap` bytes. */
-export async function fetchImageAsDataUrl(src: URL, signal: AbortSignal, cap = IMAGE_CAP): Promise<string | null> {
+/** Fetches an image and returns it as a data URL, or null on any failure, past `cap` bytes, or off `allow`. */
+export async function fetchImageAsDataUrl(src: URL, signal: AbortSignal, cap = IMAGE_CAP, allow?: (url: URL) => boolean): Promise<string | null> {
   try {
-    const { res } = await guardedFetch(src, "image/*", signal);
+    const { res } = await guardedFetch(src, "image/*", signal, allow);
     const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
     if (!res.ok || !/^image\/(png|jpeg|jpg|webp|gif|avif)$/.test(type)) return null;
     const declared = Number(res.headers.get("content-length") || 0);

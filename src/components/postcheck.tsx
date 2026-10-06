@@ -257,10 +257,12 @@ export function Postcheck() {
   // number, so a slow answer for a link that has since changed can't overwrite the current one.
   const quotesAsked = useRef(new Set<string>());
   useEffect(() => {
-    if (!quoteId || quotesAsked.current.has(quoteId)) return;
+    const asked = quotesAsked.current;
+    if (!quoteId || asked.has(quoteId)) return;
     const ctrl = new AbortController();
+    let settled = false;
     const timer = setTimeout(async () => {
-      quotesAsked.current.add(quoteId);
+      asked.add(quoteId);
       // A retry after a failed lookup shows as loading again.
       setQuotes((q) => ({ ...q, [quoteId]: "loading" }));
       let result: QuoteResult;
@@ -268,19 +270,20 @@ export function Postcheck() {
         const res = await fetch(`/api/quote?id=${quoteId}`, { signal: ctrl.signal });
         result = res.ok ? ((await res.json()) as QuoteResult) : { status: "error" };
       } catch {
-        // Typing past the link aborts its lookup: forget it was asked, so coming back asks again.
-        if (ctrl.signal.aborted) {
-          quotesAsked.current.delete(quoteId);
-          return;
-        }
+        // Typing past the link aborted its lookup; the cleanup below has already forgotten it.
+        if (ctrl.signal.aborted) return;
         result = { status: "error" };
       }
-      if (result.status === "error") quotesAsked.current.delete(quoteId);
+      settled = true;
+      if (result.status === "error") asked.delete(quoteId);
       setQuotes((q) => ({ ...q, [quoteId]: { ...result, at: Date.now() } }));
     }, 600);
     return () => {
       clearTimeout(timer);
       ctrl.abort();
+      // Forget an unanswered lookup now, not when its abort lands, so coming straight back to the
+      // link asks again instead of waiting on a request that was cancelled.
+      if (!settled) asked.delete(quoteId);
     };
   }, [quoteId]);
 

@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AVATAR_CAP, PHOTO_CAP, lookupQuote, twimgUrl } from "../src/lib/server/fxtwitter";
+import { fetchImageAsDataUrl, guardedFetch } from "../src/lib/server/fetch-guard";
 import { quoteTime, statusId } from "../src/lib/quote";
+import { extractEntities, quoteUrl } from "../src/lib/entities";
 import { GET } from "../src/app/api/quote/route";
 
 const fixtures = join(__dirname, "..", "fixtures");
@@ -132,6 +134,25 @@ test("an answer of an unexpected shape is a failed lookup or a missing field, ne
   assert.equal(failed.status, "error");
 });
 
+test("a fetch with an allowlist refuses a redirect off the list", async () => {
+  const real = globalThis.fetch;
+  const asked: string[] = [];
+  globalThis.fetch = (async (url: URL | string) => {
+    asked.push(String(url));
+    return new Response(null, { status: 302, headers: { location: "https://1.1.1.1/elsewhere.png" } });
+  }) as typeof globalThis.fetch;
+  try {
+    // IP literals keep the public-address check off the network.
+    const start = new URL("https://93.184.216.34/a.png");
+    const onList = (u: URL) => u.hostname === "93.184.216.34";
+    assert.equal(await fetchImageAsDataUrl(start, signal, 1024, onList), null);
+    assert.deepEqual(asked, ["https://93.184.216.34/a.png"]);
+    await assert.rejects(guardedFetch(start, "image/*", signal, onList), /host/);
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
 test("the route takes exactly one numeric id", async () => {
   for (const q of ["", "?id=", "?id=abc", "?id=12x", `?id=${"1".repeat(21)}`, "?id=20&x=1", "?id=20&id=21", "?u=jack"]) {
     const res = await GET(new Request(`https://postcheck.test/api/quote${q}`));
@@ -144,6 +165,21 @@ test("a status number is read only from a /status/ path", () => {
   assert.equal(statusId("https://twitter.com/jack/status/20?s=20"), "20");
   assert.equal(statusId("https://x.com/i/web/status/20/photo/1"), "20");
   assert.equal(statusId(`https://x.com/a/status/${"9".repeat(21)}`), null);
+  // The number must be a whole path segment, and never come from the query or the fragment.
+  assert.equal(statusId("https://x.com/a/status/123abc"), null);
+  assert.equal(statusId("https://x.com/home?next=/status/123"), null);
+  assert.equal(statusId("https://x.com/home#/status/123"), null);
+  assert.equal(statusId("not a url /status/123"), null);
+  // The same rule decides whether the link is a post link at all: anything else keeps its card.
+  for (const [text, quote] of [
+    ["see x.com/jack/status/20", true],
+    ["see https://x.com/i/web/status/20/photo/1", true],
+    ["see x.com/home?next=/status/123", false],
+    ["see x.com/jack/status/123abc", false],
+    ["see x.com/home#/status/123", false],
+  ] as const) {
+    assert.equal(quoteUrl(extractEntities(text)) !== undefined, quote, text);
+  }
   assert.equal(statusId("https://x.com/jack"), null);
   assert.equal(statusId(undefined), null);
 });

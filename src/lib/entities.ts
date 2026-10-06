@@ -182,7 +182,7 @@ export function extractEntities(text: string): Entity[] {
       href,
       host,
       display: displayUrl(matched),
-      isStatus: /^(x\.com|twitter\.com|mobile\.twitter\.com)$/.test(host) && /\/status\/\d+/.test(matched),
+      isStatus: /^(x\.com|twitter\.com|mobile\.twitter\.com)$/.test(host) && statusId(href) !== null,
       isArticle: /^(x\.com|twitter\.com)$/.test(host) && /\/i\/article\/\d+/.test(matched),
     });
     taken.push([start, end]);
@@ -292,6 +292,21 @@ export function cardUrl(entities: Entity[]): Entity | undefined {
  */
 export function quoteUrl(entities: Entity[]): Entity | undefined {
   return [...entities].reverse().find((e) => e.type === "url" && e.isStatus);
+}
+
+/**
+ * The status number a post link points at, or null. Read from the path only, as a whole
+ * segment (`/status/123`, `/status/123/photo/1`), never from a query, a fragment or a longer
+ * token: `x.com/home?next=/status/123` is an ordinary link (assumed; a status permalink is a
+ * path). Only these digits ever reach the server (/api/quote).
+ */
+export function statusId(href: string | undefined): string | null {
+  if (!href) return null;
+  try {
+    return new URL(href).pathname.match(/\/status\/(\d{1,20})(?:\/|$)/)?.[1] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** True when the entity is the final thing in the text (only whitespace after it). */

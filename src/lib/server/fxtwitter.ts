@@ -57,6 +57,9 @@ export function twimgUrl(raw: unknown): URL | null {
 
 type ImageFetcher = (src: URL, signal: AbortSignal, cap: number) => Promise<string | null>;
 
+/** An image from X's CDN, refused if any redirect hop leaves it. */
+export const fetchTwimg: ImageFetcher = (src, signal, cap) => fetchImageAsDataUrl(src, signal, cap, (u) => twimgUrl(u.href) !== null);
+
 /** The 200×200 rendition of an account's avatar, if FxTwitter gave a URL at all. */
 export function avatarSrc(user: FxUser): string | null {
   return typeof user.avatar_url === "string" ? user.avatar_url.replace("_normal", "_200x200") : null;
@@ -70,7 +73,7 @@ export function avatarSrc(user: FxUser): string | null {
 export async function lookupQuote(id: string, signal: AbortSignal, deps: { fetch?: typeof fetch; image?: ImageFetcher } = {}): Promise<QuoteResult> {
   if (!/^\d{1,20}$/.test(id)) return { status: "unavailable" };
   const get = deps.fetch ?? fetch;
-  const image = deps.image ?? fetchImageAsDataUrl;
+  const image = deps.image ?? fetchTwimg;
   // ssrf-exempt: constant-host (FX_API; only the validated status number is appended)
   const answer = await get(`${FX_API}/status/${id}`, {
     signal,

@@ -32,10 +32,8 @@ export type QuoteResult = { status: "ok"; quote: QuoteData } | { status: "unavai
 /** The preview's view of one lookup: in flight, or its answer and when it arrived (the clock the embed's timestamp reads). */
 export type QuoteState = "loading" | (QuoteResult & { at: number });
 
-/** The status number a post link points at, or null. Only digits ever reach the server. */
-export function statusId(href: string | undefined): string | null {
-  return href?.match(/\/status\/(\d{1,20})(?!\d)/)?.[1] ?? null;
-}
+/** One rule decides both whether a link is a post link and which post it names. */
+export { statusId } from "./entities";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 

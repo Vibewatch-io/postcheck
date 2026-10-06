@@ -58,7 +58,7 @@ Line breaks are measured, not estimated: every word is wrapped in a span, the bo
 
 The post you type stays in your browser unless you share it. Four things do leave it:
 
-- **Links** in your post go to `/api/unfurl` on the server so it can fetch the page's Open Graph tags for the card preview. The server fetches the page, not your browser.
+- **Links** in your post, other than links to X posts, go to `/api/unfurl` on the server so it can fetch the page's Open Graph tags for the card preview. The server fetches the page, not your browser.
 - **A link to an X post** sends only that post's number to `/api/quote`, which asks FxTwitter's public API for the post (author, text, date, photo) and fetches its avatar and first photo from X's image servers (`pbs.twimg.com`, `abs.twimg.com`), so the preview can draw the quote embed. The server makes those requests, not your browser; the rest of the link isn't sent.
 - **A username** you look up goes to `/api/profile`, which asks FxTwitter's public API (`api.fxtwitter.com`) for the name, avatar and badge.
 - **Font requests** go to X's CDN (`abs.twimg.com`), because the previews render in Chirp loaded exactly the way x.com loads it. X sees the same request it would see from any page that embeds a post.

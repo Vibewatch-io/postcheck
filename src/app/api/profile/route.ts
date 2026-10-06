@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cacheHeaders, fetchImageAsDataUrl } from "@/lib/server/fetch-guard";
-import { AVATAR_CAP, FX_API, avatarSrc, badgeFor, twimgUrl, type FxUser } from "@/lib/server/fxtwitter";
+import { cacheHeaders } from "@/lib/server/fetch-guard";
+import { AVATAR_CAP, FX_API, avatarSrc, badgeFor, fetchTwimg, twimgUrl, type FxUser } from "@/lib/server/fxtwitter";
 
 /**
  * Looks up an X account's name, avatar and verified badge by username through
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: missing ? `No account @${handle}` : "Lookup failed. Enter the details by hand." }, { status: missing ? 404 : 502 });
     }
     const avatarUrl = twimgUrl(avatarSrc(u));
-    const avatar = avatarUrl ? await fetchImageAsDataUrl(avatarUrl, controller.signal, AVATAR_CAP) : null;
+    const avatar = avatarUrl ? await fetchTwimg(avatarUrl, controller.signal, AVATAR_CAP) : null;
     const profile: Profile = { name: u.name ?? "", handle: u.screen_name, avatar, badge: badgeFor(u.verification) };
     return NextResponse.json({ profile }, { headers: cacheHeaders(3600) });
   } catch {
