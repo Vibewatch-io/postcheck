@@ -37,7 +37,7 @@ export function useComposer(onChange: (draft: Draft) => void) {
         "aria-label": "Post text",
         "aria-multiline": "true",
         role: "textbox",
-        class: "composer min-h-[clamp(96px,20vh,204px)] w-full rounded-xl border border-brand-warm-border bg-white px-4 py-3 font-sans text-base leading-7 text-brand-warm-dark outline-hidden focus:border-brand-teal",
+        class: "composer min-h-[clamp(112px,22vh,232px)] w-full px-5 py-4 font-sans text-base leading-7 text-brand-warm-dark outline-hidden",
       },
       // Plain-text paste keeps every line break (ProseMirror's default collapses blank lines).
       clipboardTextParser: (text, _context, _plain, view) => {
@@ -50,21 +50,28 @@ export function useComposer(onChange: (draft: Draft) => void) {
 }
 
 /**
- * The editor with a multi-line placeholder. The placeholder sits in normal flow (so the box grows to fit it)
- * with the editor laid over it, and disappears as soon as the editor is focused or has text.
+ * The editor with a multi-line placeholder. Editor, placeholder and an invisible copy of the
+ * placeholder share one grid cell: the copy is always there, so the box is always tall enough for
+ * the whole placeholder (it never clips) and focusing or typing never changes its height. The
+ * visible placeholder goes as soon as the editor is focused or has text.
  */
 export function ComposerField({ editor, placeholder }: { editor: Editor | null; placeholder: string }) {
   const state = useEditorState({ editor, selector: ({ editor: e }) => ({ empty: e?.isEmpty ?? true, focused: e?.isFocused ?? false }) });
-  // The placeholder is laid over the editor, so focusing or typing never changes the box's height.
   const showPlaceholder = (state?.empty ?? true) && !state?.focused;
+  const text = "whitespace-pre-wrap px-5 py-4 font-sans text-base leading-7 [grid-area:1/1]";
   return (
-    <div className="relative">
-      <EditorContent editor={editor} />
-      {showPlaceholder && (
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap border border-transparent px-4 py-3 font-sans text-base leading-7 text-brand-warm-muted">
-          {placeholder}
-        </div>
-      )}
+    <div
+      className="grid cursor-text rounded-xl border border-brand-warm-border bg-white focus-within:border-brand-teal"
+      // A click in the box below the text still lands in the editor.
+      onMouseDown={(e) => {
+        if ((e.target as HTMLElement).closest(".ProseMirror")) return;
+        e.preventDefault();
+        editor?.commands.focus("end");
+      }}
+    >
+      <EditorContent editor={editor} className="min-w-0 [grid-area:1/1]" />
+      <div aria-hidden className={`invisible ${text}`}>{placeholder}</div>
+      {showPlaceholder && <div aria-hidden className={`pointer-events-none text-brand-warm-muted ${text}`}>{placeholder}</div>}
     </div>
   );
 }

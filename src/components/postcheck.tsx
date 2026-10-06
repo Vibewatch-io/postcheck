@@ -2,36 +2,53 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { DEVICES, DEFAULT_DEVICE, type Device } from "@/lib/devices";
+import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListedPhone, thisPhone, type Device } from "@/lib/devices";
 import { THEMES, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
 import type { CardData } from "@/lib/card";
+import { DESCRIPTION, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
+import socialCard from "@/app/opengraph-image.png";
 import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
 import { draftToDoc, serializeDoc, trimDraft, type Draft, type DocNode } from "@/lib/draft";
 import { ComposerField, FormatBar, useComposer } from "./composer";
-import { buildAdvice, type Advice, type DeviceLines } from "@/lib/advice";
-import { XPost, type Badge, type Identity } from "./x-post";
+import { buildAdvice, type Advice, type DeviceLines, type Severity } from "@/lib/advice";
+import { DefaultAvatar, XPost, type Badge, type Identity } from "./x-post";
 import { PHONE_BEZEL, PhoneFrame } from "./phone-frame";
-import { SearchIcon } from "./icons";
+import { CameraIcon, SearchIcon } from "./icons";
 import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 
+// The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
+// alone onto its own line on purpose, and the trailing link shows only its card. 259 of 280.
 const SAMPLE =
-  "@jack we've seen a lot of bad posts. The hook goes first so it survives the 280 cut, the link goes last so only the card shows, and nobody leaves one lonely word dangling on the last line.\n\nhttps://vibewatch.io";
+  `We've seen lots of posts on X, so we know how yours will look.\n\nPostcheck counts your characters the way X does, shows exactly where Show more cuts in, and flags any single word stranded on its own line.\n\nWe never store what you write.\n${SITE_URL}`;
+
+/**
+ * The sample links to Postcheck itself, so its card ships with the page instead of being looked up:
+ * the large card X builds from this site's own tags (title, summary_large_image, the social card),
+ * with the image served from this origin so PNG export can draw it. It applies to the link exactly
+ * as the sample writes it (`SITE_URL`), whether the placeholder shows it or someone types it that
+ * way; any other spelling of it is looked up like any link.
+ */
+const PRECACHED_CARDS: Record<string, CardData> = {
+  [SITE_URL]: { url: `${SITE_URL}/`, host: SITE_HOST, title: TITLE, description: DESCRIPTION, image: socialCard.src, layout: "large" },
+};
 
 type CardState = CardData | null | "loading";
 
 /** A 1×1 image for the verify harness: a post with a photo never shows a link card. */
 const STAND_IN_PHOTO = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
 
+/** Fix = something X will do to the post that you'll regret (error); tip = worth changing (warning); note = good to know (info). */
 const SEVERITY_STYLE = {
-  fix: { dot: "bg-brand-orange", label: "Fix" },
-  tip: { dot: "bg-brand-teal", label: "Tip" },
-  note: { dot: "bg-brand-warm-muted", label: "Note" },
+  fix: { dot: "bg-severity-fix", label: "Fix" },
+  tip: { dot: "bg-severity-tip", label: "Tip" },
+  note: { dot: "bg-severity-note", label: "Note" },
 } as const;
 
-const inputCls = "min-w-0 flex-1 rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal focus:placeholder:text-transparent";
+// 16px on phones (iOS Safari zooms into smaller fields on tap), 14px from the sm breakpoint up.
+const inputCls = "min-w-0 flex-1 rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-base sm:text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal focus:placeholder:text-transparent";
 
 export function Postcheck() {
   const [draft, setDraft] = useState<Draft>({ text: "", styles: [] });
@@ -40,7 +57,23 @@ export function Postcheck() {
   const [identity, setIdentity] = useState<Identity>({ name: "", handle: "", avatar: null, badge: "none" });
   const [media, setMedia] = useState<string | null>(null);
   const [webDevice, setWebDevice] = useState<Device>(DEFAULT_DEVICE);
-  const [phoneDevice, setPhoneDevice] = useState<Device>(DEVICES.find((d) => d.id === "iphone-16") ?? DEVICES[2]);
+  const [phoneDevice, setPhoneDevice] = useState<Device>(DEFAULT_PHONE);
+  // On a phone, the preview defaults to that phone itself, drawn at its own width (see thisPhone).
+  const here = useThisPhone();
+  const [phoneChosen, setPhoneChosen] = useState(false);
+  const choosePhone = useCallback((d: Device) => {
+    setPhoneChosen(true);
+    setPhoneDevice(d);
+  }, []);
+  // Follow the phone during render (not in an effect, so no frame shows the old one): a rotation
+  // redraws this phone at its new width, leaving phone mode drops back to the list, and on first
+  // sight it becomes the preview unless a phone was already picked (by hand or by a share link).
+  const [hereSeen, setHereSeen] = useState<Device | null>(null);
+  if (here !== hereSeen) {
+    setHereSeen(here);
+    setPhoneDevice((d) => (d.id === THIS_PHONE_ID ? (here ?? DEFAULT_PHONE) : here && !phoneChosen ? here : d));
+  }
+  const probeDevices = useMemo(() => (here ? [...DEVICES, here] : DEVICES), [here]);
   const [themeId, setThemeId] = useState<ThemeId>("light");
   const [themeChosen, setThemeChosen] = useState(false);
   // Follow the viewer's system setting until they pick one themselves.
@@ -52,7 +85,7 @@ export function Postcheck() {
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, [themeChosen]);
-  const [cards, setCards] = useState<Record<string, CardState>>({});
+  const [cards, setCards] = useState<Record<string, CardState>>(PRECACHED_CARDS);
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
@@ -114,7 +147,8 @@ export function Postcheck() {
           setDraft({ text: p.text, styles: p.styles });
           setIdentity(p.identity);
           setMedia(p.media);
-          setPhoneDevice(DEVICES.find((d) => d.id === p.phone) ?? DEVICES[2]);
+          setPhoneChosen(true);
+          setPhoneDevice(DEVICES.find((d) => d.id === p.phone) ?? DEFAULT_PHONE);
           setWebDevice(DEVICES.find((d) => d.id === p.web) ?? DEFAULT_DEVICE);
           setThemeChosen(true);
           setThemeId(p.theme);
@@ -222,28 +256,36 @@ export function Postcheck() {
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
   const phoneClamp = clampFor(phoneDevice);
 
-  // Fetch card metadata for the card URL, debounced while the user is typing.
-  const requested = useRef(new Set<string>());
+  // Fetch card metadata for the card URL once the link looks finished: something typed after it, or
+  // a longer pause when it's the last thing in the post (where a half-typed link usually sits). Each
+  // card is fetched once a session and kept here; the server keeps nothing.
+  const cardLinkDone = cardEntity ? cardEntity.end < post.length : false;
+  const requested = useRef(new Set<string>(Object.keys(PRECACHED_CARDS)));
   useEffect(() => {
-    if (!cardKey || requested.current.has(cardKey)) return;
+    const asked = requested.current;
+    if (!cardKey || asked.has(cardKey)) return;
     const ctrl = new AbortController();
+    let started = false;
     const timer = setTimeout(async () => {
-      requested.current.add(cardKey);
+      started = true;
+      asked.add(cardKey);
       setCards((c) => ({ ...c, [cardKey]: "loading" }));
       try {
-        const res = await fetch(`/api/unfurl?url=${encodeURIComponent(cardKey)}`, { signal: ctrl.signal });
+        const res = await fetch("/api/unfurl", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: cardKey }), signal: ctrl.signal });
         const json = (await res.json()) as { card: CardData | null };
         setCards((c) => ({ ...c, [cardKey]: json.card }));
       } catch {
-        if (ctrl.signal.aborted) requested.current.delete(cardKey);
-        else setCards((c) => ({ ...c, [cardKey]: null }));
+        if (!ctrl.signal.aborted) setCards((c) => ({ ...c, [cardKey]: null }));
       }
-    }, 600);
+    }, cardLinkDone ? 600 : 1500);
     return () => {
       clearTimeout(timer);
+      // A fetch cut off mid-flight (typing after the link changes the wait) is forgotten here, before
+      // the next run checks for it, so that run fetches the card again instead of leaving it loading.
+      if (started) asked.delete(cardKey);
       ctrl.abort();
     };
-  }, [cardKey]);
+  }, [cardKey, cardLinkDone]);
 
   const advice: Advice[] = useMemo(
     () =>
@@ -253,12 +295,12 @@ export function Postcheck() {
         length,
         card: card === "loading" ? undefined : card,
         lineSets,
-        appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.label } : null,
+        appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
         hasMedia: media !== null,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, lineSets, phoneClamp, media, phoneDevice.label, styles.length, draft.text],
+    [post, entities, length, card, lineSets, phoneClamp, media, phoneDevice.label, phoneDevice.tipLabel, phoneDevice.id, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
@@ -269,15 +311,23 @@ export function Postcheck() {
   }, []);
 
 
-  /** Fill name, avatar and badge from the handle typed in. */
+  /** Fill name, avatar and badge from the handle typed in. Each handle is looked up once a session. */
+  const profiles = useRef(new Map<string, Identity>());
   const lookupProfile = useCallback(async () => {
     const u = identity.handle.trim();
     if (!u) return;
+    const known = profiles.current.get(u.toLowerCase());
+    if (known) {
+      setIdentity(known);
+      setLookupState("idle");
+      return;
+    }
     setLookupState("loading");
     try {
-      const res = await fetch(`/api/profile?u=${encodeURIComponent(u)}`);
+      const res = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ u }) });
       const json = (await res.json()) as { profile?: Identity; error?: string };
       if (!res.ok || !json.profile) throw new Error(json.error || "Lookup failed. Enter the details by hand.");
+      profiles.current.set(u.toLowerCase(), json.profile);
       setIdentity(json.profile);
       setLookupState("idle");
     } catch (e) {
@@ -304,7 +354,7 @@ export function Postcheck() {
   const ratio = Math.min(1, length.weighted / MAX_WEIGHTED_LENGTH);
   const ringColor = over ? "#F97316" : length.weighted > 260 ? "#F5A623" : "#00C4A1";
 
-  // Tips sit to the right of the preview when there's room, otherwise under the composer.
+  // Two halves: composer and tips on the left, the preview centred on the right.
   const rowRef = useRef<HTMLDivElement>(null);
   const [rowWidth, setRowWidth] = useState<number | null>(null);
   useEffect(() => {
@@ -316,29 +366,24 @@ export function Postcheck() {
     ro.observe(row);
     return () => ro.disconnect();
   }, []);
-  // Room for the wider preview plus the tips beside it, so neither view moves anything when you switch.
-  // The composer never changes width. As the window narrows the tips column gives way (down to
-  // TIPS_MIN), then the tips move under the composer, then Write / Preview split into a switch.
-  const widestPreview = Math.max(phoneDevice.width + 24, webDevice.width);
-  const room = (rowWidth ?? Infinity) - COLUMN_GAP - widestPreview - TIPS_GAP - COMPOSER_W;
-  const tipsAside = rowWidth === null || room >= TIPS_MIN;
-  const tipsWidth = Math.max(TIPS_MIN, Math.min(TIPS_MAX, room));
-  const previewArea = widestPreview + TIPS_GAP + tipsWidth;
-  // Too narrow for the composer beside a true-size preview: stack them and let the page scroll.
-  // (The same width is the page's breakpoint in page.tsx, where the window lock comes off.)
-  // A shared link shows the preview alone, so only the preview has to fit.
-  const narrow = rowWidth !== null && rowWidth < (previewOnly ? 0 : COMPOSER_W + COLUMN_GAP) + widestPreview;
+  // The right half always holds the wider preview at true size, so switching views never moves the
+  // composer. Too narrow for the composer beside it: stack them and let the page scroll. (The same
+  // width is the page's breakpoint in page.tsx, where the window lock comes off.) A shared link shows
+  // the preview alone, so only the preview has to fit.
+  const widestPreview = Math.max(phoneDevice.width + PHONE_BEZEL * 2, webDevice.width);
+  const narrow = rowWidth !== null && rowWidth < (previewOnly ? 0 : COMPOSER_MIN + COLUMN_GAP) + widestPreview;
 
-  // Tips only appear for the user's own draft, and only when there's something to say. The column
-  // keeps its space either way, so nothing shifts when they come and go.
+  // Tips only appear for the user's own draft, and only when there's something to say. They hang
+  // below the composer, so the composer never moves when they come and go.
   const showTips = !previewOnly && draft.text.trim() !== "" && advice.length > 0;
 
   // Nothing typed yet shares an empty draft: the recipient sees the same sample, still as a
   // placeholder, and "Edit a copy" starts them empty rather than with the sample as real text.
   const typed = draft.text.trim() !== "";
   const sharePreview = useCallback(
-    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, theme: themeId, phone: phoneDevice.id, web: webDevice.id, view }),
-    [typed, post, styles, identity, media, themeId, phoneDevice.id, webDevice.id, view],
+    // A link made on someone's own phone names the listed phone nearest to it.
+    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
+    [typed, post, styles, identity, media, themeId, phoneDevice, webDevice.id, view],
   );
   const actions = shared ? (
     <button type="button" onClick={editCopy} className="h-8 flex-none whitespace-nowrap rounded-lg bg-brand-warm-dark px-3 text-[13px] font-medium text-white hover:bg-brand-warm-dark/90">
@@ -348,7 +393,7 @@ export function Postcheck() {
     <ShareButton preview={sharePreview} />
   );
   const hints = showTips && (
-    <div className={tipsAside ? "" : "mt-4 border-t border-brand-warm-border pt-3"}>
+    <div className="px-1 pt-5">
       <h2 className="font-syne text-sm font-semibold lining-nums text-brand-warm-dark">
         {`${advice.length} ${advice.length === 1 ? "thing" : "things"} to look at`}
       </h2>
@@ -367,37 +412,64 @@ export function Postcheck() {
   );
 
   return (
-    // Composer, preview and tips share one row, each centred vertically in the window. On narrow
+    // Two halves: composer with its tips on the left, the preview centred on the right. On narrow
     // windows the preview stacks under the composer and the page scrolls.
-    <div ref={rowRef} className={`flex min-h-0 flex-1 ${narrow ? "flex-col items-center gap-6 pb-6" : "items-center justify-center gap-6"}`}>
+    <div ref={rowRef} className={`mx-auto flex min-h-0 w-full flex-1 ${narrow ? "flex-col items-center gap-6 pb-6" : "items-stretch gap-6"}`} style={{ maxWidth: ROW_MAX }}>
       <ThemeToggle themeId={themeId} onChange={(t) => { setThemeChosen(true); setThemeId(t); }} />
-      <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} devices={DEVICES} onMeasure={setLineSets} styles={styles} />
+      <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} devices={probeDevices} onMeasure={setLineSets} styles={styles} />
 
-      {/* Composer on the left; scrolls on its own if it outgrows the window. On a shared link it
-          stays mounted but hidden, ready for "Edit a copy". */}
-      <section
-        data-composer=""
+      {/* Left half: the composer centred vertically, like the preview, with the tips hanging in the
+          space below it. The two spacers split the free height evenly, but the tips' block never
+          shrinks below its content, so in a short window the composer rises only as far as the tips
+          need; past that the half scrolls. On a shared link it stays mounted but hidden, ready for
+          "Edit a copy". */}
+      <div
         hidden={previewOnly}
-        className={`max-h-full min-h-0 overflow-y-auto rounded-2xl border border-brand-warm-border bg-white/75 p-4 shadow-[0_1px_2px_rgba(20,20,18,0.04)] backdrop-blur-xs ${narrow ? "w-full max-w-[560px]" : "flex-none"}`}
-        style={narrow ? undefined : { width: COMPOSER_W }}
+        className={narrow ? "mx-auto w-full" : "flex min-h-0 min-w-0 flex-1 basis-0 flex-col items-center overflow-y-auto"}
+        style={narrow ? { maxWidth: COMPOSER_MAX } : { minWidth: COMPOSER_MIN }}
       >
+      {!narrow && <div className="min-h-0 flex-1 basis-0" aria-hidden />}
+      <div className="w-full flex-none" style={{ maxWidth: COMPOSER_MAX }}>
+      {/* No card around the composer: its fields sit on the page, the editor is the one surface. */}
+      <section data-composer="">
         {shareError !== null && (
           <p className="mb-3 rounded-lg border border-brand-orange/40 bg-orange-50 px-3 py-2 text-sm text-brand-warm-dark" role="status">
             That share link is incomplete or damaged, so there was nothing to show. Ask for the link again.
           </p>
         )}
-        {/* Identity in one row, handle first: it doubles as the lookup that fills in the rest. */}
+        {/* Identity in one row, in X's order: photo, name, check, then @handle, which doubles as the
+            lookup that fills in the rest. */}
         <form
-          className="mb-3 flex flex-wrap items-center gap-2"
+          className="mb-4 flex flex-wrap items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             void lookupProfile();
           }}
         >
+          <label className="group relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-full border border-brand-warm-border bg-brand-warm-surface" title={identity.avatar ? "Change your photo" : "Upload your photo"}>
+            {identity.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={identity.avatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <DefaultAvatar size="100%" />
+            )}
+            {/* Hover (or keyboard focus) says the circle takes your own photo, the way X's profile editor does. */}
+            <span aria-hidden className="absolute inset-0 flex items-center justify-center rounded-full bg-brand-warm-dark/45 text-white opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+              <CameraIcon size={18} />
+            </span>
+            <input type="file" accept="image/*" aria-label={identity.avatar ? "Change your photo" : "Upload your photo"} className="sr-only" onChange={(e) => readFile(e.target.files?.[0], (url) => setIdentity((i) => ({ ...i, avatar: url })))} />
+          </label>
+          <input className={`${inputCls} basis-[140px]`} value={identity.name} maxLength={50} placeholder="Your name" aria-label="Display name" autoComplete="off" data-1p-ignore="" data-lpignore="true" data-bwignore="true" data-form-type="other" onChange={(e) => setIdentity((i) => ({ ...i, name: e.target.value }))} />
+          <select value={identity.badge} onChange={(e) => setIdentity((i) => ({ ...i, badge: e.target.value as Badge }))} aria-label="Verified badge" title="Verified check" className="flex-none rounded-lg border border-brand-warm-border bg-white px-2 py-2 text-base sm:text-sm text-brand-warm-dark">
+            <option value="none">None</option>
+            <option value="blue">Blue</option>
+            <option value="gold">Gold</option>
+            <option value="gray">Gray</option>
+          </select>
           <div className="flex min-w-0 flex-[1.3] basis-[190px] items-center rounded-lg border border-brand-warm-border bg-white pl-3 focus-within:border-brand-teal">
             <span className="text-sm text-brand-warm-secondary">@</span>
             <input
-              className="min-w-0 flex-1 bg-transparent py-2 text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:placeholder:text-transparent"
+              className="min-w-0 flex-1 bg-transparent py-2 text-base sm:text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:placeholder:text-transparent"
               value={identity.handle}
               maxLength={15}
               placeholder="yourhandle"
@@ -419,28 +491,12 @@ export function Postcheck() {
               {lookupState === "loading" ? "…" : <SearchIcon size={16} />}
             </button>
           </div>
-          <label className="group relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-full border border-brand-warm-border bg-brand-warm-surface" title="Upload avatar">
-            {identity.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={identity.avatar} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-[11px] font-medium text-brand-warm-secondary">Photo</span>
-            )}
-            <input type="file" accept="image/*" className="sr-only" onChange={(e) => readFile(e.target.files?.[0], (url) => setIdentity((i) => ({ ...i, avatar: url })))} />
-          </label>
-          <input className={`${inputCls} basis-[140px]`} value={identity.name} maxLength={50} placeholder="Your name" aria-label="Display name" autoComplete="off" data-1p-ignore="" data-lpignore="true" data-bwignore="true" data-form-type="other" onChange={(e) => setIdentity((i) => ({ ...i, name: e.target.value }))} />
-          <select value={identity.badge} onChange={(e) => setIdentity((i) => ({ ...i, badge: e.target.value as Badge }))} aria-label="Verified badge" title="Verified check" className="flex-none rounded-lg border border-brand-warm-border bg-white px-2 py-2 text-sm text-brand-warm-dark">
-            <option value="none">None</option>
-            <option value="blue">Blue</option>
-            <option value="gold">Gold</option>
-            <option value="gray">Gray</option>
-          </select>
           {lookupState !== "idle" && lookupState !== "loading" && <p className="w-full text-sm text-brand-orange">{lookupState}</p>}
         </form>
 
         <ComposerField editor={editor} placeholder={SAMPLE} />
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex items-center gap-3">
             <FormatBar editor={editor} />
             <label className="cursor-pointer rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface">
@@ -462,17 +518,20 @@ export function Postcheck() {
           </span>
         </div>
 
-        {!tipsAside && hints}
       </section>
+      </div>
+      <div className={narrow ? "w-full" : "w-full flex-1 basis-0"} style={{ maxWidth: COMPOSER_MAX }}>
+        {hints}
+      </div>
+      </div>
 
       <Preview
         stacked={narrow}
-        tips={tipsAside ? hints : null}
-        areaWidth={narrow ? Math.min(rowWidth ?? 0, widestPreview) : tipsAside && !previewOnly ? previewArea : widestPreview}
+        minWidth={widestPreview}
+        marks={showTips ? advice : NO_MARKS}
         view={view}
         setView={setView}
         actions={actions}
-        centred={previewOnly}
         fontTier={fontTier}
         fontBanner={
           fontTier && fontTier !== "chirp" ? (
@@ -486,45 +545,45 @@ export function Postcheck() {
         webDevice={webDevice}
         setWebDevice={setWebDevice}
         phoneDevice={phoneDevice}
-        setPhoneDevice={setPhoneDevice}
+        setPhoneDevice={choosePhone}
+        here={here}
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
             <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
           </div>
         }
-        app={(maxHeight) => (
-          <PhoneFrame device={phoneDevice} theme={theme} maxHeight={maxHeight}>
-            <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
-          </PhoneFrame>
-        )}
+        app={(maxHeight) => {
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />;
+          // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
+          return phoneDevice.frameless ? (
+            <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>
+          ) : (
+            <PhoneFrame device={phoneDevice} theme={theme} maxHeight={maxHeight}>{cell}</PhoneFrame>
+          );
+        }}
       />
 
     </div>
   );
 }
 
-/** The toolbar above the preview when it is stacked under the composer (wide windows put it in the header). */
-const TOOLBAR_H = 48;
 /** The phone shrinks to fit a short window, down to this scale; below it the phone sheds app furniture instead. */
 const MIN_PHONE_SCALE = 0.7;
-const COMPOSER_W = 560;
+/** The composer fills its half up to COMPOSER_MAX; below COMPOSER_MIN beside the preview, the page stacks. */
+const COMPOSER_MIN = 560;
+const COMPOSER_MAX = 640;
 const COLUMN_GAP = 24;
-/** Tips sit close to the preview, like notes in its margin. */
-const TIPS_MIN = 160;
-const TIPS_MAX = 280;
-/** Beside the narrower phone the tips fill the room the web view reserves, so both views are the same
- *  width and the page stays centred; capped at a readable line length. */
-const TIPS_MAX_MOBILE = 460;
-const TIPS_GAP = 20;
+/** The two halves stop growing here, so on a wide window the composer and the preview stay close. */
+const ROW_MAX = 1440;
 
 interface PreviewProps {
   /** Stacked under the composer on a scrolling page: full phone height, no centring. */
   stacked: boolean;
-  /** Tips beside the preview, level with the post; null when they live under the composer. */
-  tips: React.ReactNode;
-  /** Width the preview area reserves: sized for phone + tips, so switching views never moves anything. */
-  areaWidth: number;
+  /** The right half never gets narrower than the wider preview at true size. */
+  minWidth: number;
+  /** Tips whose marks are drawn beside the preview, on the line they're about. */
+  marks: Advice[];
   fontBanner: React.ReactNode;
   /** Which body font loaded. PNG export is off on the GT America tier: Grilli Type's web licence forbids saving the font into images. */
   fontTier: FontTier | null;
@@ -532,6 +591,8 @@ interface PreviewProps {
   setWebDevice: (d: Device) => void;
   phoneDevice: Device;
   setPhoneDevice: (d: Device) => void;
+  /** The visitor's own phone, when they are on one: offered first in the list. */
+  here: Device | null;
   themeId: ThemeId;
   web: React.ReactNode;
   /** The phone, given the height it may take (it sheds app furniture to fit, never the post). */
@@ -540,8 +601,6 @@ interface PreviewProps {
   setView: (v: "app" | "web") => void;
   /** Extra toolbar buttons (Share, or Edit a copy on a shared link). */
   actions: React.ReactNode;
-  /** The preview alone on the page (a shared link): centre it rather than pin it left. */
-  centred: boolean;
 }
 
 /**
@@ -549,11 +608,13 @@ interface PreviewProps {
  * read X. The web view is always true size. The phone is laid out at true size and, in a short
  * window, drawn smaller as a whole (a transform, so line breaks can't move) to keep its real shape.
  */
-function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, themeId, web, app, view, setView, actions, centred }: PreviewProps) {
+function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions }: PreviewProps) {
   const areaRef = useRef<HTMLDivElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const [room, setRoom] = useState<number | null>(null);
+  const [areaWidth, setAreaWidth] = useState<number | null>(null);
   // The stage's layout height (unscaled). Whichever preview is showing is centred vertically;
   // switching views slides it into place.
   const [stageHeight, setStageHeight] = useState<number | null>(null);
@@ -565,7 +626,10 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
     const area = areaRef.current;
     const notice = noticeRef.current;
     if (!area || !notice) return;
-    const measure = () => setRoom(area.getBoundingClientRect().height - notice.getBoundingClientRect().height);
+    const measure = () => {
+      setRoom(area.getBoundingClientRect().height - notice.getBoundingClientRect().height);
+      setAreaWidth(area.clientWidth);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(area);
@@ -575,19 +639,21 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
 
   // The phone's natural height with its bezel; it shrinks until it fits, then sheds furniture.
   const phoneHeight = (phoneDevice.height ?? 0) + PHONE_BEZEL * 2;
-  const scale = view === "app" && !stacked && room !== null && room > 0 ? Math.min(1, Math.max(MIN_PHONE_SCALE, room / phoneHeight)) : 1;
+  const frameless = view === "app" && Boolean(phoneDevice.frameless);
+  const width = view === "app" ? phoneDevice.width + (frameless ? 0 : PHONE_BEZEL * 2) : webDevice.width;
+  // Beside the composer the phone shrinks to the window's height. Stacked, anything wider than the
+  // column (the web view or a listed phone, on a phone) shrinks to its width; this phone never needs to.
+  const scale = stacked
+    ? frameless || areaWidth === null ? 1 : Math.min(1, areaWidth / width)
+    : view === "app" && room !== null && room > 0 ? Math.min(1, Math.max(MIN_PHONE_SCALE, room / phoneHeight)) : 1;
+  // Tip marks go just inside the preview's left edge when there's no margin beside it.
+  const marksInside = stacked && (frameless || areaWidth === null || areaWidth < width * scale + 2 * (MARK_OFFSET + 3 * MARK_STEP));
 
-  // Tips start level with the post (inside the phone, or at the top of the web cell). The post's
-  // offset changes as the phone sheds furniture, so it's measured (in drawn pixels, after scaling).
-  const [postTop, setPostTop] = useState(0);
-  useEffect(() => {
+  // Measured before paint, so the first frame after a view switch never uses the other view's height.
+  useLayoutEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
-    const measure = () => {
-      const post = stage.querySelector("article");
-      if (post) setPostTop(Math.round(post.getBoundingClientRect().top - stage.getBoundingClientRect().top));
-      setStageHeight(stage.offsetHeight);
-    };
+    const measure = () => setStageHeight(stage.offsetHeight);
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(stage);
@@ -601,7 +667,6 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
   }, [view, scale]);
 
   const device = view === "app" ? phoneDevice : webDevice;
-  const width = view === "app" ? phoneDevice.width + PHONE_BEZEL * 2 : webDevice.width;
   const drawnHeight = stageHeight === null ? null : stageHeight * scale;
 
   const exportAllowed = fontTier !== "gt";
@@ -640,26 +705,36 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
   }, [device, themeId, exporting, exportAllowed]);
 
   // One width for both device lists, so the buttons after it never move when you switch views. A
-  // select sizes to its widest option; the widest label, "iPhone 17 Pro Max · post", needs 185px.
-  const select = "h-8 w-[190px] min-w-0 shrink rounded-lg border border-brand-warm-border bg-white px-2 text-[13px] text-brand-warm-dark";
+  // select sizes to its widest option; the widest label, "iPhone 15–16 Plus / 14–15 Pro Max", needs about 235px.
+  // 16px below the sm breakpoint: iOS Safari zooms the page into any control under 16px when it's tapped.
+  const select = "h-8 w-[244px] min-w-0 shrink rounded-lg border border-brand-warm-border bg-white px-2 text-base text-brand-warm-dark sm:text-[13px]";
   const segment = (on: boolean) => `px-3 text-[13px] font-medium transition ${on ? "bg-brand-warm-dark text-white" : "text-brand-warm-gray hover:text-brand-warm-dark"}`;
 
   const toolbar = (
-    <div className={`flex max-w-full items-center gap-2 ${stacked ? "mb-3 flex-none" : ""}`} style={stacked ? { height: TOOLBAR_H - 12, width } : undefined}>
+    <div className={`flex max-w-full items-center gap-2 ${stacked ? "mb-3 w-full flex-none flex-wrap justify-center" : ""}`} style={stacked ? { maxWidth: Math.max(width * scale, 0) || undefined } : undefined}>
       <div className="flex h-8 flex-none overflow-hidden rounded-lg border border-brand-warm-border bg-white" role="tablist" aria-label="Preview">
         <button type="button" role="tab" aria-selected={view === "app"} onClick={() => setView("app")} className={segment(view === "app")}>Mobile</button>
         <button type="button" role="tab" aria-selected={view === "web"} onClick={() => setView("web")} className={segment(view === "web")}>Web</button>
       </div>
       {view === "app" ? (
-        <select value={phoneDevice.id} onChange={(e) => setPhoneDevice(PHONE_DEVICES.find((d) => d.id === e.target.value) ?? PHONE_DEVICES[0])} aria-label="App device" className={select}>
-          {PHONE_DEVICES.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+        <select value={phoneDevice.id} onChange={(e) => setPhoneDevice([...(here ? [here] : []), ...PHONE_DEVICES].find((d) => d.id === e.target.value) ?? PHONE_DEVICES[0])} aria-label="App device" className={select}>
+          {here && (
+            <optgroup label="Your screen">
+              <option value={here.id}>{here.label}</option>
+            </optgroup>
+          )}
+          {PHONE_GROUPS.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.devices.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+            </optgroup>
+          ))}
         </select>
       ) : (
         <select value={webDevice.id} onChange={(e) => setWebDevice(WEB_DEVICES.find((d) => d.id === e.target.value) ?? WEB_DEVICES[0])} aria-label="Web device" className={select}>
           {WEB_DEVICES.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
         </select>
       )}
-      <span className={`flex items-center gap-2 ${stacked ? "ml-auto" : ""}`}>
+      <span className="flex items-center gap-2">
         {actions}
         {exportAllowed ? (
           <button type="button" onClick={() => void exportPng()} disabled={exporting} className="h-8 min-w-[96px] flex-none whitespace-nowrap rounded-lg bg-brand-teal px-3 text-[13px] font-medium text-brand-warm-dark shadow-xs transition hover:bg-brand-teal-light disabled:opacity-60">
@@ -675,11 +750,11 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
   );
 
   return (
-    // Left-aligned in a fixed-width area, so the preview doesn't jump sideways when you change views.
+    // The right half; the preview is centred in it (in the whole row on a shared link).
     <div
       ref={areaRef}
-      className={`flex min-h-0 max-w-full flex-none flex-col justify-start transition-[padding] duration-300 ease-out ${stacked ? "items-center" : centred ? "h-full items-center" : "h-full items-start"}`}
-      style={{ width: stacked ? "100%" : areaWidth, paddingTop: !stacked && room !== null && drawnHeight !== null ? Math.max(0, Math.floor((room - drawnHeight) / 2)) : 0 }}
+      className={`flex min-h-0 max-w-full flex-col items-center justify-start transition-[padding] duration-300 ease-out ${stacked ? "w-full" : "h-full min-w-0 flex-1 basis-0"}`}
+      style={{ minWidth: stacked ? undefined : minWidth, paddingTop: !stacked && room !== null && drawnHeight !== null ? Math.max(0, Math.floor((room - drawnHeight) / 2)) : 0 }}
     >
       <div ref={noticeRef} className="max-w-full flex-none">
         {fontBanner}
@@ -687,23 +762,138 @@ function Preview({ stacked, tips, areaWidth, fontBanner, fontTier, webDevice, se
       </div>
       {/* Wide windows keep the controls in the page header; stacked, they sit over the preview. */}
       {stacked ? toolbar : controlsSlot && createPortal(toolbar, controlsSlot)}
-      <div className="flex min-h-0 max-w-full flex-row items-start gap-5 overflow-auto">
+      {/* The side padding (cancelled by the negative margin) is room for the tip marks left of the preview.
+          Beside the composer the phone always fits (it scales, then sheds furniture, and its screen
+          scrolls itself), so nothing here scrolls: while it slides in from the web view's position it
+          may hang past the bottom for a moment, which must not flash a scrollbar. A tall web post page
+          and the stacked layout still scroll. */}
+      <div
+        className={stacked ? "flex justify-center" : `-mx-12 min-h-0 max-w-[calc(100%+96px)] px-12 ${view === "app" ? "overflow-visible" : "overflow-auto"}`}
+        // This phone runs edge to edge, out through the page's side padding.
+        style={stacked && frameless ? { width: "100vw", marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" } : stacked ? { width: "100%" } : undefined}
+      >
         {/* The box takes the drawn size; the preview inside keeps its true-size layout (export reads that). */}
-        <div className="flex-none" style={{ width: width * scale, height: drawnHeight ?? undefined }}>
+        <div ref={boxRef} className="relative flex-none" style={{ width: width * scale, height: drawnHeight ?? undefined }}>
+          <TipMarks advice={marks} deviceId={device.id} stageRef={stageRef} boxRef={boxRef} inside={marksInside} />
           <div style={scale < 1 ? { width, transform: `scale(${scale})`, transformOrigin: "top left" } : { width }}>
             <div ref={stageRef} style={{ display: "inline-block", width }}>
               {view === "app" ? app(stacked || room === null ? undefined : room / scale) : web}
             </div>
           </div>
         </div>
-        {tips && (
-          <aside className="flex-none" style={{ width: Math.min(TIPS_MAX_MOBILE, areaWidth - width * scale - TIPS_GAP), marginTop: postTop }}>
-            {tips}
-          </aside>
-        )}
       </div>
+      {frameless && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Drawn at this phone&apos;s width, with default text size.</p>}
+      {stacked && scale < 1 && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Scaled down to fit this screen.</p>}
     </div>
   );
+}
+
+const NO_MARKS: Advice[] = [];
+/** Marks sit this far left of the preview's edge, and this far apart when several share a line. */
+const MARK_OFFSET = 14;
+const MARK_STEP = 10;
+
+/**
+ * A small dot left of the preview on each line a tip is about, in the tip's severity colour. Drawn
+ * outside the stage, so PNG export never includes them; positions are read from the rendered post
+ * (after scaling and the phone's own scroll), so they follow the text exactly.
+ */
+function TipMarks({ advice, deviceId, stageRef, boxRef, inside }: { advice: Advice[]; deviceId: string; stageRef: React.RefObject<HTMLDivElement | null>; boxRef: React.RefObject<HTMLDivElement | null>; inside: boolean }) {
+  const [dots, setDots] = useState<Array<{ key: string; y: number; col: number; severity: Severity; title: string }>>([]);
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const box = boxRef.current;
+    if (!stage || !box) return;
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const top = box.getBoundingClientRect().top;
+        const words = [...stage.querySelectorAll<HTMLElement>("[data-w]")];
+        const screen = stage.querySelector("[data-screen-scroll]")?.getBoundingClientRect();
+        const next: typeof dots = [];
+        const perRow = new Map<number, Set<string>>();
+        for (const a of advice) {
+          for (const m of a.marks ?? []) {
+            if (m.devices && !m.devices.includes(deviceId)) continue;
+            // A word span ends past its own offset; the first such span holds the character.
+            const el = "at" in m ? words.find((w) => Number(w.dataset.e) > m.at) : stage.querySelector(m.el === "more" ? "[data-more]" : "[data-attachment] > *");
+            const rect = el?.getClientRects()[0];
+            if (!rect) continue;
+            const mid = rect.top + rect.height / 2;
+            // Off the phone's screen (scrolled away inside it): no mark.
+            if (screen && (mid < screen.top || mid > screen.bottom)) continue;
+            const y = Math.round(mid - top);
+            const row = perRow.get(y) ?? new Set<string>();
+            perRow.set(y, row);
+            if (row.has(a.id)) continue;
+            next.push({ key: `${a.id}:${y}`, y, col: row.size, severity: a.severity, title: a.title });
+            row.add(a.id);
+          }
+        }
+        setDots(next);
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(stage);
+    ro.observe(box);
+    const mo = new MutationObserver(measure);
+    mo.observe(stage, { childList: true, subtree: true, characterData: true });
+    stage.addEventListener("scroll", measure, true);
+    window.addEventListener("resize", measure);
+    void document.fonts.ready.then(measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+      mo.disconnect();
+      stage.removeEventListener("scroll", measure, true);
+      window.removeEventListener("resize", measure);
+    };
+  }, [advice, deviceId, stageRef, boxRef]);
+  return (
+    <>
+      {/* Inside the preview there's room for one dot per line (the most severe; tips come sorted). */}
+      {dots.filter((d) => !inside || d.col === 0).map((d) => (
+        <span
+          key={d.key}
+          title={d.title}
+          aria-hidden
+          className={`absolute h-1.5 w-1.5 rounded-full ${SEVERITY_STYLE[d.severity].dot}`}
+          style={{ top: d.y - 3, left: inside ? 3 : -MARK_OFFSET - 3 - d.col * MARK_STEP }}
+        />
+      ))}
+    </>
+  );
+}
+
+/**
+ * The visitor's phone, or null on anything else. A phone: no hover, a coarse pointer, and a screen
+ * under 500 on its short side (a narrowed desktop window stays on the phone list). Its width is the
+ * page's width in portrait, the short side of the screen in landscape (the X app's timeline keeps the
+ * portrait column). iPhone or Android from the user agent, which still names Android.
+ */
+function useThisPhone(): Device | null {
+  const [device, setDevice] = useState<Device | null>(null);
+  useEffect(() => {
+    const read = () => {
+      const short = Math.min(screen.width, screen.height);
+      if (!matchMedia("(hover: none) and (pointer: coarse)").matches || short >= 500) {
+        setDevice(null);
+        return;
+      }
+      const portrait = innerHeight >= innerWidth;
+      const width = Math.round(portrait ? document.documentElement.clientWidth : short);
+      const height = Math.round(portrait ? innerHeight : Math.max(screen.width, screen.height));
+      const platform = /Android/i.test(navigator.userAgent) ? "android" : "ios";
+      // The address bar coming and going changes the height only: keep the same device then.
+      setDevice((d) => (d && d.width === width && d.platform === platform ? d : thisPhone(width, height, platform)));
+    };
+    read();
+    window.addEventListener("resize", read);
+    return () => window.removeEventListener("resize", read);
+  }, []);
+  return device;
 }
 
 /** A slot in the page header (page.tsx) that the tool renders controls into. */
@@ -717,6 +907,13 @@ function useSlot(id: string): HTMLElement | null {
 
 const WEB_DEVICES = DEVICES.filter((d) => d.kind !== "phone");
 const PHONE_DEVICES = DEVICES.filter((d) => d.kind === "phone");
+const DEFAULT_PHONE = PHONE_DEVICES.find((d) => d.id === DEFAULT_PHONE_ID) ?? PHONE_DEVICES[0];
+/** The phone list in groups: iPhone and Android timelines, then the iPhone post screen. */
+const PHONE_GROUPS = [
+  { label: "iPhone", devices: PHONE_DEVICES.filter((d) => d.platform === "ios" && d.view !== "post") },
+  { label: "Android", devices: PHONE_DEVICES.filter((d) => d.platform === "android") },
+  { label: "iPhone · post page", devices: PHONE_DEVICES.filter((d) => d.platform === "ios" && d.view === "post") },
+];
 
 /** Light / dark switch for the previews, rendered into the page header's slot. */
 function ThemeToggle({ themeId, onChange }: { themeId: ThemeId; onChange: (t: ThemeId) => void }) {

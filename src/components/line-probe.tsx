@@ -65,7 +65,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, devices, onMeasur
           const el = refs.current[i]?.firstElementChild as HTMLElement | null;
           const m = el ? measureLines(el, d.lineHeight) : { lines: [], total: 0 };
           const token = refs.current[i]?.querySelector<HTMLElement>("[data-token]");
-          return { deviceId: d.id, deviceLabel: d.label, view: d.view, lines: m.lines, total: m.total, tokenWidth: token?.getBoundingClientRect().width ?? 0 };
+          return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view: d.view, lines: m.lines, total: m.total, tokenWidth: token?.getBoundingClientRect().width ?? 0 };
         }),
       );
     };

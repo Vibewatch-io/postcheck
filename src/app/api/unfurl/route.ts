@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { HTML_CAP, cacheHeaders, fetchImageAsDataUrl, guardedFetch, readCapped } from "@/lib/server/fetch-guard";
+import { HTML_CAP, NO_STORE, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
 import type { CardData } from "@/lib/card";
 
 /**
@@ -8,10 +8,16 @@ import type { CardData } from "@/lib/card";
  * deliberately paranoid: http(s) only, public addresses only (checked on every
  * redirect hop), short timeouts, hard byte caps, and the image is inlined as a
  * data URL so the browser never fetches a third-party asset for the export.
+ * The link arrives in a POST body and nothing is cached or logged: see readLookupField.
  */
 export const runtime = "nodejs";
 
 const TIMEOUT_MS = 6000;
+
+/** The lookup takes a POST body only. A stray GET (say, an old link with the URL in its address) gets a 405 that no cache keeps. */
+export function GET() {
+  return new NextResponse(null, { status: 405, headers: { ...NO_STORE, allow: "POST" } });
+}
 
 function decodeEntities(s: string): string {
   return s
@@ -43,15 +49,15 @@ function metaLookup(html: string): Map<string, string> {
   return out;
 }
 
-export async function GET(request: Request) {
-  const raw = new URL(request.url).searchParams.get("url") || "";
+export async function POST(request: Request) {
+  const raw = (await readLookupField(request, "url")) ?? "";
   let target: URL;
   try {
     target = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
   } catch {
-    return NextResponse.json({ error: "bad url" }, { status: 400 });
+    return NextResponse.json({ error: "bad url" }, { status: 400, headers: NO_STORE });
   }
-  if (raw.length > 2048) return NextResponse.json({ error: "bad url" }, { status: 400 });
+  if (raw.length > 2048) return NextResponse.json({ error: "bad url" }, { status: 400, headers: NO_STORE });
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -59,7 +65,7 @@ export async function GET(request: Request) {
     const { res, url: finalUrl } = await guardedFetch(target, "text/html,application/xhtml+xml", controller.signal);
     const type = (res.headers.get("content-type") || "").toLowerCase();
     if (!res.ok || !type.includes("html")) {
-      return NextResponse.json({ card: null }, { headers: cacheHeaders() });
+      return NextResponse.json({ card: null }, { headers: NO_STORE });
     }
     const bytes = await readCapped(res, HTML_CAP);
     const html = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
@@ -73,7 +79,7 @@ export async function GET(request: Request) {
     const imageRaw = meta.get("twitter:image") || meta.get("twitter:image:src") || meta.get("og:image") || meta.get("og:image:url") || "";
     const cardType = (meta.get("twitter:card") || "").toLowerCase();
 
-    if (!title) return NextResponse.json({ card: null }, { headers: cacheHeaders() });
+    if (!title) return NextResponse.json({ card: null }, { headers: NO_STORE });
 
     let image: string | null = null;
     if (imageRaw) {
@@ -92,9 +98,9 @@ export async function GET(request: Request) {
       image,
       layout: image && cardType === "summary_large_image" ? "large" : "small",
     };
-    return NextResponse.json({ card }, { headers: cacheHeaders() });
+    return NextResponse.json({ card }, { headers: NO_STORE });
   } catch {
-    return NextResponse.json({ card: null }, { headers: cacheHeaders(300) });
+    return NextResponse.json({ card: null }, { headers: NO_STORE });
   } finally {
     clearTimeout(timer);
   }

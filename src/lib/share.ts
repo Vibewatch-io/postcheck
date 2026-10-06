@@ -1,5 +1,5 @@
 import type { StyleRun } from "./entities";
-import { DEVICES } from "./devices";
+import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
 
 /**
  * Share links. The whole preview (text, styling, identity, shrunk images, device, theme) is
@@ -106,7 +106,7 @@ export function parseWire(raw: unknown): SharedPreview | null {
   const handle = typeof w.handle === "string" && /^[A-Za-z0-9_]{0,15}$/.test(w.handle) ? w.handle : "";
   const badge = BADGES.find((b) => b === w.badge) ?? "none";
   const theme = THEMES.find((t) => t === w.theme) ?? "light";
-  const phone = typeof w.phone === "string" && PHONE_IDS.has(w.phone) ? w.phone : "iphone-16";
+  const phone = typeof w.phone === "string" && PHONE_IDS.has(w.phone) ? w.phone : DEFAULT_PHONE_ID;
   const web = typeof w.web === "string" && WEB_IDS.has(w.web) ? w.web : "web";
   const view = w.view === "web" ? "web" : "app";
   return {

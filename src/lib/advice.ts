@@ -10,11 +10,19 @@ import type { CardData } from "./card";
 
 export type Severity = "fix" | "tip" | "note";
 
+/**
+ * Where a tip points in the preview: a character of the text (its line is marked), the Show more
+ * fold, or the card / photo / quote under the text. `devices` limits a mark to the previews it is
+ * true for (a word dangles at one width and not another).
+ */
+export type Mark = ({ at: number } | { el: "more" | "attachment" }) & { devices?: string[] };
+
 export interface Advice {
   id: string;
   severity: Severity;
   title: string;
   detail: string;
+  marks?: Mark[];
 }
 
 /** One measured line of the rendered body: words on it, in reading order. */
@@ -49,7 +57,7 @@ export interface AdviceInput {
   /** Rendered line metrics per device, for dangling-word checks. */
   lineSets: DeviceLines[];
   /** Set when the app's line clamp would fold the post. */
-  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string } | null;
+  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId?: string } | null;
   /** An image is attached: X shows it instead of any link card. */
   hasMedia?: boolean;
   /** Bold / italic runs are present. */
@@ -80,6 +88,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       title: `Opens with ${first.text}`,
       detail:
         "X treats a post that starts with a handle as a reply: it mostly reaches only people who follow both you and them. Put a word in front of the handle.",
+      marks: [{ at: first.start }],
     });
   }
 
@@ -90,6 +99,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       title: `${length.weighted} of ${MAX_WEIGHTED_LENGTH} characters`,
       detail:
         "The timeline shows the first 280 and folds the rest behind Show more, cut at the last word that fits. Accounts without Premium can't post past 280 at all. Whatever you want people to read has to land before the cut.",
+      marks: [{ el: "more" }],
     });
   } else if (length.weighted > 260 && length.emoji > 0) {
     out.push({
@@ -109,6 +119,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         severity: "note",
         title: `${urls.length} links, one card`,
         detail: `X renders a single card, for the first link (${cu.display}). If that page has no card, there is none at all. The others stay as plain link text.`,
+        marks: urls.filter((u) => u.start !== cu.start).map((u) => ({ at: u.start })),
       });
     }
     if (hasMedia) {
@@ -117,6 +128,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         severity: "note",
         title: "Photo attached, so no card",
         detail: `With an image on the post X shows the image and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
+        marks: [{ at: cu.start }],
       });
     } else if (cu.isStatus) {
       out.push({
@@ -126,6 +138,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         detail: trailing
           ? `A link to a post becomes a quote post, and because it's last, the URL text disappears.${urls.length > 1 ? " The quote replaces any link card." : ""}`
           : `A link to a post becomes a quote post. Move it to the end and the URL text disappears too.${urls.length > 1 ? " The quote replaces any link card." : ""}`,
+        marks: [trailing ? { el: "attachment" } : { at: cu.start }],
       });
     } else if (card) {
       if (trailing) {
@@ -134,6 +147,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
           severity: "note",
           title: "Link text hidden, card shown",
           detail: `The link is the last thing in the post, so X drops the URL text and shows only the ${cu.host} card.`,
+          marks: [{ el: "attachment" }],
         });
       } else {
         out.push({
@@ -141,6 +155,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
           severity: "tip",
           title: "Link text stays visible",
           detail: `Because the link sits inside the text, X prints it as "${cu.display}" and also shows the card. Move it to the very end and only the card remains.`,
+          marks: [{ at: cu.start }],
         });
       }
     } else if (card === null) {
@@ -150,6 +165,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         title: `No card for ${cu.host}`,
         detail:
           "That page has no Open Graph or Twitter Card tags, so X shows the link as plain text and no preview. The URL text stays visible even at the end of the post.",
+        marks: [{ at: cu.start }],
       });
     }
   }
@@ -162,6 +178,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       title: `${hashtags.length} hashtags`,
       detail:
         "A row of hashtags reads as spam, and X's spam classifier flags hashtag abuse. Keep one if it names a real community, otherwise drop them.",
+      marks: hashtags.map((h) => ({ at: h.start })),
     });
   }
 
@@ -172,6 +189,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "note",
       title: `@${longMention[1]} won't link`,
       detail: "Handles are at most 15 characters, so X leaves this one as plain text.",
+      marks: [{ at: longMention.index! }],
     });
   }
 
@@ -204,8 +222,9 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     });
   }
 
-  // Dangling words: a paragraph whose last rendered line holds a single short word.
-  const seen = new Set<string>();
+  // Dangling words: a paragraph whose last rendered line holds a single short word. One tip per
+  // word, marked on every preview where it dangles.
+  const orphans = new Map<string, Mark[]>();
   for (const set of lineSets) {
     if (set.view === "post") continue;
     const byPara = new Map<number, LineInfo[]>();
@@ -220,15 +239,19 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       const last = lines[lines.length - 1];
       if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "") {
         const key = last.words[0];
-        const where = seen.has(key) ? null : set.deviceLabel;
-        if (!where) continue;
-        seen.add(key);
-        out.push({
-          id: `orphan-${key}`,
-          severity: "tip",
-          title: `"${key}" dangles on its own line`,
-          detail: `On ${set.deviceLabel} that paragraph wraps so the last line is just "${key}". Cut a word or add a few so the line break lands somewhere useful.`,
-        });
+        let marks = orphans.get(key);
+        if (!marks) {
+          marks = [];
+          orphans.set(key, marks);
+          out.push({
+            id: `orphan-${key}`,
+            severity: "tip",
+            title: `"${key}" dangles on its own line`,
+            detail: `On ${set.deviceLabel} that paragraph wraps so the last line is just "${key}". Cut a word or add a few so the line break lands somewhere useful.`,
+            marks,
+          });
+        }
+        if (last.spans[0]) marks.push({ at: last.spans[0].start, devices: [set.deviceId] });
       }
     }
   }
@@ -249,6 +272,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "tip",
       title: `Collapses in the iOS app after ${clamped.maxLines} lines`,
       detail: `The web shows all ${clamped.total} lines, but on ${clamped.deviceLabel} the app folds this behind Show more after "${clamped.lastWord}". Anything below that only shows after a tap.`,
+      marks: clamped.deviceId ? [{ el: "more", devices: [clamped.deviceId] }] : [],
     });
   }
 

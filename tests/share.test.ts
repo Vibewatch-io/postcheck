@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { DEFAULT_PHONE_ID } from "../src/lib/devices";
 import { SHARE_MAX_TEXT, SHARE_PREFIX, decodeShare, encodeShare, jpegSize, parseWire, sharedImage, withoutFragment, type SharedPreview } from "../src/lib/share";
 
 /** The header of a JPEG (SOI, APP0, SOF0) claiming the given size: all jpegSize and sharedImage read. */
@@ -51,7 +52,7 @@ test("a small link that inflates past the cap is refused", async () => {
 
 test("device ids must match their view's kind", () => {
   const p = parseWire({ v: 1, text: "hi", styles: [], phone: "web", web: "iphone-16", view: "app" });
-  assert.equal(p?.phone, "iphone-16");
+  assert.equal(p?.phone, DEFAULT_PHONE_ID);
   assert.equal(p?.web, "web");
 });
 

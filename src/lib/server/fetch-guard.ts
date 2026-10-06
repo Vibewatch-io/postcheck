@@ -50,7 +50,7 @@ export async function assertPublic(url: URL): Promise<void> {
   }
 }
 
-export async function readCapped(res: Response, cap: number): Promise<Uint8Array> {
+export async function readCapped(res: Pick<Response, "body">, cap: number): Promise<Uint8Array> {
   const reader = res.body?.getReader();
   if (!reader) return new Uint8Array();
   const chunks: Uint8Array[] = [];
@@ -114,9 +114,28 @@ export async function fetchImageAsDataUrl(src: URL, signal: AbortSignal): Promis
   }
 }
 
-export function cacheHeaders(seconds = 86400): HeadersInit {
-  return {
-    "cache-control": `public, s-maxage=${seconds}, stale-while-revalidate=${seconds}`,
-    "x-content-type-options": "nosniff",
-  };
+/**
+ * The lookups carry something a person typed (a link from their post, a handle), so no cache between
+ * us and them may keep the answer: the footer promises we never store what you write. The browser
+ * keeps fetched cards for the session instead.
+ */
+export const NO_STORE: HeadersInit = { "cache-control": "no-store", "x-content-type-options": "nosniff" };
+
+/** Largest lookup body accepted: a JSON object holding one link (at most 2048 characters) or handle. */
+const LOOKUP_BODY_CAP = 4096;
+
+/**
+ * Reads one string field from a small JSON request body. The lookups take their input in the body,
+ * never the address, because addresses end up in request logs and caches and bodies don't.
+ */
+export async function readLookupField(request: Request, field: string): Promise<string | null> {
+  if (Number(request.headers.get("content-length") || 0) > LOOKUP_BODY_CAP) return null;
+  const bytes = await readCapped(request, LOOKUP_BODY_CAP + 1);
+  if (bytes.byteLength > LOOKUP_BODY_CAP) return null;
+  try {
+    const value = (JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown> | null)?.[field];
+    return typeof value === "string" ? value : null;
+  } catch {
+    return null;
+  }
 }

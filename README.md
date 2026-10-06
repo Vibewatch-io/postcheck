@@ -1,8 +1,8 @@
 # Postcheck
 
-**We've seen a lot of bad posts. Here's how to fix yours.**
+**See your post exactly as X will show it.**
 
-Postcheck shows you how an X post will look once it's published, on the web timeline, the post page and on phones, and flags the formatting X quietly punishes. Look up your username, draft on the left, see the render on the right, export a PNG.
+Postcheck shows you how an X post will look once it's published, on the web timeline, the post page and on phones, and points out the formatting quirks and ranking rules that change how it performs. Look up your username and draft on the left, with tips under the draft. The true-size preview sits on the right, and each tip puts a small dot beside the line it's about. Share a link or export a PNG.
 
 Live at [postcheck.vibewatch.io](https://postcheck.vibewatch.io). Created by [Vibewatch](https://vibewatch.io) and released under the MIT licence.
 
@@ -37,6 +37,7 @@ Everything below was read off x.com in September 2026.
 What was inferred rather than read off a DOM, and how it was checked:
 
 - **Phone layout**: 12px inset, 44px avatar, 8px gap, body at 15px/20px in a column of screen width minus 77, with X's −0.2pt tracking. Derived with CoreText and the app's own font files, then checked against captures of real posts on an iPhone 15 Pro (`scripts/ios/README.md`).
+- **Phone sizes**: one entry per screen width in points, since that is what moves a line break, each labelled with the iPhones that share it (402: iPhone 17 and the 16–18 Pro; 393: iPhone 15, 16, 14 Pro and 15 Pro; 390: iPhone 12, 13, 14 (and the 12 and 13 Pro), 16e and 17e; 440: the 16–18 Pro Max; 430: the 15 and 16 Plus and the 14 and 15 Pro Max; 420: Air; 375: SE). Sizes come from Apple's published resolutions. Only the 393pt screen has been captured, so the same insets are assumed at the other widths. The default is 402, the width with the most iPhones in use (TelemetryDeck, September 2026). Open the site on a phone and the preview is your own screen instead: the post drawn edge to edge at your phone's width, with the iPhone or Android rules for it (default text size assumed).
 - **App line fold**: the iOS app folds a post behind Show more past 9 rendered lines, even under 280 characters and even for long posts (it ignores the web's 280 cut). The Android app has no line fold: it cuts at 280 exactly like the web.
 - **Post page**: 17px/24px on web (566px) and in the app (screen width minus 32); never folds.
 - **Italic**: a slant on the web, upright bold in the iOS app.
@@ -44,6 +45,8 @@ What was inferred rather than read off a DOM, and how it was checked:
 ## The checks
 
 Suggestions come from `src/lib/advice.ts`. Each one is a rule with a mechanism behind it, not a style opinion, and reach advice must not contradict X's published ranker, [xai-org/x-algorithm](https://github.com/xai-org/x-algorithm). The code has no link penalty, so "links cost reach" is gone. "The ranker doesn't penalize it" is still not the same as "do it".
+
+Each tip's colour says how much it matters: red for something X will do to the post that you'll want to fix, amber for something worth changing, grey for something to know. A dot in the same colour sits beside the line it's about in the preview.
 
 - Opens with a handle (X treats it as a reply; it mostly reaches people who follow both accounts)
 - Over 280 (where the cut lands, and that non-Premium accounts can't post it)
@@ -61,6 +64,8 @@ The post you type stays in your browser unless you share it. Three things do lea
 - **Links** in your post go to `/api/unfurl` on the server so it can fetch the page's Open Graph tags for the card preview. The server fetches the page, not your browser.
 - **A username** you look up goes to `/api/profile`, which asks FxTwitter's public API (`api.fxtwitter.com`) for the name, avatar and badge.
 - **Font requests** go to X's CDN (`abs.twimg.com`), because the previews render in Chirp loaded exactly the way x.com loads it. X sees the same request it would see from any page that embeds a post.
+
+Links and usernames are never stored. The link or username travels in the body of the request, not its address, because addresses end up in request logs and caches. Both responses are marked `no-store`, and the server keeps nothing. Your browser keeps the cards it has fetched for the rest of the visit, and only asks once a link looks finished. The sample post's own card (a link to this site) ships with the page, so an untouched page makes no lookups at all.
 
 **Share** copies a link that holds the preview itself: the text, its styling, the name, handle and check, the device and theme, and JPEG copies of your photo and attached image shrunk in the browser (the image steps down in size until the link fits under 38,000 characters, or is left out). It is all compressed into the part of the link after `#`, which browsers never send to a server, so nothing is uploaded or stored and there is nothing for us to delete. Anyone who has the link can see the preview. Opening a shared post that contains a link fetches its card through `/api/unfurl`, the same as typing it would.
 

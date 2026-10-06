@@ -118,3 +118,15 @@ export const MailIcon = (p: P) => (
     <path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.636V5.5c0-.276-.224-.5-.5-.5h-15zm15.5 5.463l-8 3.636-8-3.638V18.5c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5v-8.037z" />
   </svg>
 );
+
+/** Camera with a plus, the mark X puts over the photo in its profile editor. */
+export function CameraIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.3l1.4-2h5.6l1.4 2h2.3A1.5 1.5 0 0 1 19 8.5V11" />
+      <path d="M3 8.5v9A1.5 1.5 0 0 0 4.5 19H12" />
+      <circle cx="11" cy="12.5" r="3" />
+      <path d="M18.5 15v6M15.5 18h6" />
+    </svg>
+  );
+}
