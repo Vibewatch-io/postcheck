@@ -50,7 +50,7 @@ export async function assertPublic(url: URL): Promise<void> {
   }
 }
 
-export async function readCapped(res: Response, cap: number): Promise<Uint8Array> {
+export async function readCapped(res: Pick<Response, "body">, cap: number): Promise<Uint8Array> {
   const reader = res.body?.getReader();
   if (!reader) return new Uint8Array();
   const chunks: Uint8Array[] = [];
@@ -114,9 +114,54 @@ export async function fetchImageAsDataUrl(src: URL, signal: AbortSignal): Promis
   }
 }
 
-export function cacheHeaders(seconds = 86400): HeadersInit {
-  return {
-    "cache-control": `public, s-maxage=${seconds}, stale-while-revalidate=${seconds}`,
-    "x-content-type-options": "nosniff",
-  };
+/**
+ * The lookups carry something a person typed (a link from their post, a handle), so no cache between
+ * us and them may keep the answer: the footer promises we never store what you write. The browser
+ * keeps fetched cards for the session instead.
+ */
+export const NO_STORE: HeadersInit = { "cache-control": "no-store", "x-content-type-options": "nosniff" };
+
+/** Largest lookup body accepted: a JSON object holding one link of up to 2048 UTF-16 units (at most
+ *  3 bytes each in UTF-8, so 6144) plus the JSON around it, or a handle. */
+const LOOKUP_BODY_CAP = 8192;
+/** A lookup body is a few hundred bytes; one still arriving after this is abandoned. */
+const LOOKUP_BODY_TIMEOUT_MS = 5000;
+
+/** The lookups take a POST body only. A stray GET (say, an old link with the URL or handle in its
+ *  address) gets a 405 that no cache keeps. */
+export function postOnly(): Response {
+  return new Response(null, { status: 405, headers: { ...NO_STORE, allow: "POST" } });
+}
+
+/**
+ * Reads one string field from a small JSON request body. The lookups take their input in the body,
+ * never the address, because addresses end up in request logs and caches and bodies don't.
+ */
+export async function readLookupField(request: Request, field: string): Promise<string | null> {
+  if (Number(request.headers.get("content-length") || 0) > LOOKUP_BODY_CAP) return null;
+  // A body that breaks off or stalls mid-upload is a bad request (400), not an unhandled error, and
+  // never holds the function open: past the deadline the stream is cancelled, which ends the read.
+  const body = request.body;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let bytes: Uint8Array;
+  try {
+    bytes = await Promise.race([
+      readCapped(request, LOOKUP_BODY_CAP + 1),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("lookup body timed out")), LOOKUP_BODY_TIMEOUT_MS);
+      }),
+    ]);
+  } catch {
+    void body?.cancel().catch(() => {});
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (bytes.byteLength > LOOKUP_BODY_CAP) return null;
+  try {
+    const value = (JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown> | null)?.[field];
+    return typeof value === "string" ? value : null;
+  } catch {
+    return null;
+  }
 }

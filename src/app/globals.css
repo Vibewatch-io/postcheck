@@ -21,6 +21,11 @@
   --color-brand-warm-border: #e4e1da;
   --color-brand-warm-border-hover: #d4d0c8;
   --color-brand-warm-surface: #f2f0eb;
+  /* Tip severity, in the tip list and the marks beside the preview: fix = error, tip = warning, note = info.
+     Each holds at least 3:1 against every ground a mark sits on (ivory page, white or black cell, bezel). */
+  --color-severity-fix: #e5484d;
+  --color-severity-tip: #c27a0a;
+  --color-severity-note: #8a867e;
 }
 
 /* Tailwind 4 gives buttons the default cursor; keep the pointer. */
@@ -36,6 +41,12 @@
 :root { --ls-web: 0px; --ls-app: -0.32px; }
 html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.196px; }
 html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; }
+
+/* On a phone the preview becomes that phone once the page knows its width (useThisPhone); until then
+   it stays hidden, so the server-rendered listed phone never flashes first. */
+@media (hover: none) and (pointer: coarse) and (max-width: 499px) {
+  html:not([data-phone-checked]) [data-preview] { visibility: hidden; }
+}
 
 /* Chirp, X's own typeface, loaded from X's CDN the same way x.com loads it.
    Two builds are in play (measured 2026-09-11): x.com's web client ships a

@@ -2,20 +2,22 @@ import type { Metadata, Viewport } from "next";
 import { Syne } from "next/font/google";
 import localFont from "next/font/local";
 import { Analytics } from "@/components/analytics";
+import { DESCRIPTION, SITE_URL, TAGLINE, TITLE, X_HANDLE } from "@/lib/site";
 import "./globals.css";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", weight: ["600", "700"] });
 const geist = localFont({ src: "./GeistVF.woff", variable: "--font-geist", weight: "100 900", display: "swap" });
 
-const TITLE = "Postcheck";
-const DESCRIPTION = "See how your X post will look on the web and on phones before you post it, and fix the formatting X quietly punishes.";
-
 export const metadata: Metadata = {
-  title: TITLE,
+  // Search results and the browser tab carry the tagline; social cards keep the short name, which
+  // X prints in the pill over the image.
+  title: `${TITLE}: ${TAGLINE}`,
   description: DESCRIPTION,
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://postcheck.vibewatch.io"),
-  openGraph: { title: TITLE, description: DESCRIPTION, type: "website" },
-  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, site: "@vibewatch_io" },
+  applicationName: TITLE,
+  alternates: { canonical: "/" },
+  metadataBase: new URL(SITE_URL),
+  openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/", siteName: TITLE, locale: "en_US" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION, site: X_HANDLE, creator: X_HANDLE },
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#F9F8F5" };
