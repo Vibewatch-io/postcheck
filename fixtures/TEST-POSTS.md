@@ -252,7 +252,7 @@ Long poll test 94: a post over 280 characters with a poll under it, to see where
 
 ## 11. More media
 
-Files are in `fixtures/media/` (t110–t116). Tag and flag only from the composer; mention-tag only
+Files are in `fixtures/media/`: `t110-tagged.jpg`, `t111-sensitive.jpg`, `t112-panorama.jpg`, `t113-square.jpg`, `t114-portrait.mp4` and `t116-tall.jpg`; 115 reuses `t50-landscape.jpg` and `t51-portrait.jpg`. Tag and flag only from the composer; mention-tag only
 `@Vibewatch_io` and `@marshallmixing`.
 
 | # | Content | Tests |

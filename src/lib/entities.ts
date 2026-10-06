@@ -43,10 +43,11 @@ const TLD_ALT = [...new Set(TLDS)].sort((a, b) => b.length - a.length).join("|")
 // digit, "@", "$", "#" or a bidi control. That keeps "user@example.com" from
 // linking "example.com".
 const URL_LEAD = String.raw`(^|[^A-Za-z0-9@$#\u202A-\u202E])`;
-// With a scheme, any plausible domain links. Without one, the TLD must be real.
+// With a scheme, any plausible domain links, Unicode labels included: X linked a typed
+// "https://münchen.de" (@postcheck_test test 124). Without a scheme, the TLD must be real.
 const SCHEME_URL_RE = new RegExp(
-  URL_LEAD + String.raw`(https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?![a-z0-9-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
-  "gi",
+  URL_LEAD + String.raw`(https?:\/\/(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+\p{L}{2,24}(?![\p{L}\p{N}-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
+  "giu",
 );
 const BARE_URL_RE = new RegExp(
   URL_LEAD + String.raw`((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:${TLD_ALT})(?![a-z0-9-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
@@ -81,7 +82,8 @@ function trimUrlTail(match: string): string {
 
 /**
  * What X prints as the link text. Scheme and "www." are stripped, and a link
- * over 30 characters has its path cut to 15 with an ellipsis. Verified against live posts:
+ * whose printed form is over 30 characters keeps the 15 characters after its
+ * host (path, query and all) and an ellipsis. Verified against live posts:
  * "techcrunch.com/2019/08/29/twi…", "nytimes.com/2021/01/20/us/…",
  * "newsletter.theresanaiforthat.com/p/ai-beats-458…" (all exactly 15 path chars).
  */
@@ -93,7 +95,9 @@ export function displayUrl(raw: string): string {
   const rest = s.slice(cut);
   // Only a link longer than 30 characters is cut: "apps.apple.com/app/id333903271" (30, path 16)
   // shows whole, "youtube.com/watch?v=jNQXAC…" (31) is cut (@postcheck_test tests 122, 120).
-  return s.length > 30 && rest.length > 15 ? `${host}${rest.slice(0, 15)}…` : host + rest;
+  // Measured on the printed (Unicode) form; for a punycode host that choice is inferred.
+  const shown = host + rest;
+  return shown.length > 30 && rest.length > 15 ? `${host}${rest.slice(0, 15)}…` : shown;
 }
 
 /**
@@ -124,7 +128,8 @@ function punycodeDecode(input: string): string {
     for (; delta > ((base - tMin) * tMax) >> 1; k += base) delta = Math.floor(delta / (base - tMin));
     return k + Math.floor(((base - tMin + 1) * delta) / (delta + skew));
   };
-  const digit = (c: number) => (c - 48 < 10 ? c - 22 : c - 65 < 26 ? c - 65 : c - 97 < 26 ? c - 97 : base);
+  // Basic code points 0-9, A-Z, a-z map to 26-35, 0-25, 0-25; anything else is malformed.
+  const digit = (c: number) => (c >= 48 && c <= 57 ? c - 22 : c >= 65 && c <= 90 ? c - 65 : c >= 97 && c <= 122 ? c - 97 : base);
   const basicEnd = input.lastIndexOf("-");
   const output = basicEnd > 0 ? [...input.slice(0, basicEnd)].map((c) => c.codePointAt(0)!) : [];
   let n = 128, i = 0, bias = 72;

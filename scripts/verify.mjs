@@ -137,7 +137,11 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   if (knownGap) {
     const pinned = Array.isArray(gapTool) && gapTool.map(norm).join("\n") === act.join("\n") && expMore === gotMore;
     if (pinned) { gap++; console.log(`  gap  ${label} ${id}  (${knownGap})`); }
-    else { fail++; console.log(`  FAIL ${label} ${id}  (marked gap, but the tool no longer draws its pinned gapTool lines)`); }
+    else {
+      fail++;
+      const why = !Array.isArray(gapTool) ? "marked gap has no gapTool pin" : expMore !== gotMore ? "marked gap, but Show more drifted" : "marked gap, but the tool no longer draws its pinned gapTool lines";
+      console.log(`  FAIL ${label} ${id}  (${why})`);
+    }
     if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
     if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
     return;

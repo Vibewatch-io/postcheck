@@ -201,3 +201,13 @@ test("editor document round-trips to the posted text, bullets as • lines, styl
   assert.equal(t.text, "hi **there**");
   assert.deepEqual(t.styles, [{ start: 3, end: 8, bold: true, italic: false }]);
 });
+
+test("a typed Unicode host links and prints in Unicode (test 124)", () => {
+  const link = extractEntities("International domain https://münchen.de").find((e) => e.type === "url");
+  assert.equal(link?.text, "https://münchen.de");
+  assert.equal(displayUrl("https://xn--mnchen-3ya.de"), "münchen.de");
+});
+
+test("a malformed punycode label is printed as stored, not decoded to control characters", () => {
+  assert.equal(displayUrl("https://xn--mnchen-3y+a.de"), "xn--mnchen-3y+a.de");
+});
