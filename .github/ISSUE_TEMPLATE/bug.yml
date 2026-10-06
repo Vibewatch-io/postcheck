@@ -1,5 +1,5 @@
 name: Bug
-description: Something other than a rendering mismatch
+description: Something else isn't working
 body:
   - type: textarea
     id: what
