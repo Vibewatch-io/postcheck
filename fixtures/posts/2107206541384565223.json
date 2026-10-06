@@ -1,0 +1,29 @@
+{
+  "id_str": "2107206541384565223",
+  "text": "one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine\nten\neleven\ntwelve",
+  "display_text_range": [
+    0,
+    62
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "poll2choice_text_only",
+    "url": "card://2107206540986105856"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "Fold",
+      "image": false
+    },
+    {
+      "label": "No fold",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

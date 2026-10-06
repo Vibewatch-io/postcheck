@@ -1,0 +1,29 @@
+{
+  "id_str": "2107205647146348590",
+  "text": "Poll that ends in five minutes",
+  "display_text_range": [
+    0,
+    30
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "poll2choice_text_only",
+    "url": "card://2107205646785650689"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "🚀 Rocket",
+      "image": false
+    },
+    {
+      "label": "🐢 Turtle",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

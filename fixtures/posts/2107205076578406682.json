@@ -1,0 +1,26 @@
+{
+  "id_str": "2107205076578406682",
+  "text": "Price chart test $TSLA",
+  "display_text_range": [
+    0,
+    22
+  ],
+  "note_tweet": false,
+  "entities": {
+    "symbols": [
+      {
+        "indices": [
+          17,
+          22
+        ],
+        "text": "TSLA"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

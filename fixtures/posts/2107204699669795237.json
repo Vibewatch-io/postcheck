@@ -1,0 +1,28 @@
+{
+  "id_str": "2107204699669795237",
+  "text": "App card https://t.co/E5X268oNkd",
+  "display_text_range": [
+    0,
+    32
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "apps.apple.com/app/id333903271",
+        "expanded_url": "https://apps.apple.com/app/id333903271",
+        "indices": [
+          9,
+          32
+        ],
+        "url": "https://t.co/E5X268oNkd"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id_str": "2107206471595503880",
+  "text": "Quote of a poll https://t.co/7rEDhRZMlP",
+  "display_text_range": [
+    0,
+    39
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/Postcheck_test…",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102785196269731968",
+        "indices": [
+          16,
+          39
+        ],
+        "url": "https://t.co/7rEDhRZMlP"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

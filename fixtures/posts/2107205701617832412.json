@@ -1,0 +1,17 @@
+{
+  "id_str": "2107205701617832412",
+  "text": "Long poll test 94: a post over 280 characters with a poll under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick",
+  "display_text_range": [
+    0,
+    275
+  ],
+  "note_tweet": true,
+  "full_text": "Long poll test 94: a post over 280 characters with a poll under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

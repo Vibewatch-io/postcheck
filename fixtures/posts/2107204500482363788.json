@@ -1,0 +1,16 @@
+{
+  "id_str": "2107204500482363788",
+  "text": "Unicode \"bold\" 𝐭𝐞𝐱𝐭 counts double",
+  "display_text_range": [
+    0,
+    37
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

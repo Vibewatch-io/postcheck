@@ -1,0 +1,31 @@
+{
+  "id_str": "2107204666526515704",
+  "text": "Audio card https://t.co/Cuq6Aytj2n",
+  "display_text_range": [
+    0,
+    34
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "open.spotify.com/track/4uLU6hMC…",
+        "expanded_url": "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
+        "indices": [
+          11,
+          34
+        ],
+        "url": "https://t.co/Cuq6Aytj2n"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary",
+    "url": "https://t.co/Cuq6Aytj2n"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

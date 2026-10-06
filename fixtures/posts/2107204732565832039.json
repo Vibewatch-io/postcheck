@@ -1,0 +1,31 @@
+{
+  "id_str": "2107204732565832039",
+  "text": "Profile link https://t.co/x4s2prHslW",
+  "display_text_range": [
+    0,
+    36
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/Vibewatch_io",
+        "expanded_url": "https://x.com/Vibewatch_io",
+        "indices": [
+          13,
+          36
+        ],
+        "url": "https://t.co/x4s2prHslW"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/x4s2prHslW"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

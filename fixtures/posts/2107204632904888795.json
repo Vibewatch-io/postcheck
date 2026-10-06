@@ -1,0 +1,31 @@
+{
+  "id_str": "2107204632904888795",
+  "text": "Video player card https://t.co/nSzpexKwHF",
+  "display_text_range": [
+    0,
+    41
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "youtube.com/watch?v=jNQXAC…",
+        "expanded_url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+        "indices": [
+          18,
+          41
+        ],
+        "url": "https://t.co/nSzpexKwHF"
+      }
+    ]
+  },
+  "card": {
+    "name": "summary_large_image",
+    "url": "https://t.co/nSzpexKwHF"
+  },
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

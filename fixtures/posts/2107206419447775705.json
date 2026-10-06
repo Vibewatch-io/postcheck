@@ -1,0 +1,41 @@
+{
+  "id_str": "2107206419447775705",
+  "text": "Poll with a link https://t.co/kGfVUwtxwc",
+  "display_text_range": [
+    0,
+    40
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "github.com/vercel/next.js",
+        "expanded_url": "https://github.com/vercel/next.js",
+        "indices": [
+          17,
+          40
+        ],
+        "url": "https://t.co/kGfVUwtxwc"
+      }
+    ]
+  },
+  "card": {
+    "name": "poll2choice_text_only",
+    "url": "card://2107206419120578560"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "Card",
+      "image": false
+    },
+    {
+      "label": "No card",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

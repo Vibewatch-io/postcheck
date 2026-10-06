@@ -74,7 +74,7 @@ console.log(`fonts: tier ${tier}; web Chirp ${widths.web}px (x.com measured 320.
 if (args.includes("--no-chirp")) { if (tier !== "gt") { console.error(`expected the GT America tier without X's CDN, got ${tier}`); process.exit(3); } }
 else if (tier !== "chirp" || Math.abs(widths.web - 320.3) > 1 || Math.abs(widths.app - 313.0) > 1) { console.error("font metrics drifted; x.com may have shipped a new Chirp build. Re-measure and update globals.css."); process.exit(3); }
 
-let pass = 0, fail = 0, edge = 0;
+let pass = 0, fail = 0, edge = 0, gap = 0;
 /** Width of a line of text in the pane's body font, and the body width, for edge-case classification. */
 async function lineFit(deviceLast, text) {
   return page.evaluate(({ deviceLast, text }) => {
@@ -123,13 +123,29 @@ async function load(id) {
   const text = typedText(fx);
   await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, { photo: fx.photos > 0 });
 }
-async function diff(label, deviceLast, id, expected, got, expMore, gotMore) {
+async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
   const exp = expected.filter((l) => !isUrlLine(l) && l !== "").map(norm);
   const act = got.filter((l) => !isUrlLine(l)).map(norm);
   let bad = null;
   for (let i = 0; i < Math.max(exp.length, act.length); i++) if (exp[i] !== act[i]) { bad = i; break; }
-  if (bad === null && expMore === gotMore) { pass++; console.log(`  ok   ${label} ${id}`); return; }
+  if (bad === null && expMore === gotMore) { pass++; console.log(`  ok   ${label} ${id}${knownGap ? "  (marked gap now passes: drop the gap)" : ""}`); return; }
+  // A fixture can name a feature the tool doesn't model yet (a poll, a card X withholds for an
+  // unknown reason) and pin what the tool draws meanwhile (`gapTool`): reported as a gap on every
+  // run, and as a failure if anything else about the post changes. Checked before the edge
+  // tolerance so a drifting gap post can't pass as a font coin flip.
+  if (knownGap) {
+    const pinned = Array.isArray(gapTool) && gapTool.map(norm).join("\n") === act.join("\n") && expMore === gotMore;
+    if (pinned) { gap++; console.log(`  gap  ${label} ${id}  (${knownGap})`); }
+    else {
+      fail++;
+      const why = !Array.isArray(gapTool) ? "marked gap has no gapTool pin" : expMore !== gotMore ? "marked gap, but Show more drifted" : "marked gap, but the tool no longer draws its pinned gapTool lines";
+      console.log(`  FAIL ${label} ${id}  (${why})`);
+    }
+    if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
+    if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
+    return;
+  }
   // A line that differs by one word right at the body edge is a font-metrics coin flip, not a rule error.
   let edgeNote = null;
   if (bad !== null && exp[bad] && act[bad]) {
@@ -154,7 +170,7 @@ for (const f of readdirSync("fixtures/web")) {
   for (const p of fx.posts) {
     if (p.compose) await compose(p.compose); else await load(p.id);
     const got = await page.evaluate(ROWS("false"));
-    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more);
+    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -165,10 +181,10 @@ for (const f of readdirSync("fixtures/app")) {
   for (const p of fx.posts) {
     if (p.compose) await compose(p.compose); else await load(p.id);
     const got = await page.evaluate(ROWS("true"));
-    await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more);
+    await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
   }
 }
-console.log(`\n${pass} passed, ${edge} within font tolerance, ${fail} failed`);
+console.log(`\n${pass} passed, ${edge} within font tolerance, ${gap} known gaps, ${fail} failed`);
 await browser.close();
 if (args.includes("--keep")) server = null;
 process.exit(fail ? 1 : 0);

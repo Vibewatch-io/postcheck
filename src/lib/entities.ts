@@ -43,10 +43,12 @@ const TLD_ALT = [...new Set(TLDS)].sort((a, b) => b.length - a.length).join("|")
 // digit, "@", "$", "#" or a bidi control. That keeps "user@example.com" from
 // linking "example.com".
 const URL_LEAD = String.raw`(^|[^A-Za-z0-9@$#\u202A-\u202E])`;
-// With a scheme, any plausible domain links. Without one, the TLD must be real.
+// With a scheme, any plausible domain links, Unicode labels included: X linked a typed
+// "https://münchen.de" (@postcheck_test test 124). Without a scheme, the TLD must be real.
 const SCHEME_URL_RE = new RegExp(
-  URL_LEAD + String.raw`(https?:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}(?![a-z0-9-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
-  "gi",
+  URL_LEAD + String.raw`([hH][tT][tT][pP][sS]?:\/\/(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+\p{L}{2,24}(?![\p{L}\p{N}-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
+  // No "i": with "u" it case-folds "ſ" to "s" and "K" (Kelvin) to "k", so "httpſ://" would pass.
+  "gu",
 );
 const BARE_URL_RE = new RegExp(
   URL_LEAD + String.raw`((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:${TLD_ALT})(?![a-z0-9-])(?::\d{2,5})?(?:[\/?#][^\s<>]*)?)`,
@@ -55,10 +57,11 @@ const BARE_URL_RE = new RegExp(
 
 const MENTION_RE = /(^|[^A-Za-z0-9_!#$%&*@＠])@([A-Za-z0-9_]{1,15})(?![A-Za-z0-9_@＠])/g;
 const HASHTAG_RE = /(^|[^&\p{L}\p{N}_])#([\p{L}\p{N}_]*\p{L}[\p{L}\p{N}_]*)/gu;
-// twitter-text caps cashtags at 6 letters, but X links $QWERTYU (7) since at
-// least 2026-09 (test 61). Only the bare 7-letter form is measured: longer
-// tags and a 7-letter tag with a ".X" suffix stay plain, as before, until captured.
-const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,6}(?:[._][A-Za-z]{1,2})?|[A-Za-z]{7}(?![._][A-Za-z]))(?![A-Za-z0-9_$])/g;
+// twitter-text caps cashtags at 6 letters, but X links up to 15 (tests 61, 61b:
+// $QWERTYU, $ABCDEFGH, $ABCDEFGHIJ, $ABCDEFGHIJKLMNO), with a ".X"/".XX" suffix
+// at 6 and 7 letters too ($QWERTY.AB, $QWERTYU.A). A suffix after 8–15 letters is
+// inferred (uncaptured); 16+ letters is untested.
+const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,15}(?:[._][A-Za-z]{1,2})?)(?![A-Za-z0-9_$])/g;
 
 /** Emoji (incl. ZWJ sequences, skin tones, flags, keycaps). */
 export const EMOJI_RE =
@@ -79,18 +82,75 @@ function trimUrlTail(match: string): string {
 }
 
 /**
- * What X prints as the link text. Scheme and "www." are stripped, and the
- * path is cut to 15 characters with an ellipsis. Verified against live posts:
+ * What X prints as the link text. Scheme and "www." are stripped, and a link
+ * whose printed form is over 30 characters keeps the 15 characters after its
+ * host (path, query and all) and an ellipsis. Verified against live posts:
  * "techcrunch.com/2019/08/29/twi…", "nytimes.com/2021/01/20/us/…",
  * "newsletter.theresanaiforthat.com/p/ai-beats-458…" (all exactly 15 path chars).
  */
 export function displayUrl(raw: string): string {
   const s = raw.replace(/^https?:\/\//i, "").replace(/^www\./i, "");
   const cut = s.search(/[/?#]/);
-  if (cut === -1) return s;
-  const host = s.slice(0, cut);
+  if (cut === -1) return unicodeHost(s);
+  const host = unicodeHost(s.slice(0, cut));
   const rest = s.slice(cut);
-  return rest.length > 15 ? `${host}${rest.slice(0, 15)}…` : host + rest;
+  // Only a link longer than 30 characters is cut: "apps.apple.com/app/id333903271" (30, path 16)
+  // shows whole, "youtube.com/watch?v=jNQXAC…" (31) is cut (@postcheck_test tests 122, 120).
+  // Measured on the printed (Unicode) form; for a punycode host that choice is inferred.
+  const shown = host + rest;
+  return shown.length > 30 && rest.length > 15 ? `${host}${rest.slice(0, 15)}…` : shown;
+}
+
+/**
+ * X prints an internationalized domain in Unicode even when the link was stored as
+ * punycode: `https://xn--mnchen-3ya.de` shows as "münchen.de" (@postcheck_test test 124).
+ */
+function unicodeHost(host: string): string {
+  return host
+    .split(".")
+    .map((label) => {
+      if (!/^xn--/i.test(label)) return label;
+      try {
+        return punycodeDecode(label.slice(4).toLowerCase());
+      } catch {
+        return label;
+      }
+    })
+    .join(".");
+}
+
+/** RFC 3492 punycode decoder for one label (without its `xn--` prefix). */
+function punycodeDecode(input: string): string {
+  const base = 36, tMin = 1, tMax = 26, skew = 38, damp = 700;
+  const adapt = (delta: number, numPoints: number, first: boolean) => {
+    delta = first ? Math.floor(delta / damp) : delta >> 1;
+    delta += Math.floor(delta / numPoints);
+    let k = 0;
+    for (; delta > ((base - tMin) * tMax) >> 1; k += base) delta = Math.floor(delta / (base - tMin));
+    return k + Math.floor(((base - tMin + 1) * delta) / (delta + skew));
+  };
+  // Basic code points 0-9, A-Z, a-z map to 26-35, 0-25, 0-25; anything else is malformed.
+  const digit = (c: number) => (c >= 48 && c <= 57 ? c - 22 : c >= 65 && c <= 90 ? c - 65 : c >= 97 && c <= 122 ? c - 97 : base);
+  const basicEnd = input.lastIndexOf("-");
+  const output = basicEnd > 0 ? [...input.slice(0, basicEnd)].map((c) => c.codePointAt(0)!) : [];
+  let n = 128, i = 0, bias = 72;
+  for (let idx = basicEnd > 0 ? basicEnd + 1 : 0; idx < input.length; ) {
+    const oldi = i;
+    for (let w = 1, k = base; ; k += base) {
+      if (idx >= input.length) throw new Error("bad punycode");
+      const d = digit(input.charCodeAt(idx++));
+      if (d >= base) throw new Error("bad punycode");
+      i += d * w;
+      const t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
+      if (d < t) break;
+      w *= base - t;
+    }
+    bias = adapt(i - oldi, output.length + 1, oldi === 0);
+    n += Math.floor(i / (output.length + 1));
+    i %= output.length + 1;
+    output.splice(i++, 0, n);
+  }
+  return String.fromCodePoint(...output);
 }
 
 export function hostOf(raw: string): string {
