@@ -57,7 +57,8 @@ const MENTION_RE = /(^|[^A-Za-z0-9_!#$%&*@＠])@([A-Za-z0-9_]{1,15})(?![A-Za-z0-
 const HASHTAG_RE = /(^|[^&\p{L}\p{N}_])#([\p{L}\p{N}_]*\p{L}[\p{L}\p{N}_]*)/gu;
 // twitter-text caps cashtags at 6 letters, but X links up to 15 (tests 61, 61b:
 // $QWERTYU, $ABCDEFGH, $ABCDEFGHIJ, $ABCDEFGHIJKLMNO), with a ".X"/".XX" suffix
-// at 6 and 7 letters too ($QWERTY.AB, $QWERTYU.A). 16+ letters is untested.
+// at 6 and 7 letters too ($QWERTY.AB, $QWERTYU.A). A suffix after 8–15 letters is
+// inferred (uncaptured); 16+ letters is untested.
 const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,15}(?:[._][A-Za-z]{1,2})?)(?![A-Za-z0-9_$])/g;
 
 /** Emoji (incl. ZWJ sequences, skin tones, flags, keycaps). */

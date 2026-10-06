@@ -238,7 +238,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       id: "premium-styles",
       severity: "note",
       title: "Bold and italic need Premium",
-      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks and the phone fold move. On the web, italic is a slant; in the iOS app it shows as upright bold (observed on one post).",
+      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks and the phone fold move. On the web, italic is a slant. The iOS app is inconsistent: one short post showed no styling at all in the timeline and a slanted italic on its own page.",
     });
   }
 

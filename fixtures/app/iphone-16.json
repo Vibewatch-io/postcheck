@@ -1105,6 +1105,9 @@
   {
    "id": "2107206419447775705",
    "gap": "poll: a poll replaces the link card, so the link text stays visible; the tool has no polls yet",
+   "gapTool": [
+    "Poll with a link"
+   ],
    "lines": [
     "Poll with a link github.com/vercel/next.js"
    ],
@@ -1236,7 +1239,10 @@
    ],
    "showMore": false,
    "card": null,
-   "gap": "card: X built no card for this App Store link although the page has Open Graph tags; cause untested (122b)"
+   "gap": "card: X built no card for this App Store link although the page has Open Graph tags; cause untested (122b)",
+   "gapTool": [
+    "App card"
+   ]
   },
   {
    "id": "2107204666526515704",

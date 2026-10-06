@@ -123,7 +123,7 @@ async function load(id) {
   const text = typedText(fx);
   await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, { photo: fx.photos > 0 });
 }
-async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap) {
+async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
   const exp = expected.filter((l) => !isUrlLine(l) && l !== "").map(norm);
   const act = got.filter((l) => !isUrlLine(l)).map(norm);
@@ -142,8 +142,9 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   }
   if (edgeNote) { edge++; console.log(`  edge ${label} ${id}  (${edgeNote})`); }
   // A fixture can name a feature the tool doesn't model yet (a poll, a card X withholds for an
-  // unknown reason): reported on every run, never counted as a pass or a failure.
-  else if (knownGap) { gap++; console.log(`  gap  ${label} ${id}  (${knownGap})`); }
+  // unknown reason) and pin what the tool draws meanwhile (`gapTool`): reported as a gap on every
+  // run, and as a failure if anything else about the post changes.
+  else if (knownGap && Array.isArray(gapTool) && gapTool.map(norm).join("\n") === act.join("\n") && expMore === gotMore) { gap++; console.log(`  gap  ${label} ${id}  (${knownGap})`); }
   else { fail++; console.log(`  FAIL ${label} ${id}`); }
   if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
@@ -157,7 +158,7 @@ for (const f of readdirSync("fixtures/web")) {
   for (const p of fx.posts) {
     if (p.compose) await compose(p.compose); else await load(p.id);
     const got = await page.evaluate(ROWS("false"));
-    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap);
+    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -168,7 +169,7 @@ for (const f of readdirSync("fixtures/app")) {
   for (const p of fx.posts) {
     if (p.compose) await compose(p.compose); else await load(p.id);
     const got = await page.evaluate(ROWS("true"));
-    await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap);
+    await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
   }
 }
 console.log(`\n${pass} passed, ${edge} within font tolerance, ${gap} known gaps, ${fail} failed`);
