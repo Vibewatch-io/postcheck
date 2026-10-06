@@ -38,23 +38,50 @@ if (!(await up())) {
   }
 }
 
-const ROWS = (deviceLast) => `(() => {
+// The post's own text (quote = false) or the quoted post's inside its embed (quote = true). A quote
+// embed clamps its text, so rows past the clamp are laid out but clipped: they don't count.
+const ROWS = (deviceLast, quote = false) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
-  const first = art.querySelector('[data-w]'); if (!first) return { rows: [], more: false };
+  const first = [...art.querySelectorAll('[data-w]')].find((w) => !!w.closest('[data-quote]') === ${quote}); if (!first) return { rows: [], more: false };
   const body = first.parentElement; const top = body.getBoundingClientRect().top; const rows = {};
   const lh = parseFloat(getComputedStyle(body).lineHeight) || 20;
-  for (const w of body.querySelectorAll('[data-w]')) { const r = w.getClientRects(); if (!r.length) continue;
+  const shown = Math.round(body.getBoundingClientRect().height / lh);
+  for (const w of body.querySelectorAll('[data-w]')) { const r = w.getClientRects(); if (!r.length || Math.round((r[0].top - top) / lh) >= shown) continue;
     if (r.length === 1) { const k = Math.round((r[0].top - top) / lh); (rows[k] = rows[k] || []).push(w.textContent); continue; }
     // A word that wraps inside its span (after a hyphen, or CJK): split it by character.
     const node = [...w.childNodes].find((c) => c.nodeType === 3) || w.firstChild?.firstChild; if (!node) continue;
     let curK = null; for (let i = 0; i < node.nodeValue.length; i++) { const rg = document.createRange(); rg.setStart(node, i); rg.setEnd(node, i + 1); const cr = rg.getClientRects(); if (!cr.length) continue;
       const k = Math.round((cr[0].top - top) / lh); rows[k] = rows[k] || []; if (k === curK) rows[k][rows[k].length - 1] += node.nodeValue[i]; else { rows[k].push(node.nodeValue[i]); curK = k; } } }
-  return { rows: Object.keys(rows).sort((a,b)=>a-b).map(k => rows[k].join(' ')), more: !!body.querySelector('[data-more]') };
+  return { rows: Object.keys(rows).sort((a,b)=>a-b).filter((k) => k < shown).map(k => rows[k].join(' ')), more: !!body.querySelector('[data-more]') };
+})()`;
+/** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
+const QUOTE_BOX = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const q = art.querySelector('[data-quote]'); if (!q) return null; const b = q.getBoundingClientRect();
+  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
+  const text = [...q.querySelectorAll('[data-w]')][0]?.parentElement;
+  return { box: [Math.round(b.width), Math.round(b.height)], avatar: rel(q.querySelector('img, svg')), text: rel(text), photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
 })()`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
+// Quote lookups replay FxTwitter answers recorded in fixtures/fx (tests/quote.test.ts checks the
+// route's reading of them), so verify never depends on a live post. Images become a grey stand-in
+// of the recorded size; a post with no recording answers as unavailable.
+const STAND_IN = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
+await page.route(/\/api\/quote$/, (route) => {
+  const id = route.request().postDataJSON()?.id;
+  let t = null;
+  try { t = JSON.parse(readFileSync(`fixtures/fx/${id}.json`, "utf8")).tweet; } catch {}
+  const v = t?.author.verification;
+  const photo = t?.media?.photos?.[0];
+  const body = t
+    ? { status: "ok", quote: { id, name: t.author.name, handle: t.author.screen_name, avatar: null, badge: !v?.verified ? "none" : v.type === "organization" ? "gold" : v.type === "government" ? "gray" : "blue", text: t.text, createdAt: new Date(t.created_at).toISOString(), photo: photo ? { src: STAND_IN, width: photo.width, height: photo.height } : null, poll: Boolean(t.poll) } }
+    : { status: "unavailable" };
+  return route.fulfill({ contentType: "application/json", body: JSON.stringify(body) });
+});
 // --no-chirp simulates X blocking its CDN: the page must degrade to GT America.
 if (args.includes("--no-chirp")) await page.route(/abs\.twimg\.com/, (r) => r.abort());
 await page.goto(base);
@@ -80,7 +107,7 @@ async function lineFit(deviceLast, text) {
   return page.evaluate(({ deviceLast, text }) => {
     const arts = [...document.querySelectorAll("article")];
     const art = deviceLast ? arts[arts.length - 1] : arts[0];
-    const body = art.querySelector("[data-w]").parentElement;
+    const body = [...art.querySelectorAll("[data-w]")].find((w) => !w.closest("[data-quote]")).parentElement;
     const cs = getComputedStyle(body);
     const s = document.createElement("span");
     s.style.cssText = `position:absolute;white-space:pre;font-family:${cs.fontFamily};font-size:${cs.fontSize}`;
@@ -94,7 +121,7 @@ async function lineFit(deviceLast, text) {
 /** Type a draft straight into the composer (**bold** / __italic__ markers become styling). */
 async function compose(text, opts = {}) {
   await page.evaluate(([t, o]) => window.__postcheck.setDraft(t, o), [text, opts]);
-  await page.waitForFunction(() => !document.body.innerText.includes("Fetching preview"), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => !document.body.innerText.includes("Fetching preview") && !document.body.innerText.includes("Loading post…"), null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(600);
 }
 // A native X Article post ends with a link to itself that X adds and hides; nobody typed it.
@@ -162,6 +189,40 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
 }
 
+/**
+ * The quote embed against X's: web fixtures record x.com's quoted lines and boxes, app fixtures the
+ * iPhone's line count, first words and photo size. Boxes match to 1px. Where the app's photo sits
+ * is not checked (the gap above it is inferred, QUIRKS.md).
+ */
+async function quoteDiff(label, deviceLast, id, want) {
+  const got = await page.evaluate(QUOTE_BOX(deviceLast));
+  const rows = (await page.evaluate(ROWS(String(deviceLast), true))).rows.map(norm);
+  const near = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => b[i] === null || Math.abs(v - b[i]) <= 1);
+  const problems = [];
+  if (!got) problems.push("no quote embed");
+  else if (Array.isArray(want.lines)) {
+    const exp = want.lines.map(norm);
+    if (exp.join("\n") !== rows.join("\n")) problems.push(`lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`);
+    if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
+    if (want.avatar && !near(got.avatar, want.avatar)) problems.push(`avatar X ${want.avatar} / tool ${got.avatar}`);
+    if (want.text && !near(got.text, want.text)) problems.push(`text box X ${want.text} / tool ${got.text}`);
+    if (want.photo && !near(got.photo, want.photo)) problems.push(`photo X ${want.photo} / tool ${got.photo}`);
+    if (!!want.poll !== !!got.poll || (want.poll && !near(got.poll.slice(0, 2), want.poll.slice(0, 2)))) problems.push(`poll line X ${want.poll} / tool ${got.poll}`);
+  } else {
+    if (rows.length !== want.lines) problems.push(`line count X ${want.lines} / tool ${rows.length}`);
+    if (!(rows[0] ?? "").startsWith(norm(want.text))) problems.push(`first line X "${want.text}…" / tool "${rows[0] ?? ""}"`);
+    if (want.photo && !near(got.photo?.slice(2), want.photo.slice(2))) problems.push(`photo size X ${want.photo.slice(2)} / tool ${got.photo?.slice(2)}`);
+    if (!want.photo && got.photo) problems.push("tool draws a photo X doesn't");
+  }
+  if (problems.length) {
+    fail++;
+    console.log(`  FAIL ${label} quote ${id}\n       ${problems.join("\n       ")}`);
+  } else {
+    pass++;
+    console.log(`  ok   ${label} quote ${id}`);
+  }
+}
+
 for (const f of readdirSync("fixtures/web")) {
   const fx = JSON.parse(readFileSync(`fixtures/web/${f}`, "utf8"));
   console.log(`\nweb · ${f}`);
@@ -171,6 +232,7 @@ for (const f of readdirSync("fixtures/web")) {
     if (p.compose) await compose(p.compose); else await load(p.id);
     const got = await page.evaluate(ROWS("false"));
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
+    if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -182,6 +244,7 @@ for (const f of readdirSync("fixtures/app")) {
     if (p.compose) await compose(p.compose); else await load(p.id);
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
+    if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
   }
 }
 console.log(`\n${pass} passed, ${edge} within font tolerance, ${gap} known gaps, ${fail} failed`);

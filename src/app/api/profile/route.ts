@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { NO_STORE, postOnly, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
+import { NO_STORE, postOnly, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
+import { AVATAR_CAP, FX_API, avatarSrc, badgeFor, fetchTwimg, onFxTwitter, twimgUrl, type FxUser } from "@/lib/server/fxtwitter";
 
 /**
  * Looks up an X account's name, avatar and verified badge by username through
@@ -23,19 +24,6 @@ export interface Profile {
   badge: "none" | "blue" | "gold" | "gray";
 }
 
-/** FxTwitter's verification type → X's badge color. */
-function badgeFor(v: FxUser["verification"]): Profile["badge"] {
-  if (!v?.verified) return "none";
-  return v.type === "organization" ? "gold" : v.type === "government" ? "gray" : "blue";
-}
-
-interface FxUser {
-  name?: string;
-  screen_name?: string;
-  avatar_url?: string;
-  verification?: { verified?: boolean; type?: string };
-}
-
 export async function POST(request: Request) {
   const raw = ((await readLookupField(request, "u")) ?? "").trim();
   const handle = raw.match(/^(?:https?:\/\/(?:www\.)?(?:x|twitter)\.com\/)?@?([A-Za-z0-9_]{1,15})\/?$/)?.[1];
@@ -45,8 +33,8 @@ export async function POST(request: Request) {
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
     // Through the shared guard like every other outbound fetch: each redirect hop re-checked for a
-    // public address, and the JSON read capped (a profile answer is a few KB).
-    const { res } = await guardedFetch(new URL(`https://api.fxtwitter.com/${handle}`), "application/json", controller.signal);
+    // public address and kept on FxTwitter's host, and the JSON read capped (a profile answer is a few KB).
+    const { res } = await guardedFetch(new URL(`${FX_API}/${handle}`), "application/json", controller.signal, onFxTwitter);
     const body = await readCapped(res, PROFILE_JSON_CAP + 1);
     const j = (body.byteLength > PROFILE_JSON_CAP ? null : (() => { try { return JSON.parse(new TextDecoder().decode(body)); } catch { return null; } })()) as { user?: FxUser } | null;
     const u = j?.user;
@@ -54,7 +42,8 @@ export async function POST(request: Request) {
       const missing = res.ok || res.status === 404;
       return NextResponse.json({ error: missing ? `No account @${handle}` : "Lookup failed. Enter the details by hand." }, { status: missing ? 404 : 502, headers: NO_STORE });
     }
-    const avatar = u.avatar_url ? await fetchImageAsDataUrl(new URL(u.avatar_url.replace("_normal", "_200x200")), controller.signal) : null;
+    const avatarUrl = twimgUrl(avatarSrc(u));
+    const avatar = avatarUrl ? await fetchTwimg(avatarUrl, controller.signal, AVATAR_CAP) : null;
     const profile: Profile = { name: u.name ?? "", handle: u.screen_name, avatar, badge: badgeFor(u.verification) };
     return NextResponse.json({ profile }, { headers: NO_STORE });
   } catch {

@@ -23,6 +23,10 @@ interface Props {
   pane?: "web" | "app";
   /** Premium bold / italic runs over the text. */
   styles?: StyleRun[];
+  /** Colour for links, mentions, hashtags and cashtags (X's blue unless given). */
+  linkColor?: string;
+  /** Show at most this many lines, ending the last with "…" (quote embeds). */
+  maxLines?: number;
 }
 
 /**
@@ -42,7 +46,7 @@ function styleCss(st: { bold: boolean; italic: boolean }, app: boolean): React.C
 }
 
 export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
-  { tokens, showMoreAt, onShowMore, hiddenUrlStart, theme, fontSize, lineHeight, width, font, pane, styles = [] },
+  { tokens, showMoreAt, onShowMore, hiddenUrlStart, theme, fontSize, lineHeight, width, font, pane, styles = [], linkColor = theme.link, maxLines },
   ref,
 ) {
   let paragraph = 0;
@@ -62,7 +66,7 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
     if (t.kind === "entity") {
       if (t.entity.type === "url" && t.entity.start === hiddenUrlStart) return;
       nodes.push(
-        <span key={i} data-w="1" data-p={paragraph} data-e={t.end} style={{ color: theme.link }}>
+        <span key={i} data-w="1" data-p={paragraph} data-e={t.end} style={{ color: linkColor }}>
           {t.text}
         </span>,
       );
@@ -97,6 +101,7 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
         wordBreak: "break-word",
         width,
         maxWidth: "100%",
+        ...(maxLines ? { display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: maxLines, overflow: "hidden" } : {}),
       }}
     >
       {nodes}

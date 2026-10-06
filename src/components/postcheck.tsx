@@ -18,6 +18,7 @@ import { CameraIcon, SearchIcon } from "./icons";
 import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
+import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
 
 // The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
 // alone onto its own line on purpose, and the trailing link shows only its card. 259 of 280.
@@ -86,6 +87,9 @@ export function Postcheck() {
     return () => mq.removeEventListener("change", apply);
   }, [themeChosen]);
   const [cards, setCards] = useState<Record<string, CardState>>(PRECACHED_CARDS);
+  // Quote lookups by status number. A found or missing post is kept for the session; a failed
+  // lookup is dropped so the next time that link is needed it is asked for again.
+  const [quotes, setQuotes] = useState<Record<string, QuoteState>>({});
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
@@ -200,6 +204,9 @@ export function Postcheck() {
   // A link to a post becomes a quote wherever it sits, and a quote beats a link card (@postcheck_test
   // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46).
   const quote = !media ? quoteUrl(entities) ?? null : null;
+  const quoteId = quote ? statusId(quote.href) : null;
+  // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
+  const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
   const cardKey = cardEntity && !cardEntity.isStatus && !media ? cardEntity.href! : null;
   const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
@@ -252,6 +259,7 @@ export function Postcheck() {
     [clampFor, cut280, post, entities, styleCuts, expanded],
   );
   const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: true })), []);
+  const quoteProp = useMemo(() => (quote ? { entity: quote, state: quoteState } : null), [quote, quoteState]);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
   const phoneClamp = clampFor(phoneDevice);
@@ -290,6 +298,42 @@ export function Postcheck() {
       ctrl.abort();
     };
   }, [cardKey, cardLinkDone]);
+
+  // Look up the quoted post once its link looks finished, as for the card (a half-typed status
+  // number names a different post). Each answer lands under its own status number, so a slow answer
+  // for a link that has since changed can't overwrite the current one.
+  const quoteLinkDone = quote ? quote.end < post.length : false;
+  const quotesAsked = useRef(new Set<string>());
+  useEffect(() => {
+    const asked = quotesAsked.current;
+    if (!quoteId || asked.has(quoteId)) return;
+    const ctrl = new AbortController();
+    let settled = false;
+    const timer = setTimeout(async () => {
+      asked.add(quoteId);
+      // A retry after a failed lookup shows as loading again.
+      setQuotes((q) => ({ ...q, [quoteId]: "loading" }));
+      let result: QuoteResult;
+      try {
+        const res = await fetch("/api/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: quoteId }), signal: ctrl.signal });
+        result = res.ok ? ((await res.json()) as QuoteResult) : { status: "error" };
+      } catch {
+        // Typing past the link aborted its lookup; the cleanup below has already forgotten it.
+        if (ctrl.signal.aborted) return;
+        result = { status: "error" };
+      }
+      settled = true;
+      if (result.status === "error") asked.delete(quoteId);
+      setQuotes((q) => ({ ...q, [quoteId]: { ...result, at: Date.now() } }));
+    }, quoteLinkDone ? 600 : 1500);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+      // Forget an unanswered lookup now, not when its abort lands, so coming straight back to the
+      // link asks again instead of waiting on a request that was cancelled.
+      if (!settled) asked.delete(quoteId);
+    };
+  }, [quoteId, quoteLinkDone]);
 
   const advice: Advice[] = useMemo(
     () =>
@@ -554,11 +598,11 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />;
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>

@@ -2,11 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as unfurl from "../src/app/api/unfurl/route";
 import * as profile from "../src/app/api/profile/route";
+import * as quote from "../src/app/api/quote/route";
 
 // The lookups take their input in a POST body so links and handles never sit in a cacheable address.
 // A stray GET must still answer with a response no cache keeps (Next's automatic 405 carries no
 // cache-control), since its address may hold a link or handle.
-for (const [name, route] of [["unfurl", unfurl], ["profile", profile]] as const) {
+for (const [name, route] of [["unfurl", unfurl], ["profile", profile], ["quote", quote]] as const) {
   test(`/api/${name} refuses GET with an uncacheable 405`, () => {
     assert.equal(typeof route.GET, "function");
     const res = route.GET();

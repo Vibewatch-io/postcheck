@@ -1,0 +1,52 @@
+{
+ "code": 200,
+ "message": "OK",
+ "tweet": {
+  "url": "https://x.com/Postcheck_test/status/2100298548843872339",
+  "id": "2100298548843872339",
+  "text": "Length test A: this post is exactly 280 weighted characters and ends on a whole word. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps.",
+  "raw_text": {
+   "text": "Length test A: this post is exactly 280 weighted characters and ends on a whole word. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps.",
+   "display_text_range": [
+    0,
+    280
+   ],
+   "facets": []
+  },
+  "author": {
+   "screen_name": "Postcheck_test",
+   "url": "https://x.com/Postcheck_test",
+   "id": "2100294004965539840",
+   "name": "Postcheck",
+   "description": "",
+   "raw_description": {
+    "text": "",
+    "facets": []
+   },
+   "location": "",
+   "banner_url": "",
+   "avatar_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_200x200.png",
+   "joined": "Wed Sep 16 18:42:26 +0000 2026",
+   "protected": false,
+   "website": null,
+   "verification": {
+    "verified": true,
+    "verified_at": null,
+    "type": "individual"
+   },
+   "avatar_color": null
+  },
+  "created_at": "Wed Sep 16 18:59:30 +0000 2026",
+  "created_timestamp": 1789585170,
+  "is_note_tweet": false,
+  "community_note": null,
+  "lang": "en",
+  "replying_to": null,
+  "replying_to_status": null,
+  "source": "Twitter Web App",
+  "twitter_card": "tweet",
+  "color": null,
+  "provider": "twitter",
+  "reposted_by": null
+ }
+}
