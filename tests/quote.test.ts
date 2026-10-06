@@ -1,0 +1,171 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { AVATAR_CAP, PHOTO_CAP, lookupQuote, twimgUrl } from "../src/lib/server/fxtwitter";
+import { quoteTime, statusId } from "../src/lib/quote";
+import { GET } from "../src/app/api/quote/route";
+
+const fixtures = join(__dirname, "..", "fixtures");
+/** FxTwitter's answer for a quoted @postcheck_test post, recorded 2026-10-06 (counters dropped). */
+const fx = (id: string) => readFileSync(join(fixtures, "fx", `${id}.json`), "utf8");
+
+/** X's own JSON for the same post, rebuilt to the typed text (t.co expanded, media links dropped). */
+function typedText(id: string): string {
+  const f = JSON.parse(readFileSync(join(fixtures, "posts", `${id}.json`), "utf8")) as {
+    text: string;
+    entities?: { urls?: Array<{ expanded_url: string; indices: [number, number] }>; media?: Array<{ indices: [number, number] }> };
+  };
+  const cps = [...f.text];
+  const edits = [...(f.entities?.urls ?? []).map((u) => ({ i: u.indices, r: u.expanded_url })), ...(f.entities?.media ?? []).map((m) => ({ i: m.indices, r: "" }))].sort((a, b) => a.i[0] - b.i[0]);
+  let out = "";
+  let cur = 0;
+  for (const e of edits) {
+    out += cps.slice(cur, e.i[0]).join("") + e.r;
+    cur = e.i[1];
+  }
+  return (out + cps.slice(cur).join("")).trimEnd();
+}
+
+interface Call {
+  url: string;
+  init?: RequestInit;
+}
+
+/** A fetch that answers every request with `body`, recording what was asked. */
+function stubFetch(body: string, status = 200, type = "application/json") {
+  const calls: Call[] = [];
+  const fetch = (async (url: string, init?: RequestInit) => {
+    calls.push({ url: String(url), init });
+    return new Response(body, { status, headers: { "content-type": type } });
+  }) as typeof globalThis.fetch;
+  return { fetch, calls };
+}
+
+function stubImages() {
+  const asked: Array<{ url: string; cap: number }> = [];
+  const image = async (src: URL, _signal: AbortSignal, cap: number) => {
+    asked.push({ url: src.toString(), cap });
+    return "data:image/png;base64,AA==";
+  };
+  return { image, asked };
+}
+
+const signal = new AbortController().signal;
+
+test("the quoted text is the post as typed, for every recorded quote", async () => {
+  for (const id of ["2100298548843872339", "2100651092556333450", "2102784124830507151", "2102785196269731968"]) {
+    const { fetch, calls } = stubFetch(fx(id));
+    const r = await lookupQuote(id, signal, { fetch, image: stubImages().image });
+    assert.equal(r.status, "ok", id);
+    if (r.status !== "ok") continue;
+    assert.equal(r.quote.text, typedText(id), id);
+    assert.equal(r.quote.handle, "Postcheck_test");
+    assert.equal(r.quote.badge, "blue");
+    assert.equal(calls[0].url, `https://api.fxtwitter.com/status/${id}`);
+    // A redirect from the fixed host is refused, never followed.
+    assert.equal(calls[0].init?.redirect, "error");
+  }
+});
+
+test("a quoted photo and poll come through; images only from X's CDN, within their caps", async () => {
+  const photo = stubImages();
+  const r = await lookupQuote("2102784124830507151", signal, { fetch: stubFetch(fx("2102784124830507151")).fetch, image: photo.image });
+  assert.equal(r.status, "ok");
+  if (r.status === "ok") assert.deepEqual(r.quote.photo && [r.quote.photo.width, r.quote.photo.height], [1600, 900]);
+  assert.deepEqual(
+    photo.asked.map((a) => [new URL(a.url).hostname, new URL(a.url).searchParams.get("name"), a.cap]),
+    [
+      ["abs.twimg.com", null, AVATAR_CAP],
+      ["pbs.twimg.com", "medium", PHOTO_CAP],
+    ],
+  );
+  const poll = await lookupQuote("2102785196269731968", signal, { fetch: stubFetch(fx("2102785196269731968")).fetch, image: stubImages().image });
+  assert.equal(poll.status === "ok" && poll.quote.poll, true);
+});
+
+test("image URLs in FxTwitter's answer are never fetched off X's CDN", async () => {
+  for (const bad of ["https://169.254.169.254/latest/meta-data", "http://pbs.twimg.com/a.jpg", "https://pbs.twimg.com.evil.example/a.jpg", "https://eviltwimg.com/a.jpg", "https://ton.twimg.com/a.jpg", "https://user@pbs.twimg.com/a.jpg", "https://pbs.twimg.com:8443/a.jpg", "file:///etc/passwd"]) {
+    assert.equal(twimgUrl(bad), null, bad);
+    const answer = JSON.parse(fx("2102784124830507151"));
+    answer.tweet.author.avatar_url = bad;
+    answer.tweet.media.photos[0].url = bad;
+    const images = stubImages();
+    const r = await lookupQuote("2102784124830507151", signal, { fetch: stubFetch(JSON.stringify(answer)).fetch, image: images.image });
+    assert.equal(images.asked.length, 0, bad);
+    assert.equal(r.status === "ok" && r.quote.avatar === null && r.quote.photo === null, true, bad);
+  }
+});
+
+test("missing, protected and broken lookups are told apart", async () => {
+  const image = stubImages().image;
+  const status = async (body: string, code = 200, type?: string) => (await lookupQuote("2100298548843872339", signal, { fetch: stubFetch(body, code, type).fetch, image })).status;
+  assert.equal(await status('{"code":404,"message":"NOT_FOUND","tweet":null}', 404), "unavailable");
+  assert.equal(await status('{"code":401,"message":"PRIVATE_TWEET","tweet":null}', 401), "unavailable");
+  assert.equal(await status('{"code":200,"message":"OK","tweet":null}'), "unavailable");
+  // FxTwitter answers some unknown numbers with its HTML home page.
+  assert.equal(await status("<!DOCTYPE html><html></html>", 200, "text/html"), "error");
+  assert.equal(await status('{"code":500,"message":"API_FAIL"}', 500), "error");
+  // An answer about a different post than the one asked for is not shown.
+  assert.equal(await status(fx("2100651092556333450")), "error");
+  assert.equal(await status(" ".repeat(300 * 1024)), "error");
+  const throwing = (async () => {
+    throw new Error("network");
+  }) as unknown as typeof globalThis.fetch;
+  assert.equal((await lookupQuote("2100298548843872339", signal, { fetch: throwing, image })).status, "error");
+});
+
+test("an answer of an unexpected shape is a failed lookup or a missing field, never a crash", async () => {
+  const odd = JSON.parse(fx("2102784124830507151"));
+  odd.tweet.author.avatar_url = { url: "https://pbs.twimg.com/a.jpg" };
+  odd.tweet.media.photos = "none";
+  odd.tweet.created_at = 12;
+  const images = stubImages();
+  const r = await lookupQuote("2102784124830507151", signal, { fetch: stubFetch(JSON.stringify(odd)).fetch, image: images.image });
+  assert.equal(r.status, "ok");
+  if (r.status === "ok") assert.deepEqual([r.quote.avatar, r.quote.photo, r.quote.createdAt], [null, null, ""]);
+  assert.equal(images.asked.length, 0);
+  const throwing = async () => {
+    throw new Error("decode");
+  };
+  const failed = await lookupQuote("2102784124830507151", signal, { fetch: stubFetch(fx("2102784124830507151")).fetch, image: throwing });
+  assert.equal(failed.status, "error");
+});
+
+test("the route takes exactly one numeric id", async () => {
+  for (const q of ["", "?id=", "?id=abc", "?id=12x", `?id=${"1".repeat(21)}`, "?id=20&x=1", "?id=20&id=21", "?u=jack"]) {
+    const res = await GET(new Request(`https://postcheck.test/api/quote${q}`));
+    assert.equal(res.status, 400, q);
+  }
+});
+
+test("a status number is read only from a /status/ path", () => {
+  assert.equal(statusId("https://x.com/Postcheck_test/status/2100298548843872339"), "2100298548843872339");
+  assert.equal(statusId("https://twitter.com/jack/status/20?s=20"), "20");
+  assert.equal(statusId("https://x.com/i/web/status/20/photo/1"), "20");
+  assert.equal(statusId(`https://x.com/a/status/${"9".repeat(21)}`), null);
+  assert.equal(statusId("https://x.com/jack"), null);
+  assert.equal(statusId(undefined), null);
+});
+
+test("quote timestamps: seconds, minutes, hours, then date (web) or days (app)", () => {
+  const now = Date.parse("2026-10-06T12:00:00Z");
+  const at = (ms: number) => new Date(now - ms).toISOString();
+  const S = 1000, M = 60 * S, H = 60 * M, D = 24 * H;
+  for (const p of ["web", "app"] as const) {
+    assert.equal(quoteTime(at(59 * S), now, p), "59s");
+    assert.equal(quoteTime(at(60 * S), now, p), "1m");
+    assert.equal(quoteTime(at(59 * M), now, p), "59m");
+    assert.equal(quoteTime(at(23 * H + 59 * M), now, p), "23h");
+  }
+  const local = (iso: string) => new Date(iso);
+  const sep16 = "2026-09-16T12:00:00Z";
+  assert.equal(quoteTime(sep16, now, "web"), `Sep ${local(sep16).getDate()}`);
+  assert.equal(quoteTime(at(D), now, "app"), "1d");
+  assert.equal(quoteTime(at(7 * D - S), now, "app"), "6d");
+  const week = at(7 * D);
+  assert.equal(quoteTime(week, now, "app"), `${local(week).getMonth() + 1}/${local(week).getDate()}/26`);
+  const lastYear = "2025-09-16T12:00:00Z";
+  assert.equal(quoteTime(lastYear, now, "web"), `Sep ${local(lastYear).getDate()}, 2025`);
+  assert.equal(quoteTime("not a date", now, "web"), "");
+});

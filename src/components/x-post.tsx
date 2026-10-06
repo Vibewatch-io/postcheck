@@ -5,7 +5,8 @@ import type { Device } from "@/lib/devices";
 import type { XTheme } from "@/lib/theme";
 import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
-import { Entity, Token, type StyleRun } from "@/lib/entities";
+import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type StyleRun } from "@/lib/entities";
+import { quoteTime, type QuoteState } from "@/lib/quote";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
 import { BookmarkIcon, GoldVerifiedIcon, GrayVerifiedIcon, LikeIcon, MoreIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
@@ -38,7 +39,8 @@ interface Props {
   onShowMore?: () => void;
   hiddenUrlStart: number | null;
   card: CardData | "loading" | null;
-  quote: Entity | null;
+  /** The post link that becomes the quote embed, and what the lookup found. */
+  quote: { entity: Entity; state: QuoteState | null } | null;
   /** Attached image (data URL). A post with media never shows a link card. */
   media?: string | null;
   /** Premium bold / italic runs. */
@@ -80,10 +82,113 @@ function Actions({ theme, full }: { theme: XTheme; full: boolean }) {
   );
 }
 
-function QuoteStub({ entity, theme, width, font }: { entity: Entity; theme: XTheme; width: number; font: "web" | "app" }) {
+/** Name, check, @handle and time on one line, as the timeline cell and the quote embed print them. */
+function NameRow({ name, handle, badge, time, theme }: { name: string; handle: string; badge: Badge; time: string; theme: XTheme }) {
   return (
-    <div style={{ width, boxSizing: "border-box", border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: 12, fontFamily: fontStack(font), fontSize: 15, lineHeight: "20px", color: theme.secondary }}>
-      {entity.isArticle ? "Article on X" : "Quote post"} · {entity.display}
+    <div style={{ display: "flex", alignItems: "center", minWidth: 0, color: theme.secondary, whiteSpace: "nowrap" }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+        <span style={{ color: theme.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+        <BadgeIcon badge={badge} theme={theme} />
+      </span>
+      <span style={{ marginLeft: 8, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>@{handle}</span>
+      <span style={{ padding: "0 4px" }}>·</span>
+      <span>{time}</span>
+    </div>
+  );
+}
+
+/**
+ * Quote embed geometry (QUIRKS.md, "Quote embeds").
+ * Web, measured on x.com 2026-10-06 (fixtures/web/postcheck_test.json `quote` boxes): the body
+ * column wide (518 timeline, 566 post page), radius 16, 12px inset inside a 1px border, 24px
+ * avatar, text 4px under it at 15/20, links in the text colour, 5-line clamp (x.com's
+ * -webkit-line-clamp).
+ * iOS timeline, from iPhone 15 Pro captures of tests 42 and 43 at 393pt: 322pt wide (screen − 71:
+ * it starts at the text column and runs 6pt past its right edge), radius 12 (fit to the capture),
+ * 20pt avatar, text 6pt under it with a 19pt line pitch, links blue, 5 lines then "…".
+ * The iOS post screen and Android have no capture: assumed iOS-like and web-like respectively.
+ */
+function quoteLook(device: Device) {
+  if (device.kind === "phone" && device.platform === "ios") {
+    const width = device.view === "post" ? device.textWidth : device.width - 71;
+    // One landscape sample (test 44): a 1600×900 photo shows 321×171, cropped wider than 16:9.
+    return { width, radius: 12, avatar: 20, textGap: 6, lineHeight: 19, appLinks: true, photoRatio: 171 / 321 };
+  }
+  return { width: device.textWidth, radius: 16, avatar: 24, textGap: 4, lineHeight: 20, appLinks: false, photoRatio: null };
+}
+
+/**
+ * The post a link points at, drawn the way X embeds it. While the lookup runs it holds a
+ * one-line box; a post X can't show gets its "unavailable" box, and a failed lookup falls
+ * back to naming the link.
+ */
+function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: QuoteState | null; device: Device; theme: XTheme }) {
+  const look = quoteLook(device);
+  const frame: React.CSSProperties = {
+    width: look.width,
+    boxSizing: "border-box",
+    border: `1px solid ${theme.cardBorder}`,
+    borderRadius: look.radius,
+    overflow: "hidden",
+    fontFamily: fontStack(device.font),
+    fontSize: 15,
+    lineHeight: "20px",
+  };
+  if (state === null || state === "loading" || state.status !== "ok") {
+    const unavailable = state !== null && state !== "loading" && state.status === "unavailable";
+    const label = state === "loading" ? "Loading post…" : unavailable ? "This post is unavailable." : `Quote post · ${entity.display}`;
+    return (
+      <div data-quote="" style={{ ...frame, padding: 12, color: theme.secondary, backgroundColor: unavailable ? theme.cardBg : undefined }}>
+        {label}
+      </div>
+    );
+  }
+
+  const q = state.quote;
+  const entities = extractEntities(q.text);
+  // A quoted post that ends in a post link is itself a quote: hide that link as the timeline does (assumed).
+  const nested = quoteUrl(entities);
+  const hiddenUrlStart = nested && isTrailing(q.text, nested) ? nested.start : null;
+  const tokens = tokenize(q.text, entities, []);
+  const hasText = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrlStart));
+  const photoWidth = look.width - 2;
+  // Web: the photo's own shape (16:9 measured); no taller than 4:5 is assumed (QUIRKS.md).
+  const photoHeight = q.photo ? Math.round(photoWidth * (look.photoRatio ?? Math.min(q.photo.height / q.photo.width, 1.25))) : 0;
+  return (
+    <div data-quote="" style={frame}>
+      <div style={{ padding: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, height: look.avatar }}>
+          <Avatar src={q.avatar} size={look.avatar} square={q.badge === "gold" || q.badge === "gray"} />
+          <NameRow name={q.name} handle={q.handle} badge={q.badge} time={quoteTime(q.createdAt, state.at, device.kind === "phone" ? "app" : "web")} theme={theme} />
+        </div>
+        {hasText && (
+          <div style={{ marginTop: look.textGap }}>
+            <PostBody
+              tokens={tokens}
+              showMoreAt={-1}
+              hiddenUrlStart={hiddenUrlStart}
+              theme={theme}
+              fontSize={15}
+              lineHeight={look.lineHeight}
+              width={look.width - 26}
+              font={device.font}
+              pane={device.pane}
+              linkColor={look.appLinks ? theme.link : theme.text}
+              maxLines={5}
+            />
+          </div>
+        )}
+        {/* A quoted poll isn't drawn (tests 96, 54). */}
+        {q.poll && (
+          <div data-quote-poll="" style={{ marginTop: 4, color: theme.link }}>
+            Show this poll
+          </div>
+        )}
+      </div>
+      {q.photo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img data-quote-photo="" src={q.photo.src} alt="" style={{ display: "block", width: photoWidth, height: photoHeight, objectFit: "cover", marginTop: 4 }} />
+      )}
     </div>
   );
 }
@@ -107,7 +212,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, h
     // eslint-disable-next-line @next/next/no-img-element
     <img src={media} alt="" style={{ width: bodyWidth, display: "block", borderRadius: 16, border: `1px solid ${theme.cardBorder}`, boxSizing: "border-box", maxHeight: bodyWidth * 1.25, objectFit: "cover" }} />
   ) : quote ? (
-    <QuoteStub entity={quote} theme={theme} width={bodyWidth} font={device.font} />
+    <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
     <LinkCard card={card} theme={theme} width={bodyWidth} viewport={viewport} font={device.font} />
   ) : null;
@@ -181,15 +286,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, h
         <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", minWidth: 0, color: theme.secondary, whiteSpace: "nowrap" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
-                <span style={{ color: theme.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
-                <BadgeIcon badge={identity.badge} theme={theme} />
-              </span>
-              <span style={{ marginLeft: 8, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>@{handle}</span>
-              <span style={{ padding: "0 4px" }}>·</span>
-              <span>1h</span>
-            </div>
+            <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} />
             <div style={{ color: theme.icon, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", margin: "-6px -8px 0 0", flexShrink: 0 }}>
               <MoreIcon size={16} />
             </div>

@@ -1,0 +1,78 @@
+{
+ "code": 200,
+ "message": "OK",
+ "tweet": {
+  "url": "https://x.com/Postcheck_test/status/2102785196269731968",
+  "id": "2102785196269731968",
+  "text": "Test 57: poll with four options",
+  "raw_text": {
+   "text": "Test 57: poll with four options",
+   "display_text_range": [
+    0,
+    31
+   ],
+   "facets": []
+  },
+  "author": {
+   "screen_name": "Postcheck_test",
+   "url": "https://x.com/Postcheck_test",
+   "id": "2100294004965539840",
+   "name": "Postcheck",
+   "description": "",
+   "raw_description": {
+    "text": "",
+    "facets": []
+   },
+   "location": "",
+   "banner_url": "",
+   "avatar_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_200x200.png",
+   "joined": "Wed Sep 16 18:42:26 +0000 2026",
+   "protected": false,
+   "website": null,
+   "verification": {
+    "verified": true,
+    "verified_at": null,
+    "type": "individual"
+   },
+   "avatar_color": null
+  },
+  "created_at": "Wed Sep 23 15:40:33 +0000 2026",
+  "created_timestamp": 1790178033,
+  "is_note_tweet": false,
+  "community_note": null,
+  "lang": "en",
+  "replying_to": null,
+  "replying_to_status": null,
+  "poll": {
+   "ends_at": "2026-09-24T15:40:33Z",
+   "time_left_en": "Final results",
+   "total_votes": 0,
+   "choices": [
+    {
+     "label": "One",
+     "count": 0,
+     "percentage": 0
+    },
+    {
+     "label": "Two",
+     "count": 0,
+     "percentage": 0
+    },
+    {
+     "label": "Three",
+     "count": 0,
+     "percentage": 0
+    },
+    {
+     "label": "Four",
+     "count": 0,
+     "percentage": 0
+    }
+   ]
+  },
+  "twitter_card": "tweet",
+  "color": null,
+  "provider": "twitter",
+  "reposted_by": null
+ }
+}

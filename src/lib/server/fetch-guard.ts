@@ -98,16 +98,16 @@ export async function guardedFetch(start: URL, accept: string, signal: AbortSign
   throw new Error("too many redirects");
 }
 
-/** Fetches an image and returns it as a data URL, or null on any failure. */
-export async function fetchImageAsDataUrl(src: URL, signal: AbortSignal): Promise<string | null> {
+/** Fetches an image and returns it as a data URL, or null on any failure or past `cap` bytes. */
+export async function fetchImageAsDataUrl(src: URL, signal: AbortSignal, cap = IMAGE_CAP): Promise<string | null> {
   try {
     const { res } = await guardedFetch(src, "image/*", signal);
     const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
     if (!res.ok || !/^image\/(png|jpeg|jpg|webp|gif|avif)$/.test(type)) return null;
     const declared = Number(res.headers.get("content-length") || 0);
-    if (declared > IMAGE_CAP) return null;
-    const bytes = await readCapped(res, IMAGE_CAP + 1);
-    if (bytes.byteLength > IMAGE_CAP) return null;
+    if (declared > cap) return null;
+    const bytes = await readCapped(res, cap + 1);
+    if (bytes.byteLength > cap) return null;
     return `data:${type};base64,${Buffer.from(bytes).toString("base64")}`;
   } catch {
     return null;

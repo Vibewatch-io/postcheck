@@ -22,11 +22,9 @@ if (login) {
 
 const EXTRACT = `(() => {
   const out = [];
-  for (const art of document.querySelectorAll('article[data-testid=tweet]')) {
-    const link = [...art.querySelectorAll('a[href*="/status/"]')].find((a) => a.querySelector('time'));
-    const id = link?.href.match(/status\\/(\\d+)/)?.[1]; if (!id) continue;
-    const tt = art.querySelector('[data-testid=tweetText]'); const rows = {}; let lh = 20;
-    if (tt) { const top = tt.getBoundingClientRect().top; const walker = document.createTreeWalker(tt, NodeFilter.SHOW_TEXT); let n, first = true;
+  /* Which words share a line in one tweetText block. */
+  const rowsOf = (tt) => { const rows = {}; let lh = 20;
+    { const top = tt.getBoundingClientRect().top; const walker = document.createTreeWalker(tt, NodeFilter.SHOW_TEXT); let n, first = true;
       while ((n = walker.nextNode())) { if (n.parentElement.closest('[aria-hidden="true"]') && !n.parentElement.getBoundingClientRect().width) continue; /* X hides a link's scheme and cut path in zero-width spans; the visible … after a cut path is aria-hidden too, so test the width */ const s = n.nodeValue; const re = /\\S+/g; let m;
         while ((m = re.exec(s))) { const r = document.createRange(); r.setStart(n, m.index); r.setEnd(n, m.index + m[0].length); const rects = r.getClientRects(); if (!rects.length) continue;
           if (first) { lh = Math.max(rects[0].height, 16); first = false; }
@@ -35,6 +33,18 @@ const EXTRACT = `(() => {
           let curK = null; for (let c = m.index; c < m.index + m[0].length; c++) { const cr = document.createRange(); cr.setStart(n, c); cr.setEnd(n, c + 1); const cc = cr.getClientRects(); if (!cc.length) continue;
             const k = Math.round((cc[0].top - top) / lh); rows[k] = rows[k] || []; if (k === curK) rows[k][rows[k].length - 1] += s[c]; else { rows[k].push(s[c]); curK = k; } } } }
       for (const img of tt.querySelectorAll('img[alt]')) { const k = Math.round((img.getBoundingClientRect().top - top) / lh); (rows[k] = rows[k] || []).push(img.alt); } }
+    return { lines: Object.keys(rows).sort((a, b) => a - b).map((k) => rows[k].join(' ')), rowCount: Math.round(tt.getBoundingClientRect().height / lh) }; };
+  /* A quote embed is a role=link block holding its own User-Name (x.com sets no testid on it, 2026-10-06): its lines, and boxes [x, y, w, h] relative to it. */
+  const quoteOf = (art) => { const q = [...art.querySelectorAll('div[role=link]')].find((e) => e.querySelector('[data-testid=User-Name]')); if (!q) return false; const b = q.getBoundingClientRect();
+    const rel = (e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
+    const qt = q.querySelector('[data-testid=tweetText]'); const av = q.querySelector('[data-testid=Tweet-User-Avatar]'); const ph = q.querySelector('[data-testid=tweetPhoto]'); const poll = [...q.querySelectorAll('span')].find((s) => !s.children.length && s.textContent.trim() === 'Show this poll');
+    return { lines: qt ? rowsOf(qt).lines : [], box: [Math.round(b.width), Math.round(b.height)], avatar: av ? rel(av) : null, text: qt ? rel(qt) : null, ...(ph ? { photo: rel(ph) } : {}), ...(poll ? { poll: rel(poll) } : {}) }; };
+  for (const art of document.querySelectorAll('article[data-testid=tweet]')) {
+    const link = [...art.querySelectorAll('a[href*="/status/"]')].find((a) => a.querySelector('time') && !a.closest('div[role=link]'));
+    const id = link?.href.match(/status\\/(\\d+)/)?.[1]; if (!id) continue;
+    /* The post's own text, never the quoted post's. */
+    const tt = [...art.querySelectorAll('[data-testid=tweetText]')].find((e) => !e.closest('div[role=link]'));
+    const own = tt ? rowsOf(tt) : { lines: [], rowCount: 0 };
     const more = art.querySelector('[data-testid=tweet-text-show-more-link]'); const card = art.querySelector('[data-testid="card.wrapper"]');
     /* Media boxes relative to the first one: [x, y, w, h, badge]. Several items sit in a ScrollSnap row that scrolls sideways (no 2x2 grid since 2026-09); a video's countdown is recorded as 'time'. */
     const ph = [...art.querySelectorAll('[data-testid=tweetPhoto]')].filter((e) => !e.closest('div[role=link]')); const o = ph[0]?.getBoundingClientRect();
@@ -42,9 +52,9 @@ const EXTRACT = `(() => {
       alt: [...art.querySelectorAll('span')].filter((s) => !s.children.length && s.textContent.trim() === 'ALT' && !s.closest('div[role=link]')).length } : null;
     const pollText = card && /\\bvotes?\\b/.test(card.innerText) ? card.innerText.split('\\n') : null; const cr = card?.getBoundingClientRect();
     const poll = pollText ? { choices: pollText.filter((_, i) => pollText[i + 1]?.endsWith('%')), images: card.querySelectorAll('img').length, size: [Math.round(cr.width), Math.round(cr.height)] } : null;
-    out.push({ id, lines: Object.keys(rows).sort((a, b) => a - b).map((k) => rows[k].join(' ')), rowCount: tt ? Math.round(tt.getBoundingClientRect().height / lh) : 0, showMore: !!more,
+    out.push({ id, lines: own.lines, rowCount: own.rowCount, showMore: !!more,
       card: card ? (card.querySelector('[data-testid="card.layoutLarge.media"]') ? 'large' : card.querySelector('[data-testid="card.layoutSmall.media"]') ? 'small' : 'other') : null,
-      photo: !!art.querySelector('[data-testid=tweetPhoto]'), video: !!art.querySelector('[data-testid=videoPlayer]'), quote: !!art.querySelector('div[role=link] [data-testid=tweetText]') /* a quote embed is a role=link block with its own tweetText; x.com sets no testid on it (2026-09-17) */,
+      photo: ph.length > 0, video: !!art.querySelector('[data-testid=videoPlayer]'), quote: quoteOf(art),
       ...(media ? { media } : {}), ...(poll ? { poll } : {}) });
   }
   return out;

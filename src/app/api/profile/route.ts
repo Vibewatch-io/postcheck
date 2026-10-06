@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cacheHeaders, fetchImageAsDataUrl } from "@/lib/server/fetch-guard";
+import { AVATAR_CAP, FX_API, avatarSrc, badgeFor, twimgUrl, type FxUser } from "@/lib/server/fxtwitter";
 
 /**
  * Looks up an X account's name, avatar and verified badge by username through
@@ -16,19 +17,6 @@ export interface Profile {
   badge: "none" | "blue" | "gold" | "gray";
 }
 
-/** FxTwitter's verification type → X's badge color. */
-function badgeFor(v: FxUser["verification"]): Profile["badge"] {
-  if (!v?.verified) return "none";
-  return v.type === "organization" ? "gold" : v.type === "government" ? "gray" : "blue";
-}
-
-interface FxUser {
-  name?: string;
-  screen_name?: string;
-  avatar_url?: string;
-  verification?: { verified?: boolean; type?: string };
-}
-
 export async function GET(request: Request) {
   const raw = (new URL(request.url).searchParams.get("u") || "").trim();
   const handle = raw.match(/^(?:https?:\/\/(?:www\.)?(?:x|twitter)\.com\/)?@?([A-Za-z0-9_]{1,15})\/?$/)?.[1];
@@ -37,14 +25,16 @@ export async function GET(request: Request) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch(`https://api.fxtwitter.com/${handle}`, { signal: controller.signal, headers: { accept: "application/json" } });
+    // ssrf-exempt: constant-host (FX_API; only the validated handle is appended)
+    const res = await fetch(`${FX_API}/${handle}`, { signal: controller.signal, redirect: "error", headers: { accept: "application/json" } });
     const j = (await res.json().catch(() => null)) as { user?: FxUser } | null;
     const u = j?.user;
     if (!u?.screen_name) {
       const missing = res.ok || res.status === 404;
       return NextResponse.json({ error: missing ? `No account @${handle}` : "Lookup failed. Enter the details by hand." }, { status: missing ? 404 : 502 });
     }
-    const avatar = u.avatar_url ? await fetchImageAsDataUrl(new URL(u.avatar_url.replace("_normal", "_200x200")), controller.signal) : null;
+    const avatarUrl = twimgUrl(avatarSrc(u));
+    const avatar = avatarUrl ? await fetchImageAsDataUrl(avatarUrl, controller.signal, AVATAR_CAP) : null;
     const profile: Profile = { name: u.name ?? "", handle: u.screen_name, avatar, badge: badgeFor(u.verification) };
     return NextResponse.json({ profile }, { headers: cacheHeaders(3600) });
   } catch {

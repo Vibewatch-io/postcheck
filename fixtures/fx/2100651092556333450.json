@@ -1,0 +1,75 @@
+{
+ "code": 200,
+ "message": "OK",
+ "tweet": {
+  "url": "https://x.com/Postcheck_test/status/2100651092556333450",
+  "id": "2100651092556333450",
+  "text": "Large card, link at the end https://github.com/vercel/next.js",
+  "raw_text": {
+   "text": "Large card, link at the end https://t.co/kGfVUwtxwc",
+   "display_text_range": [
+    0,
+    51
+   ],
+   "facets": [
+    {
+     "type": "url",
+     "indices": [
+      28,
+      51
+     ],
+     "original": "https://t.co/kGfVUwtxwc",
+     "replacement": "https://github.com/vercel/next.js",
+     "display": "github.com/vercel/next.js"
+    }
+   ]
+  },
+  "author": {
+   "screen_name": "Postcheck_test",
+   "url": "https://x.com/Postcheck_test",
+   "id": "2100294004965539840",
+   "name": "Postcheck",
+   "description": "",
+   "raw_description": {
+    "text": "",
+    "facets": []
+   },
+   "location": "",
+   "banner_url": "",
+   "avatar_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_200x200.png",
+   "joined": "Wed Sep 16 18:42:26 +0000 2026",
+   "protected": false,
+   "website": null,
+   "verification": {
+    "verified": true,
+    "verified_at": null,
+    "type": "individual"
+   },
+   "avatar_color": null
+  },
+  "created_at": "Thu Sep 17 18:20:23 +0000 2026",
+  "created_timestamp": 1789669223,
+  "possibly_sensitive": false,
+  "is_note_tweet": false,
+  "community_note": null,
+  "lang": "en",
+  "replying_to": null,
+  "replying_to_status": null,
+  "source": "Twitter Web App",
+  "card": {
+   "url": "https://github.com/vercel/next.js",
+   "title": "GitHub - vercel/next.js: The React Framework",
+   "description": "The React Framework. Contribute to vercel/next.js development by creating an account on GitHub.",
+   "domain": "github.com",
+   "image": {
+    "width": 800,
+    "height": 419,
+    "url": "https://pbs.twimg.com/card_img/2104278833415233536/WtVeB6di?format=jpg&name=800x419"
+   }
+  },
+  "twitter_card": "tweet",
+  "color": null,
+  "provider": "twitter",
+  "reposted_by": null
+ }
+}

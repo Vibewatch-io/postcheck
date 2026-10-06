@@ -56,13 +56,14 @@ Line breaks are measured, not estimated: every word is wrapped in a span, the bo
 
 ## Privacy
 
-The post you type stays in your browser unless you share it. Three things do leave it:
+The post you type stays in your browser unless you share it. Four things do leave it:
 
 - **Links** in your post go to `/api/unfurl` on the server so it can fetch the page's Open Graph tags for the card preview. The server fetches the page, not your browser.
+- **A link to an X post** sends only that post's number to `/api/quote`, which asks FxTwitter's public API for the post (author, text, date, photo) and fetches its avatar and first photo from X's image servers (`pbs.twimg.com`, `abs.twimg.com`), so the preview can draw the quote embed. The server makes those requests, not your browser; the rest of the link isn't sent.
 - **A username** you look up goes to `/api/profile`, which asks FxTwitter's public API (`api.fxtwitter.com`) for the name, avatar and badge.
 - **Font requests** go to X's CDN (`abs.twimg.com`), because the previews render in Chirp loaded exactly the way x.com loads it. X sees the same request it would see from any page that embeds a post.
 
-**Share** copies a link that holds the preview itself: the text, its styling, the name, handle and check, the device and theme, and JPEG copies of your photo and attached image shrunk in the browser (the image steps down in size until the link fits under 38,000 characters, or is left out). It is all compressed into the part of the link after `#`, which browsers never send to a server, so nothing is uploaded or stored and there is nothing for us to delete. Anyone who has the link can see the preview. Opening a shared post that contains a link fetches its card through `/api/unfurl`, the same as typing it would.
+**Share** copies a link that holds the preview itself: the text, its styling, the name, handle and check, the device and theme, and JPEG copies of your photo and attached image shrunk in the browser (the image steps down in size until the link fits under 38,000 characters, or is left out). It is all compressed into the part of the link after `#`, which browsers never send to a server, so nothing is uploaded or stored and there is nothing for us to delete. Anyone who has the link can see the preview. Opening a shared post that contains a link fetches its card through `/api/unfurl`, or its quoted post through `/api/quote`, the same as typing it would.
 
 The only analytics is Vercel Web Analytics, a cookieless page-view counter with no cross-site tracking. It is there because the fallback font's licence requires a monthly unique-visitor count (see Fonts), and it does nothing outside Vercel. It records the page address without the `#` part, so a share link's contents never reach it.
 
@@ -76,9 +77,9 @@ Previews render in Chirp from X's CDN, never bundled. If that fails, the page de
 
 The UI chrome uses Geist (Vercel, SIL Open Font License; text in `src/app/GeistVF.LICENSE.txt`) and Syne, both self-hosted by Next.js at build time. No font request goes to Google.
 
-## Card and profile lookups
+## Card, quote and profile lookups
 
-`/api/unfurl` accepts http(s) only, resolves the host and refuses private, loopback and link-local addresses on every redirect hop, caps the HTML at 2MB and the image at 2MB, times out at 6s, and inlines the image as a data URL so the PNG export can draw it. `/api/profile` proxies FxTwitter and inlines the avatar the same way. Both are public endpoints once deployed, so put a rate limit in front of them (see Deploying).
+`/api/unfurl` accepts http(s) only, resolves the host and refuses private, loopback and link-local addresses on every redirect hop, caps the HTML at 2MB and the image at 2MB, times out at 6s, and inlines the image as a data URL so the PNG export can draw it. `/api/quote` takes nothing but a status number of 1–20 digits (any other parameter is refused), asks FxTwitter at a fixed address with redirects refused, reads at most 256KB of its answer, and inlines the avatar (up to 256KB) and the first photo in X's medium size (up to 1MB) only when they come from X's image servers over https. `/api/profile` asks FxTwitter for an account the same way (fixed address, redirects refused) and inlines the avatar under the same image-server rule. All three are public endpoints once deployed, so put a rate limit in front of them (see Deploying).
 
 ## Run it
 
@@ -95,7 +96,7 @@ Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
 
 - `NEXT_PUBLIC_SITE_URL` if the site lives somewhere other than `postcheck.vibewatch.io`, so Open Graph URLs resolve.
 - A linked **private Vercel Blob store** holding `GT-America-Standard-Regular.woff2` and `GT-America-Standard-Bold.woff2` at its root (or under the folder named by `FONT_BLOB_PREFIX`), only if you hold your own GT America web licence. Without it the fallback is the system font, which is fine.
-- **Rate limits** on `/api/unfurl` and `/api/profile` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
+- **Rate limits** on `/api/unfurl`, `/api/quote` and `/api/profile` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
 
 ## Working on it
 

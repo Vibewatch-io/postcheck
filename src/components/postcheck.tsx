@@ -16,6 +16,7 @@ import { SearchIcon } from "./icons";
 import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
+import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
 
 const SAMPLE =
   "@jack we've seen a lot of bad posts. The hook goes first so it survives the 280 cut, the link goes last so only the card shows, and nobody leaves one lonely word dangling on the last line.\n\nhttps://vibewatch.io";
@@ -53,6 +54,9 @@ export function Postcheck() {
     return () => mq.removeEventListener("change", apply);
   }, [themeChosen]);
   const [cards, setCards] = useState<Record<string, CardState>>({});
+  // Quote lookups by status number. A found or missing post is kept for the session; a failed
+  // lookup is dropped so the next time that link is needed it is asked for again.
+  const [quotes, setQuotes] = useState<Record<string, QuoteState>>({});
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
@@ -166,6 +170,9 @@ export function Postcheck() {
   // A link to a post becomes a quote wherever it sits, and a quote beats a link card (@postcheck_test
   // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46).
   const quote = !media ? quoteUrl(entities) ?? null : null;
+  const quoteId = quote ? statusId(quote.href) : null;
+  // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
+  const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
   const cardKey = cardEntity && !cardEntity.isStatus && !media ? cardEntity.href! : null;
   const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
@@ -218,6 +225,7 @@ export function Postcheck() {
     [clampFor, cut280, post, entities, styleCuts, expanded],
   );
   const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: true })), []);
+  const quoteProp = useMemo(() => (quote ? { entity: quote, state: quoteState } : null), [quote, quoteState]);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
   const phoneClamp = clampFor(phoneDevice);
@@ -244,6 +252,37 @@ export function Postcheck() {
       ctrl.abort();
     };
   }, [cardKey]);
+
+  // Look up the quoted post, debounced like the card. Each answer lands under its own status
+  // number, so a slow answer for a link that has since changed can't overwrite the current one.
+  const quotesAsked = useRef(new Set<string>());
+  useEffect(() => {
+    if (!quoteId || quotesAsked.current.has(quoteId)) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      quotesAsked.current.add(quoteId);
+      // A retry after a failed lookup shows as loading again.
+      setQuotes((q) => ({ ...q, [quoteId]: "loading" }));
+      let result: QuoteResult;
+      try {
+        const res = await fetch(`/api/quote?id=${quoteId}`, { signal: ctrl.signal });
+        result = res.ok ? ((await res.json()) as QuoteResult) : { status: "error" };
+      } catch {
+        // Typing past the link aborts its lookup: forget it was asked, so coming back asks again.
+        if (ctrl.signal.aborted) {
+          quotesAsked.current.delete(quoteId);
+          return;
+        }
+        result = { status: "error" };
+      }
+      if (result.status === "error") quotesAsked.current.delete(quoteId);
+      setQuotes((q) => ({ ...q, [quoteId]: { ...result, at: Date.now() } }));
+    }, 600);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [quoteId]);
 
   const advice: Advice[] = useMemo(
     () =>
@@ -490,12 +529,12 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
           </div>
         }
         app={(maxHeight) => (
           <PhoneFrame device={phoneDevice} theme={theme} maxHeight={maxHeight}>
-            <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quote} media={media} styles={styles} />
+            <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
           </PhoneFrame>
         )}
       />
