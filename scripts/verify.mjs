@@ -130,6 +130,18 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   let bad = null;
   for (let i = 0; i < Math.max(exp.length, act.length); i++) if (exp[i] !== act[i]) { bad = i; break; }
   if (bad === null && expMore === gotMore) { pass++; console.log(`  ok   ${label} ${id}${knownGap ? "  (marked gap now passes: drop the gap)" : ""}`); return; }
+  // A fixture can name a feature the tool doesn't model yet (a poll, a card X withholds for an
+  // unknown reason) and pin what the tool draws meanwhile (`gapTool`): reported as a gap on every
+  // run, and as a failure if anything else about the post changes. Checked before the edge
+  // tolerance so a drifting gap post can't pass as a font coin flip.
+  if (knownGap) {
+    const pinned = Array.isArray(gapTool) && gapTool.map(norm).join("\n") === act.join("\n") && expMore === gotMore;
+    if (pinned) { gap++; console.log(`  gap  ${label} ${id}  (${knownGap})`); }
+    else { fail++; console.log(`  FAIL ${label} ${id}  (marked gap, but the tool no longer draws its pinned gapTool lines)`); }
+    if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
+    if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
+    return;
+  }
   // A line that differs by one word right at the body edge is a font-metrics coin flip, not a rule error.
   let edgeNote = null;
   if (bad !== null && exp[bad] && act[bad]) {
@@ -141,10 +153,6 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
     else if (expMore && bad === exp.length - 1 && longer.startsWith(shorter) && longer.length - shorter.length <= 2) edgeNote = `fold cut ${longer.length - shorter.length} char(s) off`;
   }
   if (edgeNote) { edge++; console.log(`  edge ${label} ${id}  (${edgeNote})`); }
-  // A fixture can name a feature the tool doesn't model yet (a poll, a card X withholds for an
-  // unknown reason) and pin what the tool draws meanwhile (`gapTool`): reported as a gap on every
-  // run, and as a failure if anything else about the post changes.
-  else if (knownGap && Array.isArray(gapTool) && gapTool.map(norm).join("\n") === act.join("\n") && expMore === gotMore) { gap++; console.log(`  gap  ${label} ${id}  (${knownGap})`); }
   else { fail++; console.log(`  FAIL ${label} ${id}`); }
   if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
