@@ -26,5 +26,6 @@ REVIEW.md
 # compiled helpers (built from the .swift sources next to them)
 scripts/phone/tap
 scripts/phone/*.png
+scripts/android/*.png
 scripts/ios/layout
 scripts/ios/measure

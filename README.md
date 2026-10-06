@@ -37,7 +37,7 @@ Everything below was read off x.com in September 2026.
 What was inferred rather than read off a DOM, and how it was checked:
 
 - **Phone layout**: 12px inset, 44px avatar, 8px gap, body at 15px/20px in a column of screen width minus 77, with X's −0.2pt tracking. Derived with CoreText and the app's own font files, then checked against captures of real posts on an iPhone 15 Pro (`scripts/ios/README.md`).
-- **App line fold**: the app folds a post behind Show more past 9 rendered lines, even under 280 characters and even for long posts (it ignores the web's 280 cut).
+- **App line fold**: the iOS app folds a post behind Show more past 9 rendered lines, even under 280 characters and even for long posts (it ignores the web's 280 cut). The Android app has no line fold: it cuts at 280 exactly like the web.
 - **Post page**: 17px/24px on web (566px) and in the app (screen width minus 32); never folds.
 - **Italic**: a slant on the web, upright bold in the iOS app.
 
@@ -110,7 +110,7 @@ npm run capture:web              # re-capture x.com timeline cells (--login once
 node scripts/fetch-fixture.mjs   # refresh X's entities and display ranges for the corpus
 ```
 
-Where truth lives: `fixtures/corpus.json` and `fixtures/CORPUS.md` (the canonical posts), `fixtures/TEST-POSTS.md` (the edge-case posts on @postcheck_test, one rule per post), `fixtures/web` (x.com DOM captures), `fixtures/app` (iPhone captures), `fixtures/posts` (X's per-post data), `scripts/ios` (CoreText oracle, needs the app fonts locally), `scripts/phone` (iPhone Mirroring capture), and `QUIRKS.md` (every rule and its evidence; update it in the same commit as a rule change).
+Where truth lives: `fixtures/corpus.json` and `fixtures/CORPUS.md` (the canonical posts), `fixtures/TEST-POSTS.md` (the edge-case posts on @postcheck_test, one rule per post), `fixtures/web` (x.com DOM captures), `fixtures/app` (iPhone and Android captures), `fixtures/posts` (X's per-post data), `scripts/ios` (CoreText oracle, needs the app fonts locally), `scripts/phone` (iPhone Mirroring capture), `scripts/android` (Android app capture over adb), and `QUIRKS.md` (every rule and its evidence; update it in the same commit as a rule change).
 
 The capture rigs run against your own logged-in X session, on your own machine, and only read. They never post, like, repost, reply or follow, and the code stays that way. Automating a browser against x.com is something you do under X's terms, at your own risk.
 

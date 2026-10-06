@@ -173,12 +173,12 @@ export function Postcheck() {
   const attachmentEntity = quote ?? cardEntity;
   const hiddenUrlStart = attachmentEntity && hasAttachment && isTrailing(post, attachmentEntity) ? attachmentEntity.start : null;
 
-  // Probe text: the whole post, measured at every device width (the app folds by
+  // Probe text: the whole post, measured at every device width (the iOS app folds by
   // rendered lines regardless of the 280 cut, so line 9 may lie past it).
   const probeTokens = useMemo(() => tokenize(post, entities, styleCuts), [post, entities, styleCuts]);
   const showMore280 = cut280 < post.length;
 
-  // The app additionally folds long-by-lines posts (see devices.ts APP_MAX_LINES).
+  // The iOS app additionally folds long-by-lines posts (see devices.ts APP_MAX_LINES).
   const clampFor = useCallback(
     (d: Device) => {
       if (!d.maxLines) return null;
@@ -201,10 +201,11 @@ export function Postcheck() {
       // So does a timeline post once its Show more has been clicked.
       if (d.kind === "focal" || d.view === "post" || expanded[d.id]) return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
       const clamp = clampFor(d);
-      // The app folds by rendered lines only: a long post shows its first 9 lines, not X's 280 cut
+      // The iOS app folds by rendered lines only: a long post shows its first 9 lines, not X's 280 cut
       // (Write/status/1646674962055565319 on an iPhone 15 Pro). Under 10 lines it shows everything it has.
       // A long post under 10 lines shows whole, with no Show more (@postcheck_test tests 05, 06, 08 on an iPhone 15 Pro).
-      if (d.kind === "phone") {
+      // The Android app cuts at 280 exactly like the web and never folds by lines (tests 05–08, 11–13 on Android 12).
+      if (d.kind === "phone" && d.platform === "ios") {
         const cut = clamp ? clamp.cut : post.length;
         const ents = entities.filter((e) => e.end <= cut);
         return { tokens: tokenize(post.slice(0, cut), ents, styleCuts), showMore: Boolean(clamp), cut };

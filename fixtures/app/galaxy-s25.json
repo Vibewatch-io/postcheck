@@ -1,0 +1,126 @@
+{
+ "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 480 so the app lays out at 360x679 dp (scripts/android/README.md); @Postcheck_test search-result cells (test 12 also on the profile timeline, identical), captured 2026-10-05. Lines transcribed from captures; the last line of a showMore post is the line before the token. The 280 cut matches x.com's to the character on tests 05-08 (the text node reads the visible text plus \" Show more\").",
+ "device": "galaxy-s25",
+ "platform": "android",
+ "posts": [
+  {
+   "id": "2100299215364931868",
+   "lines": [
+    "Long test 05: the word before Show more",
+    "ends exactly on character 280. the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2100299387255902230",
+   "lines": [
+    "Long test 06: character 280 falls in the",
+    "middle of a long word here. the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2100650875857629266",
+   "lines": [
+    "Long test 07: a link starts before character",
+    "280 and ends after it. the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2100299521561706589",
+   "lines": [
+    "Long test 08: an emoji starts on character",
+    "280 and ends on 281. the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog"
+   ],
+   "showMore": true
+  },
+  {
+   "id": "2100299835433988437",
+   "lines": [
+    "Fold test 11",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100299967806263515",
+   "lines": [
+    "Fold test 12",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100300134030746111",
+   "lines": [
+    "Fold test 13",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a"
+   ],
+   "showMore": false
+  }
+ ]
+}

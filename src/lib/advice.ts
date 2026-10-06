@@ -247,7 +247,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     out.push({
       id: "app-clamp",
       severity: "tip",
-      title: `Collapses in the app after ${clamped.maxLines} lines`,
+      title: `Collapses in the iOS app after ${clamped.maxLines} lines`,
       detail: `The web shows all ${clamped.total} lines, but on ${clamped.deviceLabel} the app folds this behind Show more after "${clamped.lastWord}". Anything below that only shows after a tap.`,
     });
   }

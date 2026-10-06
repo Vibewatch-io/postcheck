@@ -161,11 +161,13 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, h
   }
 
   const isPhone = device.kind === "phone";
+  const android = device.platform === "android";
   return (
     <article
       style={{
         // App cell measured on an iPhone 15 Pro capture: 12px inset, 44px avatar, 8px gap, 12px right.
-        padding: isPhone ? "12px 13px 12px 12px" : "12px 16px",
+        // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
+        padding: isPhone ? (android ? "12px" : "12px 13px 12px 12px") : "12px 16px",
         backgroundColor: theme.bg,
         width: device.width,
         boxSizing: "border-box",
@@ -176,7 +178,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, h
       }}
     >
       <div style={{ display: "flex", gap: 8 }}>
-        <Avatar src={identity.avatar} size={isPhone ? 44 : 40} square={square} />
+        <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20 }}>
             <div style={{ display: "flex", alignItems: "center", minWidth: 0, color: theme.secondary, whiteSpace: "nowrap" }}>

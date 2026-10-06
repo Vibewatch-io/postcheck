@@ -43,7 +43,7 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
   // Rendered on the client only, so the server's clock never shows up in the page.
   const clock = useClock() ?? "";
   const light = theme.id === "light";
-  const ios = device.id.startsWith("iphone");
+  const ios = device.platform === "ios";
   const post = device.view === "post";
   // The post is never cut. When the window can't hold the whole screen, the app's furniture goes
   // instead, in this order, so what's left is still the real post in the real column.

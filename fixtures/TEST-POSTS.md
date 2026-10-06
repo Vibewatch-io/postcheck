@@ -30,7 +30,7 @@ For every post, capture:
 | F | x.com post page (focal view) | open the post, same script with the post URL |
 | I | iPhone app timeline | iPhone Mirroring, `scripts/phone/README.md` |
 | IP | iPhone app post screen | tap into the post |
-| A | Android app timeline, 360 and 412 dp | Android Studio emulator (next phase) |
+| A | Android app timeline, 360 and 412 dp | USB Android phone, `scripts/android/README.md` (X refuses to sign in on the emulator) |
 
 Light and dark theme only matter for the colour tests (**C1–C2**); everything else is theme-independent.
 
