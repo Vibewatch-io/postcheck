@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode, Ref } from "react";
+import type { CSSProperties, ReactNode, Ref } from "react";
 import type { Device } from "@/lib/devices";
 import type { XTheme } from "@/lib/theme";
 import { fontStack } from "@/lib/theme";
@@ -55,8 +55,13 @@ function Avatar({ src, size, square }: { src: string | null; size: number; squar
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={src} alt="" width={size} height={size} className={shape} style={{ width: size, height: size, borderRadius: square ? undefined : "50%", objectFit: "cover", display: "block", flexShrink: 0 }} />;
   }
+  return <DefaultAvatar size={size} className={shape} style={{ borderRadius: square ? undefined : "50%" }} />;
+}
+
+/** X's grey person silhouette for an account with no photo (also the composer's photo button). */
+export function DefaultAvatar({ size, className, style }: { size: number | string; className?: string; style?: CSSProperties }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden className={shape} style={{ flexShrink: 0, display: "block", borderRadius: square ? undefined : "50%", overflow: "hidden" }}>
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden className={className} style={{ flexShrink: 0, display: "block", overflow: "hidden", ...style }}>
       <rect width="40" height="40" fill="#CFD9DE" />
       <circle cx="20" cy="15.5" r="7" fill="#fff" />
       <path d="M6.5 35.5c1.4-7.2 7-11 13.5-11s12.1 3.8 13.5 11A19.9 19.9 0 0 1 20 40a19.9 19.9 0 0 1-13.5-4.5z" fill="#fff" />
@@ -208,7 +213,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, h
   const viewport = device.kind === "phone" ? device.width : 1200;
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrlStart));
 
-  const attachment = media ? (
+  // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
+  // the attachment through it.
+  const attached = media ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={media} alt="" style={{ width: bodyWidth, display: "block", borderRadius: 16, border: `1px solid ${theme.cardBorder}`, boxSizing: "border-box", maxHeight: bodyWidth * 1.25, objectFit: "cover" }} />
   ) : quote ? (
@@ -216,6 +223,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, h
   ) : card ? (
     <LinkCard card={card} theme={theme} width={bodyWidth} viewport={viewport} font={device.font} />
   ) : null;
+  const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
 
   const body = (
     <PostBody

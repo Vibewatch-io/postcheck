@@ -6,7 +6,7 @@ import { AVATAR_CAP, PHOTO_CAP, lookupQuote, twimgUrl } from "../src/lib/server/
 import { fetchImageAsDataUrl, guardedFetch } from "../src/lib/server/fetch-guard";
 import { quoteTime, statusId } from "../src/lib/quote";
 import { extractEntities, quoteUrl } from "../src/lib/entities";
-import { GET } from "../src/app/api/quote/route";
+import { POST } from "../src/app/api/quote/route";
 
 const fixtures = join(__dirname, "..", "fixtures");
 /** FxTwitter's answer for a quoted @postcheck_test post, recorded 2026-10-06 (counters dropped). */
@@ -153,10 +153,12 @@ test("a fetch with an allowlist refuses a redirect off the list", async () => {
   }
 });
 
-test("the route takes exactly one numeric id", async () => {
-  for (const q of ["", "?id=", "?id=abc", "?id=12x", `?id=${"1".repeat(21)}`, "?id=20&x=1", "?id=20&id=21", "?u=jack"]) {
-    const res = await GET(new Request(`https://postcheck.test/api/quote${q}`));
-    assert.equal(res.status, 400, q);
+test("the route takes a numeric id in its body and nothing it answers is cached", async () => {
+  // Only digits may reach the FxTwitter URL; anything else is refused before any fetch.
+  for (const body of ["", "{}", '{"id":""}', '{"id":"abc"}', '{"id":"12x"}', '{"id":"../20"}', `{"id":"${"1".repeat(21)}"}`, '{"id":20}', '{"u":"jack"}', "not json"]) {
+    const res = await POST(new Request("https://postcheck.test/api/quote", { method: "POST", body }));
+    assert.equal(res.status, 400, body);
+    assert.equal(res.headers.get("cache-control"), "no-store", body);
   }
 });
 

@@ -26,6 +26,10 @@ export interface Device {
   font: "web" | "app";
   /** Which calibrated tracking applies: x.com's (web) or the app's (app). See globals.css. */
   pane: "web" | "app";
+  /** Drawn without a phone around it: the visitor's own phone (see thisPhone). */
+  frameless?: boolean;
+  /** How tips name it, when the label reads badly mid-sentence ("On this phone that paragraph…"). */
+  tipLabel?: string;
 }
 
 // Web numbers were measured on x.com (Sept 2026): a 600px column with 1px
@@ -95,15 +99,47 @@ const phonePost = (d: Device): Device => ({
   view: "post",
 });
 
+/**
+ * One entry per screen width in points, since that is what moves line breaks: each label names the
+ * models that share the width. Ordered by how many people read on it. TelemetryDeck's iPhone model
+ * survey (week of 2026-09-28, top 10 models in use) totals 402pt 32.6%, 393pt 28.4%, 390pt 19.5%,
+ * 440pt 19.5%; the 430, 420 and 375pt screens are outside its top 10. The iPhone 18 Pro and 18 Pro Max
+ * (Sept 2026) keep the 17 Pro's 402 and 17 Pro Max's 440 (Apple: 2622x1206 and 2868x1320 at 460 ppi,
+ * 3x). Ids are kept from earlier labels: share links and the fixtures name devices by id.
+ */
 const PHONES: Device[] = [
-  phone("iphone-se", "iPhone SE", 375, 667, "none", 0),
-  phone("iphone-16", "iPhone 16", 393, 852, "dynamic-island"),
-  phone("iphone-17", "iPhone 17 / Pro", 402, 874, "dynamic-island"),
+  phone("iphone-17", "iPhone 17 / 16–18 Pro", 402, 874, "dynamic-island"),
+  phone("iphone-16", "iPhone 15 / 16 / 14–15 Pro", 393, 852, "dynamic-island"),
+  phone("iphone-13", "iPhone 12 / 13 / 14 / 16e / 17e", 390, 844, "notch", 47),
+  phone("iphone-17-pro-max", "iPhone 16–18 Pro Max", 440, 956, "dynamic-island", 62),
+  phone("iphone-16-plus", "iPhone 15–16 Plus / 14–15 Pro Max", 430, 932, "dynamic-island", 55),
   phone("iphone-air", "iPhone Air", 420, 912, "dynamic-island", 58),
-  phone("iphone-17-pro-max", "iPhone 17 Pro Max", 440, 956, "dynamic-island", 62),
+  phone("iphone-se", "iPhone SE / 12–13 mini", 375, 667, "none", 0),
   phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36, "android"),
   phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40, "android"),
 ];
+
+/** The phone most people read on (the 402pt group, see PHONES), shown first. */
+export const DEFAULT_PHONE_ID = "iphone-17";
+
+export const THIS_PHONE_ID = "this-phone";
+
+/**
+ * The visitor's own phone, when they open the site on one: a phone's page width in CSS pixels is its
+ * screen width in points (dp on Android), the unit the X app lays out in, so a timeline cell drawn at
+ * that width is the app's own layout. Same cell geometry and fold rules as the phone list (QUIRKS.md),
+ * drawn edge to edge with no frame. Assumes default text size, like every capture.
+ */
+export function thisPhone(width: number, height: number, platform: "ios" | "android"): Device {
+  return { ...phone(THIS_PHONE_ID, `This phone (${width})`, width, height, "none", 0, platform), frameless: true, tipLabel: "this phone" };
+}
+
+/** The listed phone a share link names when it was made in this-phone mode: same platform, nearest width. */
+export function nearestListedPhone(d: Device): Device {
+  const same = PHONES.filter((p) => p.platform === d.platform);
+  const listed = same.length ? same : PHONES;
+  return listed.reduce((best, p) => (Math.abs(p.width - d.width) < Math.abs(best.width - d.width) ? p : best), listed[0]);
+}
 
 export const DEVICES: Device[] = [
   { id: "web", label: "X web · timeline", kind: "web", width: 600, textWidth: 518, fontSize: 15, lineHeight: 20, pixelRatio: 2, font: "web", pane: "web" },

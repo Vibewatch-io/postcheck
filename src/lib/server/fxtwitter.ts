@@ -8,6 +8,9 @@ import { UA, fetchImageAsDataUrl, readCapped } from "./fetch-guard";
  */
 export const FX_API = "https://api.fxtwitter.com";
 
+/** For guardedFetch: every hop must stay on FxTwitter's API host. */
+export const onFxTwitter = (u: URL) => u.origin === FX_API;
+
 /** Largest FxTwitter answer read: a status with its author and media is a few KB. */
 const FX_CAP = 256 * 1024;
 /** Longest quoted text kept (a long post is clamped to 5 lines in the embed anyway). */

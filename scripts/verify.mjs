@@ -71,8 +71,8 @@ const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
 // route's reading of them), so verify never depends on a live post. Images become a grey stand-in
 // of the recorded size; a post with no recording answers as unavailable.
 const STAND_IN = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
-await page.route(/\/api\/quote\?/, (route) => {
-  const id = new URL(route.request().url()).searchParams.get("id");
+await page.route(/\/api\/quote$/, (route) => {
+  const id = route.request().postDataJSON()?.id;
   let t = null;
   try { t = JSON.parse(readFileSync(`fixtures/fx/${id}.json`, "utf8")).tweet; } catch {}
   const v = t?.author.verification;
