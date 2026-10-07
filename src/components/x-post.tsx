@@ -5,7 +5,7 @@ import type { Device } from "@/lib/devices";
 import type { XTheme } from "@/lib/theme";
 import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
-import { Entity, Token, extractEntities, tokenize, type StyleRun } from "@/lib/entities";
+import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type StyleRun } from "@/lib/entities";
 import { quoteTime, type QuoteState } from "@/lib/quote";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
@@ -155,10 +155,11 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
   }
 
   const q = state.quote;
-  const entities = extractEntities(q.text);
   // A quoted post that is itself a quote keeps its post link as visible text: X draws no quote
-  // inside a quote (@postcheck_test test 107).
-  const tokens = tokenize(q.text, entities, []);
+  // inside a quote. The iOS app prints that link twice (@postcheck_test test 107, one capture).
+  const inner = quoteUrl(extractEntities(q.text));
+  const text = device.pane === "app" && inner && isTrailing(q.text, inner) ? `${q.text} ${q.text.slice(inner.start, inner.end)}` : q.text;
+  const tokens = tokenize(text, extractEntities(text), []);
   const hasText = tokens.some((t) => t.kind !== "space" && t.kind !== "newline");
   const photoWidth = look.width - 2;
   // Web: the photo's own shape (16:9 measured); no taller than 4:5 is assumed (QUIRKS.md).

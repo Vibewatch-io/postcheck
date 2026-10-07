@@ -1613,6 +1613,7 @@
    "quote": {
     "text": "Test 44: quote of the photo post",
     "lines": 2,
+    "last": "Postcheck_test… x.com/Postcheck_test…",
     "hasCard": false,
     "hasName": true
    }

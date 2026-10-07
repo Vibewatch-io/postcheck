@@ -193,7 +193,7 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
 
 /**
  * The quote embed against X's: web fixtures record x.com's quoted lines and boxes, app fixtures the
- * iPhone's line count, first words and photo size. Boxes match to 1px. Where the app's photo sits
+ * iPhone's line count, first words, last line where recorded, and photo size. Boxes match to 1px. Where the app's photo sits
  * is not checked (the gap above it is inferred, QUIRKS.md).
  */
 async function quoteDiff(label, deviceLast, id, want) {
@@ -213,6 +213,7 @@ async function quoteDiff(label, deviceLast, id, want) {
   } else {
     if (rows.length !== want.lines) problems.push(`line count X ${want.lines} / tool ${rows.length}`);
     if (!(rows[0] ?? "").startsWith(norm(want.text))) problems.push(`first line X "${want.text}…" / tool "${rows[0] ?? ""}"`);
+    if (want.last !== undefined && (rows[rows.length - 1] ?? "") !== norm(want.last)) problems.push(`last line X "${want.last}" / tool "${rows[rows.length - 1] ?? ""}"`);
     if (want.photo && !near(got.photo?.slice(2), want.photo.slice(2))) problems.push(`photo size X ${want.photo.slice(2)} / tool ${got.photo?.slice(2)}`);
     if (!want.photo && got.photo) problems.push("tool draws a photo X doesn't");
   }
