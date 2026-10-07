@@ -1,0 +1,40 @@
+{
+  "id_str": "2107678993482912055",
+  "text": "Test 115: a landscape and a portrait photo https://t.co/JtTYZAkBXa",
+  "display_text_range": [
+    0,
+    42
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/JtTYZAkBXa",
+        "expanded_url": "https://x.com/Postcheck_test/status/2107678993482912055/photo/1",
+        "indices": [
+          43,
+          66
+        ],
+        "url": "https://t.co/JtTYZAkBXa"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 2,
+  "media": [
+    {
+      "type": "photo",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "type": "photo",
+      "width": 900,
+      "height": 1600
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

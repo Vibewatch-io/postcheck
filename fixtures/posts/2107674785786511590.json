@@ -1,0 +1,28 @@
+{
+  "id_str": "2107674785786511590",
+  "text": "Quote of a quote https://t.co/jddxVTNuLO",
+  "display_text_range": [
+    0,
+    40
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/Postcheck_test…",
+        "expanded_url": "https://x.com/Postcheck_test/status/2102798540888244642",
+        "indices": [
+          17,
+          40
+        ],
+        "url": "https://t.co/jddxVTNuLO"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
