@@ -37,6 +37,8 @@ interface Props {
   showMore: boolean;
   /** Called when Show more is clicked. */
   onShowMore?: () => void;
+  /** Called when the timeline cell itself is clicked: the preview folds or expands the post (not something X does). */
+  onToggle?: () => void;
   hiddenUrlStart: number | null;
   card: CardData | "loading" | null;
   /** The post link that becomes the quote embed, and what the lookup found. */
@@ -204,7 +206,7 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
  * 12px → card → action row. The post page ("focal") variant runs the body at
  * 17px/24px under the header and adds the timestamp row.
  */
-export function XPost({ device, theme, identity, tokens, showMore, onShowMore, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
+export function XPost({ device, theme, identity, tokens, showMore, onShowMore, onToggle, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
   const font = { fontFamily: fontStack(device.font), fontSize: 15, lineHeight: "20px" } as const;
   const handle = identity.handle.replace(/^@/, "") || "yourhandle";
   const name = identity.name || "Your name";
@@ -277,7 +279,17 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, h
   const android = device.platform === "android";
   return (
     <article
+      // Focusable when it toggles, as X's own timeline cells are; Enter or Space on the cell itself
+      // (not on Show more inside it) toggles it, so the fold works without a mouse too.
+      tabIndex={onToggle ? 0 : undefined}
+      onClick={onToggle}
+      onKeyDown={onToggle ? (e) => {
+        if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
+        e.preventDefault();
+        onToggle();
+      } : undefined}
       style={{
+        cursor: onToggle ? "pointer" : undefined,
         // App cell measured on an iPhone 15 Pro capture: 12px inset, 44px avatar, 8px gap, 12px right.
         // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
         padding: isPhone ? (android ? "12px" : "12px 13px 12px 12px") : "12px 16px",

@@ -265,16 +265,18 @@ export function Postcheck() {
     delete next[d.id];
     return next;
   }), []);
-  // Wraps a post so a click toggles it. It decides from this render's state, so the click that
-  // reaches it from Show more (which has already expanded the post) expands it again, not back.
-  // The wrapper has no box (display: contents), so layout and export are untouched.
-  const toggleOnClick = (d: Device, cut: boolean, cell: React.ReactNode) => {
+  // A click on a post folds it if it's expanded and expands it if it's cut. It decides from this
+  // render's state, so the click that bubbles up from Show more (which has just expanded the post)
+  // expands it again rather than folding it. Selecting text ends in a click too, so a selection
+  // inside the post never toggles it.
+  const toggleFor = (d: Device, cut: boolean) => {
     const open = Boolean(expanded[d.id]);
-    return (
-      <div style={{ display: "contents", cursor: open || cut ? "pointer" : undefined }} onClick={open ? () => fold(d) : cut ? () => expand(d) : undefined}>
-        {cell}
-      </div>
-    );
+    if (!open && !cut) return undefined;
+    return () => {
+      if (window.getSelection()?.isCollapsed === false) return;
+      if (open) fold(d);
+      else expand(d);
+    };
   };
   const quoteProp = useMemo(() => (quote ? { entity: quote, state: quoteState } : null), [quote, quoteState]);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
@@ -616,11 +618,11 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            {toggleOnClick(webDevice, webRender.showMore, <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />)}
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} onToggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
           </div>
         }
         app={(maxHeight) => {
-          const cell = toggleOnClick(phoneDevice, phoneRender.showMore, <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />);
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} onToggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>
