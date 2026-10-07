@@ -670,7 +670,11 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
   const [exportError, setExportError] = useState<string | null>(null);
   const controlsSlot = useSlot("preview-controls");
 
-  useEffect(() => {
+  // Measured before paint, and again in the commit that portals the header's controls in: the
+  // slots fill only after hydration, and the header grows with them. The observer alone reports
+  // that a frame late, and not at all while the tab stays hidden (a link opened in a background
+  // tab), which kept the room from before the header grew and drew the phone past the bottom.
+  useLayoutEffect(() => {
     const area = areaRef.current;
     const notice = noticeRef.current;
     if (!area || !notice) return;
@@ -683,7 +687,7 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
     ro.observe(area);
     ro.observe(notice);
     return () => ro.disconnect();
-  }, []);
+  }, [controlsSlot]);
 
   // The phone's natural height with its bezel; it shrinks until it fits, then sheds furniture.
   const phoneHeight = (phoneDevice.height ?? 0) + PHONE_BEZEL * 2;
