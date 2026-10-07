@@ -1,5 +1,5 @@
 {
- "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #; @Postcheck_test batch 6 captured 2026-10-05 (02, 61b, 66–66d, 70–77, 90–97 with 91b/94b, 120–124): voter-view poll pills, 93 read after it closed; 66d shows the ticker tile and no link card; 70's timeline row shows no bold/italic (the post page does); 123 gets a large card here (small on the web)",
+ "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #; @Postcheck_test batch 6 captured 2026-10-05 (02, 61b, 66–66d, 70–77, 90–97 with 91b/94b, 120–124): voter-view poll pills, 93 read after it closed; 66d shows the ticker tile and no link card; 70's timeline row shows no bold/italic (the post page does); 123 gets a large card here (small on the web); @Postcheck_test batch 7 captured 2026-10-07 (100–104, 107, 70b, 110–117b, 122b, 131), viewed as @marshallmixing: 70b read folded (its styling shows only once expanded); 100's 3/3 read from the Replies tab; 111's box is the content-warning cover",
  "device": "iphone-16",
  "posts": [
   {
@@ -1180,6 +1180,7 @@
   },
   {
    "id": "2107205404967211163",
+   "compose": "This has **bold** and __italic__ and **__both__**",
    "lines": [
     "This has bold and italic and both"
    ],
@@ -1238,11 +1239,7 @@
     "App card apps.apple.com/app/id333903271"
    ],
    "showMore": false,
-   "card": null,
-   "gap": "card: X built no card for this App Store link although the page has Open Graph tags; cause untested (122b)",
-   "gapTool": [
-    "App card"
-   ]
+   "card": null
   },
   {
    "id": "2107204666526515704",
@@ -1337,6 +1334,337 @@
    ],
    "showMore": false,
    "card": "large"
+  },
+  {
+   "id": "2107674594463367513",
+   "lines": [
+    "Edit test: this text was edited once"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107689714786644013",
+   "lines": [
+    "Test 117b: four very tall, narrow photos",
+    "(87x1200 each)"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      30,
+      401,
+      ""
+     ],
+     [
+      33,
+      0,
+      30,
+      401,
+      ""
+     ],
+     [
+      67,
+      0,
+      29,
+      401,
+      ""
+     ],
+     [
+      100,
+      0,
+      30,
+      401,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107689539150221418",
+   "lines": [
+    "Test 117: one very tall, narrow photo (87x1200)"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      186,
+      402,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107679528940454347",
+   "lines": [
+    "Long media test 116: a post over 280 characters",
+    "with a tall photo under it, to see where Show",
+    "more lands. the quick brown fox jumps over a",
+    "lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a lazy dog and this",
+    "sentence keeps going past the cut so the post",
+    "needs Show more on the web timeline."
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      186,
+      401,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107678993482912055",
+   "lines": [
+    "Test 115: a landscape and a portrait photo"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      242,
+      137,
+      ""
+     ],
+     [
+      246,
+      0,
+      78,
+      137,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107678610543018332",
+   "lines": [
+    "Test 114: a portrait video"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      226,
+      402,
+      "mute"
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107676801090920544",
+   "lines": [
+    "Test 113: a square photo"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      323,
+      323,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107676353667760235",
+   "lines": [
+    "Test 112: a 4:1 panorama photo"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      324,
+      81,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107676172104716423",
+   "lines": [
+    "Test 111: a photo marked sensitive"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      324,
+      163,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107675923063734568",
+   "lines": [
+    "Test 110: a photo with one person tagged"
+   ],
+   "showMore": false,
+   "card": null,
+   "media": {
+    "carousel": false,
+    "items": [
+     [
+      0,
+      0,
+      324,
+      183,
+      ""
+     ]
+    ],
+    "alt": 0
+   }
+  },
+  {
+   "id": "2107675173730308420",
+   "lines": [
+    "Paid partnership test"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107675007178719627",
+   "lines": [
+    "App card, direct apps.apple.com/us/app/x/",
+    "id333…"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107674949947130122",
+   "compose": "Long styled test 70b: a post over 280 characters with one bold and one italic word, to see if the app timeline keeps the styling. the **quick** brown fox jumps over a __lazy__ dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+   "lines": [
+    "Long styled test 70b: a post over 280",
+    "characters with one bold and one italic word, to",
+    "see if the app timeline keeps the styling. the",
+    "quick brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog the quick",
+    "brown fox jumps over a lazy dog and this",
+    "sentence keeps going past the cut"
+   ],
+   "showMore": true,
+   "card": null
+  },
+  {
+   "id": "2107674785786511590",
+   "lines": [
+    "Quote of a quote"
+   ],
+   "showMore": false,
+   "card": null,
+   "quote": {
+    "text": "Test 44: quote of the photo post",
+    "lines": 2,
+    "last": "Postcheck_test… x.com/Postcheck_test…",
+    "hasCard": false,
+    "hasName": true
+   }
+  },
+  {
+   "id": "2107674404880863418",
+   "lines": [
+    "Reply settings: only @Vibewatch_io can reply"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107674333208518700",
+   "lines": [
+    "Reply settings: verified accounts"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107674128757252425",
+   "lines": [
+    "Reply settings: accounts I follow"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107674006552035510",
+   "lines": [
+    "Thread test 1/3"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107674007650832429",
+   "lines": [
+    "Thread test 2/3"
+   ],
+   "showMore": false,
+   "card": null
+  },
+  {
+   "id": "2107674008712097806",
+   "lines": [
+    "Thread test 3/3"
+   ],
+   "showMore": false,
+   "card": null
   }
  ]
 }

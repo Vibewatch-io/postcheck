@@ -155,12 +155,12 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
   }
 
   const q = state.quote;
-  const entities = extractEntities(q.text);
-  // A quoted post that ends in a post link is itself a quote: hide that link as the timeline does (assumed).
-  const nested = quoteUrl(entities);
-  const hiddenUrlStart = nested && isTrailing(q.text, nested) ? nested.start : null;
-  const tokens = tokenize(q.text, entities, []);
-  const hasText = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrlStart));
+  // A quoted post that is itself a quote keeps its post link as visible text: X draws no quote
+  // inside a quote. The iOS app prints that link twice (@postcheck_test test 107, one capture).
+  const inner = quoteUrl(extractEntities(q.text));
+  const text = device.pane === "app" && inner && isTrailing(q.text, inner) ? `${q.text} ${q.text.slice(inner.start, inner.end)}` : q.text;
+  const tokens = tokenize(text, extractEntities(text), []);
+  const hasText = tokens.some((t) => t.kind !== "space" && t.kind !== "newline");
   const photoWidth = look.width - 2;
   // Web: the photo's own shape (16:9 measured); no taller than 4:5 is assumed (QUIRKS.md).
   const photoHeight = q.photo ? Math.round(photoWidth * (look.photoRatio ?? Math.min(q.photo.height / q.photo.width, 1.25))) : 0;
@@ -176,7 +176,7 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
             <PostBody
               tokens={tokens}
               showMoreAt={-1}
-              hiddenUrlStart={hiddenUrlStart}
+              hiddenUrlStart={null}
               theme={theme}
               fontSize={15}
               lineHeight={look.lineHeight}

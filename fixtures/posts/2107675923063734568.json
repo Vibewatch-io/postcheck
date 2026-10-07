@@ -1,0 +1,35 @@
+{
+  "id_str": "2107675923063734568",
+  "text": "Test 110: a photo with one person tagged https://t.co/pD99EGBFjB",
+  "display_text_range": [
+    0,
+    40
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/pD99EGBFjB",
+        "expanded_url": "https://x.com/Postcheck_test/status/2107675923063734568/photo/1",
+        "indices": [
+          41,
+          64
+        ],
+        "url": "https://t.co/pD99EGBFjB"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "media": [
+    {
+      "type": "photo",
+      "width": 1600,
+      "height": 900
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import type { Device } from "@/lib/devices";
+import { rowHidesStyles, type Device } from "@/lib/devices";
 import type { StyleRun, Token } from "@/lib/entities";
 import { THEMES, fontStack } from "@/lib/theme";
 import type { DeviceLines, LineInfo } from "@/lib/advice";
@@ -27,14 +27,54 @@ export function measureLines(root: HTMLElement, lineHeight: number): { lines: Li
     const word = el.textContent || "";
     const paragraph = Number(el.dataset.p || 0);
     const end = Number(el.dataset.e || 0);
-    const first = Math.round((rects[0].top - box.top) / lineHeight);
-    const last = Math.round((rects[rects.length - 1].top - box.top) / lineHeight);
-    if (!rows[first]) continue;
-    rows[first].words.push(word);
-    const lastRect = rects[rects.length - 1];
-    (rows[last] ?? rows[first]).spans.push({ start: end - word.length, end, left: lastRect.left - box.left, right: lastRect.right - box.left });
-    for (let r = first; r <= last && rows[r]; r++) {
-      rows[r].end = end;
+    // A link span holds its display text, not the posted URL, so its characters have no offsets in the
+    // post: it is measured as one unit from its real start (`data-link`) to its end (see appFoldCut).
+    const linkStart = el.dataset.link !== undefined ? Number(el.dataset.link) : null;
+    const rowOf = (top: number) => Math.round((top - box.top) / lineHeight);
+    const first = rowOf(rects[0].top);
+    const last = rowOf(rects[rects.length - 1].top);
+    if (first === last) {
+      if (!rows[first]) continue;
+      const r = rects[rects.length - 1];
+      rows[first].words.push(word);
+      rows[first].spans.push({ start: linkStart ?? end - word.length, end, left: r.left - box.left, right: r.right - box.left, ...(linkStart !== null ? { link: true } : {}) });
+      rows[first].end = end;
+      rows[first].paragraph = paragraph;
+      continue;
+    }
+    // A span that wraps (a link broken after "/" on the app pane, a word after a hyphen, CJK): one
+    // fragment per row, each with its own words, edges and end.
+    const frags = new Map<number, { text: string; start: number; end: number; left: number; right: number }>();
+    let at = end - word.length;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      let i = 0;
+      for (const ch of n.nodeValue ?? "") {
+        const range = document.createRange();
+        range.setStart(n, i);
+        range.setEnd(n, i + ch.length);
+        const cr = range.getClientRects()[0];
+        i += ch.length;
+        const from = at;
+        at += ch.length;
+        if (!cr) continue;
+        const f = frags.get(rowOf(cr.top));
+        if (f) Object.assign(f, { text: f.text + ch, end: at, right: cr.right - box.left });
+        else frags.set(rowOf(cr.top), { text: ch, start: from, end: at, left: cr.left - box.left, right: cr.right - box.left });
+      }
+    }
+    // A row a link runs off ends at the link's start, so a fold there keeps the whole link behind Show
+    // more (an empty span there gives no cut inside it, and the fold still eats a character from the
+    // text before it); only the row it ends on can cut after it (assumed; no capture has a link across
+    // the fold). Every fragment after the first is `cont`: a token's tail, not a word the writer can move.
+    for (const [r, f] of frags) {
+      if (!rows[r]) continue;
+      rows[r].words.push(f.text);
+      const cont = r !== first ? { cont: true } : {};
+      if (linkStart === null) rows[r].spans.push({ start: f.start, end: f.end, left: f.left, right: f.right, ...cont });
+      else if (r === last) rows[r].spans.push({ start: linkStart, end, left: f.left, right: f.right, link: true, ...cont });
+      else rows[r].spans.push({ start: linkStart, end: linkStart, left: f.left, right: f.left, ...cont });
+      rows[r].end = r === last ? end : linkStart ?? f.end;
       rows[r].paragraph = paragraph;
     }
   }
@@ -86,7 +126,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, devices, onMeasur
         >
           {/* The app never appends the web's 280-cut "Show more": a long post under 10 lines shows whole
               there, so counting the token would push a full last line onto a 10th row (test 94). */}
-          <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={d.lineHeight} width={d.textWidth} font={d.font} pane={d.pane} styles={styles} />
+          <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={d.lineHeight} width={d.textWidth} font={d.font} pane={d.pane} styles={rowHidesStyles(d) ? [] : styles} />
           <span data-token style={{ position: "absolute", whiteSpace: "pre", fontFamily: fontStack(d.font), fontSize: d.fontSize, lineHeight: `${d.lineHeight}px`, letterSpacing: `var(--ls-${d.pane})` }}>
             {" Show more"}
           </span>

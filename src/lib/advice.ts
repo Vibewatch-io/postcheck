@@ -6,7 +6,7 @@ import {
   type Entity,
   type LengthInfo,
 } from "./entities";
-import type { CardData } from "./card";
+import { cardless, type CardData } from "./card";
 
 export type Severity = "fix" | "tip" | "note";
 
@@ -33,7 +33,7 @@ export interface LineInfo {
   /** UTF-16 offset just past the last word on the line. */
   end: number;
   /** Each word on the line with its text offsets and pixel edges (relative to the body's left edge). */
-  spans: Array<{ start: number; end: number; left: number; right: number }>;
+  spans: Array<{ start: number; end: number; left: number; right: number; link?: boolean; cont?: boolean }>;
 }
 
 export interface DeviceLines {
@@ -163,8 +163,9 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         id: "no-card",
         severity: "note",
         title: `No card for ${cu.host}`,
-        detail:
-          "That page has no Open Graph or Twitter Card tags, so X shows the link as plain text and no preview. The URL text stays visible even at the end of the post.",
+        detail: cardless(cu.href!)
+          ? "X shows no preview for App Store links, even though the page has the tags for one. The URL text stays visible even at the end of the post."
+          : "That page has no Open Graph or Twitter Card tags, so X shows the link as plain text and no preview. The URL text stays visible even at the end of the post.",
         marks: [{ at: cu.start }],
       });
     }
@@ -237,7 +238,9 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     for (const lines of byPara.values()) {
       if (lines.length < 2) continue;
       const last = lines[lines.length - 1];
-      if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "") {
+      // The tail of a token that wrapped (a link after "/", a word after a hyphen, CJK) isn't a word the
+      // writer can move.
+      if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "" && !last.spans[0]?.cont) {
         const key = last.words[0];
         let orphan = orphans.get(key);
         if (!orphan) {
@@ -263,7 +266,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       id: "premium-styles",
       severity: "note",
       title: "Bold and italic need Premium",
-      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks and the phone fold move. On the web, italic is a slant. The iOS app is inconsistent: one short post showed no styling at all in the timeline and a slanted italic on its own page.",
+      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks move wherever the styling shows. In the iPhone app's timeline, X shows the post with no bold or italic at all (a post that folds behind Show more gets it back once that's tapped), so the breaks and the fold there don't change; its post page shows the styling. That looks like an X bug, and the iPhone preview shows it the same way.",
     });
   }
 
