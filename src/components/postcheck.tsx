@@ -21,9 +21,9 @@ import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
 
 // The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
-// alone onto its own line on purpose, and the trailing link shows only its card. 259 of 280.
+// alone onto its own line on purpose, and the trailing link shows only its card. 261 of 280.
 const SAMPLE =
-  `We've seen lots of posts on X, so we know how yours will look.\n\nPostcheck counts your characters the way X does, shows exactly where Show more cuts in, and flags any single word stranded on its own line.\n\nWe never store what you write.\n${SITE_URL}`;
+  `We've seen lots of posts on X, so we know how yours will look.\n\nPostcheck counts your characters the way X does, shows exactly where "Show more" cuts in, and flags any single word stranded on its own line.\n\nWe never store what you write.\n${SITE_URL}`;
 
 /**
  * The sample links to Postcheck itself, so its card ships with the page instead of being looked up:
@@ -93,9 +93,10 @@ export function Postcheck() {
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
-  // Clicking Show more expands that preview in place, the way x.com does, keyed by device id. Any
-  // change to the text folds every preview again (see below); bold / italic alone don't, and a
-  // device stays expanded if you switch away and back.
+  // Clicking Show more expands that preview in place, the way x.com does, keyed by device id; a
+  // click anywhere on a cut or expanded post toggles it, so it can be folded again. Any change to
+  // the text folds every preview again (see below); bold / italic alone don't, and a device stays
+  // expanded if you switch away and back.
   const [expanded, setExpanded] = useState<Record<string, true>>({});
   const theme = THEMES[themeId];
   const fontTier = useFontTier();
@@ -259,6 +260,22 @@ export function Postcheck() {
     [clampFor, cut280, post, entities, styleCuts, expanded],
   );
   const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: true })), []);
+  const fold = useCallback((d: Device) => setExpanded((e) => {
+    const next = { ...e };
+    delete next[d.id];
+    return next;
+  }), []);
+  // Wraps a post so a click toggles it. It decides from this render's state, so the click that
+  // reaches it from Show more (which has already expanded the post) expands it again, not back.
+  // The wrapper has no box (display: contents), so layout and export are untouched.
+  const toggleOnClick = (d: Device, cut: boolean, cell: React.ReactNode) => {
+    const open = Boolean(expanded[d.id]);
+    return (
+      <div style={{ display: "contents", cursor: open || cut ? "pointer" : undefined }} onClick={open ? () => fold(d) : cut ? () => expand(d) : undefined}>
+        {cell}
+      </div>
+    );
+  };
   const quoteProp = useMemo(() => (quote ? { entity: quote, state: quoteState } : null), [quote, quoteState]);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
@@ -577,7 +594,7 @@ export function Postcheck() {
         stacked={narrow}
         minWidth={widestPreview}
         marks={showTips ? advice : NO_MARKS}
-        report={!previewOnly && typed}
+        report={previewOnly ? "never" : typed ? "shown" : "reserved"}
         view={view}
         setView={setView}
         actions={actions}
@@ -599,11 +616,11 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
+            {toggleOnClick(webDevice, webRender.showMore, <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />)}
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />;
+          const cell = toggleOnClick(phoneDevice, phoneRender.showMore, <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />);
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>
@@ -619,6 +636,9 @@ export function Postcheck() {
 
 /** The phone shrinks to fit a short window, down to this scale; below it the phone sheds app furniture instead. */
 const MIN_PHONE_SCALE = 0.7;
+/** The "Looks different on X?" line under the preview: its gap above and its height, both kept out of the phone's room. */
+const FOOT_GAP = 8;
+const FOOT_LINE = 16;
 /** The composer fills its half up to COMPOSER_MAX; below COMPOSER_MIN beside the preview, the page stacks. */
 const COMPOSER_MIN = 560;
 const COMPOSER_MAX = 640;
@@ -650,8 +670,11 @@ interface PreviewProps {
   setView: (v: "app" | "web") => void;
   /** Extra toolbar buttons (Share, or Edit a copy on a shared link). */
   actions: React.ReactNode;
-  /** Offer the "Looks different on X?" link under the preview: the user's own draft, once they've typed. */
-  report: boolean;
+  /**
+   * The "Looks different on X?" line under the preview: shown for the user's own draft once they've
+   * typed, its space reserved before that, and no line at all on a shared link.
+   */
+  report: "never" | "reserved" | "shown";
 }
 
 /**
@@ -662,10 +685,11 @@ interface PreviewProps {
 function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions, report }: PreviewProps) {
   const areaRef = useRef<HTMLDivElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
-  const footRef = useRef<HTMLParagraphElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const [room, setRoom] = useState<number | null>(null);
+  // The height under the notices; the preview gets it less the "Looks different on X?" line's.
+  const [space, setSpace] = useState<number | null>(null);
+  const room = space === null ? null : space - (report === "never" ? 0 : FOOT_GAP + FOOT_LINE);
   const [areaWidth, setAreaWidth] = useState<number | null>(null);
   // The stage's layout height (unscaled). Whichever preview is showing is centred vertically;
   // switching views slides it into place.
@@ -677,19 +701,15 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
   useEffect(() => {
     const area = areaRef.current;
     const notice = noticeRef.current;
-    const foot = footRef.current;
-    if (!area || !notice || !foot) return;
+    if (!area || !notice) return;
     const measure = () => {
-      // The line under the preview takes its margin too.
-      const footHeight = foot.getBoundingClientRect().height + parseFloat(getComputedStyle(foot).marginTop);
-      setRoom(area.getBoundingClientRect().height - notice.getBoundingClientRect().height - footHeight);
+      setSpace(area.getBoundingClientRect().height - notice.getBoundingClientRect().height);
       setAreaWidth(area.clientWidth);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(area);
     ro.observe(notice);
-    ro.observe(foot);
     return () => ro.disconnect();
   }, []);
 
@@ -841,17 +861,20 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
       </div>
       {frameless && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Drawn at this phone&apos;s width, with default text size.</p>}
       {stacked && scale < 1 && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Scaled down to fit this screen.</p>}
-      {/* Its line is kept while empty, so the phone doesn't resize when the first character goes in. */}
-      <p ref={footRef} className="mt-2 h-4 flex-none px-4 text-center text-xs leading-4 text-brand-warm-secondary">
-        {report && (
-          <>
-            Looks different on X?{" "}
-            <a href={MISMATCH_FORM} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-warm-dark">
-              Tell us
-            </a>
-          </>
-        )}
-      </p>
+      {/* Its line is kept while empty, so the phone doesn't resize when the first character goes in.
+          A shared link has no line, and the phone gets the room back. */}
+      {report !== "never" && (
+        <p className="flex-none px-4 text-center text-xs text-brand-warm-secondary" style={{ marginTop: FOOT_GAP, height: FOOT_LINE, lineHeight: `${FOOT_LINE}px` }}>
+          {report === "shown" && (
+            <>
+              Looks different on X?{" "}
+              <a href={MISMATCH_FORM} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-warm-dark">
+                Tell us
+              </a>
+            </>
+          )}
+        </p>
+      )}
     </div>
   );
 }
