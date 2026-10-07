@@ -6,7 +6,7 @@ import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListed
 import { THEMES, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
 import type { CardData } from "@/lib/card";
-import { DESCRIPTION, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
+import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
 import socialCard from "@/app/opengraph-image.png";
 import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
 import { draftToDoc, serializeDoc, trimDraft, type Draft, type DocNode } from "@/lib/draft";
@@ -577,6 +577,7 @@ export function Postcheck() {
         stacked={narrow}
         minWidth={widestPreview}
         marks={showTips ? advice : NO_MARKS}
+        report={!previewOnly && typed}
         view={view}
         setView={setView}
         actions={actions}
@@ -649,6 +650,8 @@ interface PreviewProps {
   setView: (v: "app" | "web") => void;
   /** Extra toolbar buttons (Share, or Edit a copy on a shared link). */
   actions: React.ReactNode;
+  /** Offer the "Looks different on X?" link under the preview: the user's own draft, once they've typed. */
+  report: boolean;
 }
 
 /**
@@ -656,9 +659,10 @@ interface PreviewProps {
  * read X. The web view is always true size. The phone is laid out at true size and, in a short
  * window, drawn smaller as a whole (a transform, so line breaks can't move) to keep its real shape.
  */
-function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions }: PreviewProps) {
+function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions, report }: PreviewProps) {
   const areaRef = useRef<HTMLDivElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
+  const footRef = useRef<HTMLParagraphElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [room, setRoom] = useState<number | null>(null);
@@ -673,15 +677,19 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
   useEffect(() => {
     const area = areaRef.current;
     const notice = noticeRef.current;
-    if (!area || !notice) return;
+    const foot = footRef.current;
+    if (!area || !notice || !foot) return;
     const measure = () => {
-      setRoom(area.getBoundingClientRect().height - notice.getBoundingClientRect().height);
+      // The line under the preview takes its margin too.
+      const footHeight = foot.getBoundingClientRect().height + parseFloat(getComputedStyle(foot).marginTop);
+      setRoom(area.getBoundingClientRect().height - notice.getBoundingClientRect().height - footHeight);
       setAreaWidth(area.clientWidth);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(area);
     ro.observe(notice);
+    ro.observe(foot);
     return () => ro.disconnect();
   }, []);
 
@@ -833,6 +841,17 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
       </div>
       {frameless && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Drawn at this phone&apos;s width, with default text size.</p>}
       {stacked && scale < 1 && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Scaled down to fit this screen.</p>}
+      {/* Its line is kept while empty, so the phone doesn't resize when the first character goes in. */}
+      <p ref={footRef} className="mt-2 h-4 flex-none px-4 text-center text-xs leading-4 text-brand-warm-secondary">
+        {report && (
+          <>
+            Looks different on X?{" "}
+            <a href={MISMATCH_FORM} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-warm-dark">
+              Tell us
+            </a>
+          </>
+        )}
+      </p>
     </div>
   );
 }
