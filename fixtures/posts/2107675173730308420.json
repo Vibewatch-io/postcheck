@@ -1,0 +1,16 @@
+{
+  "id_str": "2107675173730308420",
+  "text": "Paid partnership test",
+  "display_text_range": [
+    0,
+    21
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

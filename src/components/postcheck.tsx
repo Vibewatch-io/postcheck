@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListedPhone, thisPhone, type Device } from "@/lib/devices";
+import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListedPhone, rowHidesStyles, thisPhone, type Device } from "@/lib/devices";
 import { THEMES, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
-import type { CardData } from "@/lib/card";
+import { cardless, type CardData } from "@/lib/card";
 import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
 import socialCard from "@/app/opengraph-image.png";
 import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
@@ -209,7 +209,7 @@ export function Postcheck() {
   // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
-  const cardKey = cardEntity && !cardEntity.isStatus && !media ? cardEntity.href! : null;
+  const cardKey = cardEntity && !cardEntity.isStatus && !media && !cardless(cardEntity.href!) ? cardEntity.href! : null;
   const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;
@@ -617,7 +617,7 @@ export function Postcheck() {
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />;
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>

@@ -415,12 +415,15 @@ export function tokenize(text: string, entities: Entity[], boundaries: number[] 
  * "…grows to 80,00". See QUIRKS.md.
  *
  * `spans` are the words on that line with pixel edges relative to the body's
- * left edge; a word's characters are assumed evenly spaced within it.
+ * left edge; a word's characters are assumed evenly spaced within it. A link
+ * span (`link`) is one unit: the cut lands before it or after it, never inside
+ * its display text, and the extra character is not eaten from it (assumed; no
+ * capture has a link at the fold).
  */
 export function appFoldCut(
   text: string,
   lineEnd: number,
-  fit?: { spans: Array<{ start: number; end: number; left: number; right: number }>; tokenWidth: number; textWidth: number },
+  fit?: { spans: Array<{ start: number; end: number; left: number; right: number; link?: boolean }>; tokenWidth: number; textWidth: number },
 ): number {
   const trimmedEnd = text.slice(0, lineEnd).trimEnd().length;
   if (!fit || fit.spans.length === 0) {
@@ -430,8 +433,12 @@ export function appFoldCut(
   }
   const { spans, tokenWidth, textWidth } = fit;
   // Candidate cuts: after every character of every word on the line, with the right edge of what remains.
-  const candidates: Array<{ cut: number; right: number }> = [];
+  const candidates: Array<{ cut: number; right: number; link?: boolean }> = [];
   for (const sp of spans) {
+    if (sp.link) {
+      candidates.push({ cut: sp.end, right: sp.right, link: true });
+      continue;
+    }
     const graphemes = [...text.slice(sp.start, sp.end)];
     let at = sp.start;
     for (let i = 0; i < graphemes.length; i++) {
@@ -441,7 +448,7 @@ export function appFoldCut(
   }
   let k = candidates.length - 1;
   while (k >= 0 && (candidates[k].cut > trimmedEnd || candidates[k].right + tokenWidth > textWidth)) k -= 1;
-  k -= 1; // the app always eats one more character
+  if (k >= 0 && !candidates[k].link) k -= 1; // the app always eats one more character
   const cut = k >= 0 ? candidates[k].cut : spans[0].start;
   return text.slice(0, cut).trimEnd().length;
 }

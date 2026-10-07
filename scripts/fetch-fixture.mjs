@@ -17,7 +17,29 @@ for (const arg of args) {
     console.error(`skip ${id}: ${res.status}`);
     continue;
   }
-  const j = await res.json();
+  let j = await res.json();
+  // Syndication tombstones a post whose media the author flagged sensitive (test 111); rebuild the
+  // fields read below from FxTwitter's raw text, which keeps the t.co media link and its facets.
+  if (j.__typename === "TweetTombstone") {
+    const t = (await fetch(`https://api.fxtwitter.com/status/${id}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))?.tweet;
+    const facets = t?.raw_text?.facets ?? [];
+    const odd = facets.filter((f) => f.type !== "media" && f.type !== "url");
+    if (typeof t?.raw_text?.text !== "string" || !Array.isArray(t.raw_text.display_text_range) || odd.length) {
+      console.error(`skip ${id}: tombstoned${odd.length ? `, facets ${odd.map((f) => f.type).join(" ")} not mapped` : ", and FxTwitter has no raw text for it"}`);
+      continue;
+    }
+    const ent = (f) => ({ display_url: f.display, expanded_url: f.replacement, indices: f.indices, url: f.original });
+    const media = t.media?.all ?? [];
+    j = {
+      id_str: id,
+      text: t.raw_text.text,
+      display_text_range: t.raw_text.display_text_range,
+      entities: { ...(facets.some((f) => f.type === "url") ? { urls: facets.filter((f) => f.type === "url").map(ent) } : {}), ...(facets.some((f) => f.type === "media") ? { media: facets.filter((f) => f.type === "media").map(ent) } : {}) },
+      photos: media.filter((m) => m.type === "photo"),
+      mediaDetails: media.map((m) => ({ type: m.type, original_info: { width: m.width, height: m.height }, ...(m.duration ? { video_info: { duration_millis: Math.round(m.duration * 1000) } } : {}) })),
+      user: { name: t.author?.name, screen_name: t.author?.screen_name },
+    };
+  }
   // The syndication JSON of a long post stops at the 280 cut; FxTwitter carries the whole text (t.co links expanded).
   let full_text;
   if (j.note_tweet) {

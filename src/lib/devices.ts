@@ -100,6 +100,15 @@ const phonePost = (d: Device): Device => ({
 });
 
 /**
+ * The iOS app's timeline row draws a Premium-styled post with no bold or italic at all, short or
+ * folded; the styling shows once a long row is expanded with Show more, and on the post screen
+ * (@postcheck_test tests 70 and 70b, iPhone 15 Pro). Likely an X bug, but the preview shows it as it is.
+ */
+export function rowHidesStyles(d: Device, expanded = false): boolean {
+  return d.pane === "app" && d.view === "timeline" && !expanded;
+}
+
+/**
  * One entry per screen width in points, since that is what moves line breaks: each label names the
  * models that share the width. Ordered by how many people read on it. TelemetryDeck's iPhone model
  * survey (week of 2026-09-28, top 10 models in use) totals 402pt 32.6%, 393pt 28.4%, 390pt 19.5%,

@@ -177,7 +177,7 @@ tests (59a, 59d) were dropped. Posted 2026-09-23.
 | # | Text | Tests |
 |---|---|---|
 | 70 **P** | `This has **bold** and __italic__ and **__both__**` (typed with the X composer's own B / I buttons) | Premium bold/italic: weight 700 on web and app, iOS italic shown as upright bold (seen once; confirm). |
-| 70b **P** | Test 94's long text with `quick` in bold and `lazy` in italic (Cmd+B / Cmd+I) | The iOS timeline showed test 70 (short) with no styling at all: does a long post keep its styling there? |
+| 70b **P** | Test 94's long text (lead sentence changed to name 70b) with the first `quick` in bold and the first `lazy` in italic (Cmd+B / Cmd+I); posted 2026-10-06 | The iOS timeline showed test 70 (short) with no styling at all: does a long post keep its styling there? |
 | 71 | Lines starting `• `, `- ` and `1. ` | Bullet characters render as typed; no list styling. |
 | 72 | `مرحبا بالعالم Hello world שלום` | Mixed right-to-left text. Corpus gap. |
 | 73 | `ภาษาไทยไม่มีช่องว่างระหว่างคำ` repeated to 3 lines | Thai (no spaces) line breaking. |
@@ -250,9 +250,11 @@ Long poll test 94: a post over 280 characters with a poll under it, to see where
 | 106 | Repost test 01 | "You reposted" header in the profile timeline. |
 | 107 | `Quote of a quote <ID 44>` | A quote whose quoted post is itself a quote. |
 
+Posted 2026-10-06 (batch 7). 104's edit made a new post id (…7513), which was pinned for 105 and unpinned once the web and iPhone captures were done (2026-10-07).
+
 ## 11. More media
 
-Files are in `fixtures/media/`: `t110-tagged.jpg`, `t111-sensitive.jpg`, `t112-panorama.jpg`, `t113-square.jpg`, `t114-portrait.mp4` and `t116-tall.jpg`; 115 reuses `t50-landscape.jpg` and `t51-portrait.jpg`. Tag and flag only from the composer; mention-tag only
+Files are in `fixtures/media/`: `t110-tagged.jpg`, `t111-sensitive.jpg`, `t112-panorama.jpg`, `t113-square.jpg`, `t114-portrait.mp4`, `t116-tall.jpg` and `t117-strip-1..4.png`; 115 reuses `t50-landscape.jpg` and `t51-portrait.jpg`. Tag and flag only from the composer; mention-tag only
 `@Vibewatch_io` and `@marshallmixing`.
 
 | # | Content | Tests |
@@ -264,11 +266,15 @@ Files are in `fixtures/media/`: `t110-tagged.jpg`, `t111-sensitive.jpg`, `t112-p
 | 114 | `t114-portrait.mp4` (9:16, 6 s) | Portrait video box and duration badge. |
 | 115 | `t50-landscape.jpg` + `t51-portrait.jpg` | Two photos of different shapes side by side: crop. |
 | 116 **P** | `t116-tall.jpg` (1:4) with the block's text | Show more above media, and the tallest crop. |
+| 117 | `t117-strip-1.png` (87×1200, 1:13.8): `Test 117: one very tall, narrow photo (87x1200)` | An extreme strip on its own (after @phantom's 2093795106285629908). |
+| 117b | `t117-strip-1..4.png`: `Test 117b: four very tall, narrow photos (87x1200 each)` | Four strips, as @phantom posted them. |
 
 ```text
 116
 Long media test 116: a post over 280 characters with a tall photo under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.
 ```
+
+Posted 2026-10-06 (batch 7), texts `Test 110: …` to `Test 115: …` as in 51–56. 110 tags only @Vibewatch_io (@marshallmixing refuses media tags) and says "one person". The first 114 upload stalled at "Ready" with Post disabled; a page reload and a fresh drag worked, and Post enabled about a minute after "Ready".
 
 ## 12. More link cards
 
@@ -277,7 +283,7 @@ Long media test 116: a post over 280 characters with a tall photo under it, to s
 | 120 | `Video player card https://www.youtube.com/watch?v=jNQXAC9IVRw` | YouTube player card. |
 | 121 | `Audio card https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC` | Spotify link (its page serves `twitter:card=summary`, no player tag). |
 | 122 | `App card https://apps.apple.com/app/id333903271` | App Store card. Result: no card, link text visible. |
-| 122b | `App card, direct https://apps.apple.com/us/app/x/id333903271` | Same page without the 301: does the redirect cost the card, or does X withhold App Store cards? |
+| 122b | `App card, direct https://apps.apple.com/us/app/x/id333903271` | Same page without the 301: does the redirect cost the card, or does X withhold App Store cards? Result: no card either; X withholds them. |
 | 123 | `Profile link https://x.com/Vibewatch_io` | Link to an X profile: card or plain? |
 | 124 | `International domain https://münchen.de` | IDN display (Unicode or punycode). |
 
@@ -287,6 +293,8 @@ Long media test 116: a post over 280 characters with a tall photo under it, to s
 |---|---|---|
 | 130 | `Location test` with a location tagged | Location line on the post. |
 | 131 | `Paid partnership test` with the paid-partnership label on | Disclosure label. |
+
+131 posted 2026-10-06 (composer → content disclosure → Paid partnership; the same sheet offers "Made with AI"). 130 not posted: the Browser pane denies geolocation, so the location button is disabled.
 
 ---
 

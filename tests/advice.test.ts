@@ -43,3 +43,52 @@ test("a word dangling on two previews names both in the tip", () => {
   const tip = buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [a, b] }).find((t) => t.id === "orphan-four");
   assert.match(tip?.detail ?? "", /^On Phone A and Phone B that paragraph wraps/);
 });
+
+// X builds no card for App Store links although their pages carry the tags (tests 122, 122b): the
+// tip must not blame the page.
+test("an App Store link's missing card is put down to X, not to the page", () => {
+  const text = "Get the app https://apps.apple.com/us/app/x/id333903271";
+  const entities = extractEntities(text);
+  const advice = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [] });
+  const tip = advice.find((a) => a.id === "no-card");
+  assert.match(tip?.detail ?? "", /no preview for App Store links/);
+  const other = "Read https://example.com";
+  const e2 = extractEntities(other);
+  const plain = buildAdvice({ text: other, entities: e2, length: weightedLength(other, e2), card: null, lineSets: [] }).find((a) => a.id === "no-card");
+  assert.match(plain?.detail ?? "", /no Open Graph or Twitter Card tags/);
+});
+
+// A link that broke after "/" leaves its tail on the last row; that tail isn't a dangling word.
+test("a link's tail alone on the last row is not a dangling word", () => {
+  const text = "Get the app https://apps.apple.com/us/app/x/id333903271";
+  const entities = extractEntities(text);
+  const s = text.indexOf("https");
+  const lines = [
+    { words: ["Get", "the", "app", "apps.apple.com/us/app/x/"], paragraph: 0, end: s, spans: [{ start: s, end: s, left: 90, right: 90, link: true }] },
+    { words: ["id333…"], paragraph: 0, end: text.length, spans: [{ start: s, end: text.length, left: 0, right: 50, link: true, cont: true }] },
+  ];
+  const set: DeviceLines = { deviceId: "app", deviceLabel: "iPhone", lines, total: 2, tokenWidth: 0 };
+  const advice = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [set] });
+  assert.equal(advice.find((a) => a.id.startsWith("orphan-")), undefined);
+});
+
+// The iOS timeline row drops Premium styling (tests 70, 70b); the tip must say so.
+test("the styling tip says the iPhone timeline shows no bold or italic", () => {
+  const text = "Ship it today";
+  const entities = extractEntities(text);
+  const tip = buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasStyles: true }).find((a) => a.id === "premium-styles");
+  assert.match(tip?.detail ?? "", /iPhone app's timeline, X shows the post with no bold or italic/);
+});
+
+test("only an unexpanded iOS timeline row hides styling", async () => {
+  const { DEVICES, rowHidesStyles } = await import("../src/lib/devices");
+  const ios = DEVICES.find((d) => d.platform === "ios" && d.view === "timeline")!;
+  const iosPost = DEVICES.find((d) => d.platform === "ios" && d.view === "post")!;
+  const android = DEVICES.find((d) => d.platform === "android" && d.view === "timeline")!;
+  const web = DEVICES.find((d) => d.kind !== "phone")!;
+  assert.equal(rowHidesStyles(ios), true);
+  assert.equal(rowHidesStyles(ios, true), false);
+  assert.equal(rowHidesStyles(iosPost), false);
+  assert.equal(rowHidesStyles(android), false);
+  assert.equal(rowHidesStyles(web), false);
+});
