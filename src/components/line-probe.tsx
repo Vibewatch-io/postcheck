@@ -69,7 +69,7 @@ export function measureLines(root: HTMLElement, lineHeight: number): { lines: Li
       if (!rows[r]) continue;
       rows[r].words.push(f.text);
       if (linkStart === null) rows[r].spans.push({ start: f.start, end: f.end, left: f.left, right: f.right });
-      else if (r === last) rows[r].spans.push({ start: linkStart, end, left: f.left, right: f.right, link: true });
+      else if (r === last) rows[r].spans.push({ start: linkStart, end, left: f.left, right: f.right, link: true, cont: true });
       else rows[r].spans.push({ start: linkStart, end: linkStart, left: f.left, right: f.left, link: true });
       rows[r].end = r === last ? end : linkStart ?? f.end;
       rows[r].paragraph = paragraph;

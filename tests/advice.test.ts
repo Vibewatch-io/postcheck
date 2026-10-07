@@ -57,3 +57,17 @@ test("an App Store link's missing card is put down to X, not to the page", () =>
   const plain = buildAdvice({ text: other, entities: e2, length: weightedLength(other, e2), card: null, lineSets: [] }).find((a) => a.id === "no-card");
   assert.match(plain?.detail ?? "", /no Open Graph or Twitter Card tags/);
 });
+
+// A link that broke after "/" leaves its tail on the last row; that tail isn't a dangling word.
+test("a link's tail alone on the last row is not a dangling word", () => {
+  const text = "Get the app https://apps.apple.com/us/app/x/id333903271";
+  const entities = extractEntities(text);
+  const s = text.indexOf("https");
+  const lines = [
+    { words: ["Get", "the", "app", "apps.apple.com/us/app/x/"], paragraph: 0, end: s, spans: [{ start: s, end: s, left: 90, right: 90, link: true }] },
+    { words: ["id333…"], paragraph: 0, end: text.length, spans: [{ start: s, end: text.length, left: 0, right: 50, link: true, cont: true }] },
+  ];
+  const set: DeviceLines = { deviceId: "app", deviceLabel: "iPhone", lines, total: 2, tokenWidth: 0 };
+  const advice = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [set] });
+  assert.equal(advice.find((a) => a.id.startsWith("orphan-")), undefined);
+});

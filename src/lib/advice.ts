@@ -33,7 +33,7 @@ export interface LineInfo {
   /** UTF-16 offset just past the last word on the line. */
   end: number;
   /** Each word on the line with its text offsets and pixel edges (relative to the body's left edge). */
-  spans: Array<{ start: number; end: number; left: number; right: number; link?: boolean }>;
+  spans: Array<{ start: number; end: number; left: number; right: number; link?: boolean; cont?: boolean }>;
 }
 
 export interface DeviceLines {
@@ -238,7 +238,8 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     for (const lines of byPara.values()) {
       if (lines.length < 2) continue;
       const last = lines[lines.length - 1];
-      if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "") {
+      // The tail of a link that broke after "/" isn't a word the writer can move.
+      if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "" && !last.spans[0]?.cont) {
         const key = last.words[0];
         let orphan = orphans.get(key);
         if (!orphan) {
