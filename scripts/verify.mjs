@@ -48,10 +48,12 @@ const ROWS = (deviceLast, quote = false) => `(() => {
   const lh = parseFloat(getComputedStyle(body).lineHeight) || 20;
   const shown = Math.round(body.getBoundingClientRect().height / lh);
   for (const w of body.querySelectorAll('[data-w]')) { const r = w.getClientRects(); if (!r.length || Math.round((r[0].top - top) / lh) >= shown) continue;
-    if (r.length === 1) { const k = Math.round((r[0].top - top) / lh); (rows[k] = rows[k] || []).push(w.textContent); continue; }
-    // A word that wraps inside its span (after a hyphen, or CJK): split it by character.
-    const node = [...w.childNodes].find((c) => c.nodeType === 3) || w.firstChild?.firstChild; if (!node) continue;
-    let curK = null; for (let i = 0; i < node.nodeValue.length; i++) { const rg = document.createRange(); rg.setStart(node, i); rg.setEnd(node, i + 1); const cr = rg.getClientRects(); if (!cr.length) continue;
+    const ks = [...r].map((x) => Math.round((x.top - top) / lh));
+    if (ks.every((k) => k === ks[0])) { (rows[ks[0]] = rows[ks[0]] || []).push(w.textContent); continue; }
+    // A word that wraps inside its span (after a hyphen, CJK, or a link's <wbr> after "/"): split it by
+    // character, across every text node in the span.
+    const walker = document.createTreeWalker(w, NodeFilter.SHOW_TEXT); let node, curK = null;
+    while ((node = walker.nextNode())) for (let i = 0; i < node.nodeValue.length; i++) { const rg = document.createRange(); rg.setStart(node, i); rg.setEnd(node, i + 1); const cr = rg.getClientRects(); if (!cr.length) continue;
       const k = Math.round((cr[0].top - top) / lh); rows[k] = rows[k] || []; if (k === curK) rows[k][rows[k].length - 1] += node.nodeValue[i]; else { rows[k].push(node.nodeValue[i]); curK = k; } } }
   return { rows: Object.keys(rows).sort((a,b)=>a-b).filter((k) => k < shown).map(k => rows[k].join(' ')), more: !!body.querySelector('[data-more]') };
 })()`;

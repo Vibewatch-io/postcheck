@@ -250,7 +250,7 @@ Long poll test 94: a post over 280 characters with a poll under it, to see where
 | 106 | Repost test 01 | "You reposted" header in the profile timeline. |
 | 107 | `Quote of a quote <ID 44>` | A quote whose quoted post is itself a quote. |
 
-Posted 2026-10-06 (batch 7). 104's edit made a new post id (…3513), which was then pinned for 105 and stays pinned until the iPhone capture.
+Posted 2026-10-06 (batch 7). 104's edit made a new post id (…3513), which was pinned for 105 and unpinned once the web and iPhone captures were done (2026-10-07).
 
 ## 11. More media
 

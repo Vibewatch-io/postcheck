@@ -65,9 +65,12 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
     }
     if (t.kind === "entity") {
       if (t.entity.type === "url" && t.entity.start === hiddenUrlStart) return;
+      // The iOS app breaks a link that doesn't fit after a "/" ("…/us/app/x/" | "id333…",
+      // @postcheck_test test 122b); the browser never breaks there on its own.
+      const text = pane === "app" && t.entity.type === "url" ? t.text.split(/(?<=\/)(?=.)/).flatMap((s, j) => (j ? [<wbr key={j} />, s] : [s])) : t.text;
       nodes.push(
         <span key={i} data-w="1" data-p={paragraph} data-e={t.end} style={{ color: linkColor }}>
-          {t.text}
+          {text}
         </span>,
       );
       return;
