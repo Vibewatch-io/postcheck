@@ -1,0 +1,16 @@
+{
+  "id_str": "2107957996760494575",
+  "text": "Display name test 80",
+  "display_text_range": [
+    0,
+    20
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck display name test 80, fifty chars long🚀",
+    "screen_name": "Postcheck_test"
+  }
+}

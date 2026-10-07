@@ -13,6 +13,8 @@ interface Props {
   /** Viewport width X's breakpoints see (screen width on phones). */
   viewport: number;
   font: "web" | "app";
+  /** x.com itself (timeline or post page), not a phone: only there are the 2026-10-07 card metrics measured. */
+  web: boolean;
 }
 
 const clamp = (lines: number): React.CSSProperties => ({
@@ -28,9 +30,12 @@ const clamp = (lines: number): React.CSSProperties => ({
  * (130px at ≥450px viewports, 110px at ≥400px, 90px below), then domain /
  * title / description at 15px with a 12px inset and 2px gaps.
  * Large ("summary_large_image"): the image with the title in a dark pill at
- * the bottom-left, and "From domain" underneath.
+ * the bottom-left, and "From domain" underneath. On x.com (2026-10-07, test 20)
+ * the pill is 20px high with 8px sides and 13px text (16px line, centred), "From domain" is 13/16
+ * secondary 4px under the card, and neither card has a fill of its own; the
+ * phone panes (iOS and Android) keep the earlier values, which no app capture has measured.
  */
-export function LinkCard({ card, theme, width, viewport, font: fontKind }: Props) {
+export function LinkCard({ card, theme, width, viewport, font: fontKind, web }: Props) {
   const font = { fontFamily: fontStack(fontKind), fontSize: 15, lineHeight: "20px" } as const;
   const frame: React.CSSProperties = {
     border: `1px solid ${theme.cardBorder}`,
@@ -38,12 +43,12 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind }: Props
     overflow: "hidden",
     width,
     boxSizing: "border-box",
-    backgroundColor: theme.cardBg,
+    backgroundColor: web ? undefined : theme.cardBg,
   };
 
   if (card === "loading") {
     return (
-      <div style={{ ...frame, height: 132, display: "flex", alignItems: "center", justifyContent: "center", color: theme.secondary, ...font }}>
+      <div style={{ ...frame, backgroundColor: theme.cardBg, height: 132, display: "flex", alignItems: "center", justifyContent: "center", color: theme.secondary, ...font }}>
         Fetching preview…
       </div>
     );
@@ -61,8 +66,9 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind }: Props
               left: 12,
               bottom: 12,
               maxWidth: "calc(100% - 24px)",
+              boxSizing: "border-box",
               height: 20,
-              padding: "0 4px",
+              padding: web ? "0 8px" : "0 4px",
               borderRadius: 4,
               backgroundColor: "rgba(0,0,0,0.77)",
               color: "#fff",
@@ -77,7 +83,7 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind }: Props
             {card.title}
           </div>
         </div>
-        <div style={{ ...font, color: theme.secondary, marginTop: 4, ...clamp(1) }}>From {card.host}</div>
+        <div style={{ ...font, ...(web ? { fontSize: 13, lineHeight: "16px" } : {}), color: theme.secondary, marginTop: 4, ...clamp(1) }}>From {card.host}</div>
       </div>
     );
   }

@@ -1,0 +1,16 @@
+{
+  "id_str": "2107946787990610136",
+  "text": "Location test",
+  "display_text_range": [
+    0,
+    13
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

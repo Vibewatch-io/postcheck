@@ -209,8 +209,12 @@ Bullets as typed:
 | C1 | Any text post, captured in light theme | Light colours on the logged-in client (open question 5). |
 | C2 | Same post, dark theme | Dark colours, already measured; re-confirm. |
 
+C1/C2 measured 2026-10-07 on the post pages of tests 20, 22, 42 and 60 (light through `prefers-color-scheme`, the pane's X display set to "Use system setting"); no new post needed.
+
 Post a short text post (`Display name test 80`, `Display name test 81`) after each rename so a fresh post
-sits at the top of the profile, capture it, then put the name back to `Postcheck test`.
+sits at the top of the profile, capture it, then put the name back to `Postcheck`.
+
+80 posted 2026-10-07 (2107957996760494575) with the name `Postcheck display name test 80, fifty chars long🚀`: X counts the limit in UTF-16 units, so the emoji costs 2 and the name only fit with no space before it. A rename sends a Premium profile to "Under review": the check disappears and X refuses further renames until the review ends. **81 and restoring the name to `Postcheck` wait for that review**; until then every @postcheck_test post shows the test-80 name and no check.
 
 ## 9. Polls
 
@@ -294,7 +298,7 @@ Posted 2026-10-06 (batch 7), texts `Test 110: …` to `Test 115: …` as in 51�
 | 130 | `Location test` with a location tagged | Location line on the post. |
 | 131 | `Paid partnership test` with the paid-partnership label on | Disclosure label. |
 
-131 posted 2026-10-06 (composer → content disclosure → Paid partnership; the same sheet offers "Made with AI"). 130 not posted: the Browser pane denies geolocation, so the location button is disabled.
+131 posted 2026-10-06 (composer → content disclosure → Paid partnership; the same sheet offers "Made with AI"). 130 posted 2026-10-07 by Brandon from his phone (the Browser pane denies geolocation, so its location button is disabled): the web timeline shows no location, the post page adds "from Stanford, CA".
 
 ---
 

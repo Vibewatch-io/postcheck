@@ -9,7 +9,7 @@ import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type St
 import { quoteTime, type QuoteState } from "@/lib/quote";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
-import { BookmarkIcon, GoldVerifiedIcon, GrayVerifiedIcon, LikeIcon, MoreIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
+import { BookmarkIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
 
 export interface Identity {
   name: string;
@@ -92,15 +92,27 @@ function Actions({ theme, full }: { theme: XTheme; full: boolean }) {
   );
 }
 
-/** Name, check, @handle and time on one line, as the timeline cell and the quote embed print them. */
-function NameRow({ name, handle, badge, time, theme }: { name: string; handle: string; badge: Badge; time: string; theme: XTheme }) {
+/**
+ * Name, check, @handle and time on one line, as the timeline cell and the quote embed print them.
+ * x.com shrinks the name and the @handle together. The iOS timeline row gives way with the handle
+ * first: a name too long for the row leaves no handle at all, "Name… · 4m" (test 80). Whether a
+ * name that nearly fits shows a cut "@hand…" first is assumed, not captured.
+ */
+function NameRow({ name, handle, badge, time, theme, handleFirst = false }: { name: string; handle: string; badge: Badge; time: string; theme: XTheme; handleFirst?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", minWidth: 0, color: theme.secondary, whiteSpace: "nowrap" }}>
       <span style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
         <span style={{ color: theme.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
         <BadgeIcon badge={badge} theme={theme} />
       </span>
-      <span style={{ marginLeft: 8, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>@{handle}</span>
+      {handleFirst ? (
+        // The gap sits inside the clipped box, so a handle shrunk to nothing leaves no space behind.
+        <span style={{ flexShrink: 1e4, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>
+          <span style={{ marginLeft: 8 }}>@{handle}</span>
+        </span>
+      ) : (
+        <span style={{ marginLeft: 8, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>@{handle}</span>
+      )}
       <span style={{ padding: "0 4px" }}>·</span>
       <span>{time}</span>
     </div>
@@ -226,7 +238,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
-    <LinkCard card={card} theme={theme} width={bodyWidth} viewport={viewport} font={device.font} />
+    <LinkCard card={card} theme={theme} width={bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} />
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
 
@@ -316,7 +328,13 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20 }}>
-            <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} />
+            <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} handleFirst={device.pane === "app"} />
+            {device.pane === "app" && (
+              // iPhone captures (test 80, 2026-10-07): the Grok mark at x 343–357 on a 393pt screen, so the name row stops near 334.
+              <div style={{ color: theme.icon, width: 16, height: 20, display: "flex", alignItems: "center", justifyContent: "center", marginLeft: "auto", marginRight: -10, flexShrink: 0 }}>
+                <GrokIcon size={16} />
+              </div>
+            )}
             <div style={{ color: theme.icon, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", margin: "-6px -8px 0 0", flexShrink: 0 }}>
               <MoreIcon size={16} />
             </div>
