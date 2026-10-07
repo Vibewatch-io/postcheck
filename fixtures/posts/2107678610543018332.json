@@ -1,0 +1,36 @@
+{
+  "id_str": "2107678610543018332",
+  "text": "Test 114: a portrait video https://t.co/qhMuQzAk6N",
+  "display_text_range": [
+    0,
+    26
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/qhMuQzAk6N",
+        "expanded_url": "https://x.com/Postcheck_test/status/2107678610543018332/video/1",
+        "indices": [
+          27,
+          50
+        ],
+        "url": "https://t.co/qhMuQzAk6N"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "media": [
+    {
+      "type": "video",
+      "width": 720,
+      "height": 1280,
+      "duration_ms": 6000
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

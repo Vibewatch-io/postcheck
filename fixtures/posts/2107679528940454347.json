@@ -1,0 +1,36 @@
+{
+  "id_str": "2107679528940454347",
+  "text": "Long media test 116: a post over 280 characters with a tall photo under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the https://t.co/wVYSmUqmCC",
+  "display_text_range": [
+    0,
+    277
+  ],
+  "note_tweet": true,
+  "full_text": "Long media test 116: a post over 280 characters with a tall photo under it, to see where Show more lands. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/wVYSmUqmCC",
+        "expanded_url": "https://x.com/Postcheck_test/status/2107679528940454347/photo/1",
+        "indices": [
+          278,
+          301
+        ],
+        "url": "https://t.co/wVYSmUqmCC"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "media": [
+    {
+      "type": "photo",
+      "width": 600,
+      "height": 2400
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListedPhone, thisPhone, type Device } from "@/lib/devices";
 import { THEMES, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
-import type { CardData } from "@/lib/card";
+import { cardless, type CardData } from "@/lib/card";
 import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
 import socialCard from "@/app/opengraph-image.png";
 import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
@@ -209,7 +209,7 @@ export function Postcheck() {
   // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
-  const cardKey = cardEntity && !cardEntity.isStatus && !media ? cardEntity.href! : null;
+  const cardKey = cardEntity && !cardEntity.isStatus && !media && !cardless(cardEntity.href!) ? cardEntity.href! : null;
   const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;

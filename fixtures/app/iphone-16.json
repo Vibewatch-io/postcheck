@@ -1238,11 +1238,7 @@
     "App card apps.apple.com/app/id333903271"
    ],
    "showMore": false,
-   "card": null,
-   "gap": "card: X built no card for this App Store link although the page has Open Graph tags; cause untested (122b)",
-   "gapTool": [
-    "App card"
-   ]
+   "card": null
   },
   {
    "id": "2107204666526515704",

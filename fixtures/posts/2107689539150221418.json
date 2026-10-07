@@ -1,0 +1,35 @@
+{
+  "id_str": "2107689539150221418",
+  "text": "Test 117: one very tall, narrow photo (87x1200) https://t.co/P2lFoNlnxu",
+  "display_text_range": [
+    0,
+    47
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/P2lFoNlnxu",
+        "expanded_url": "https://x.com/Postcheck_test/status/2107689539150221418/photo/1",
+        "indices": [
+          48,
+          71
+        ],
+        "url": "https://t.co/P2lFoNlnxu"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "media": [
+    {
+      "type": "photo",
+      "width": 87,
+      "height": 1200
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

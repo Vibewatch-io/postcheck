@@ -1,0 +1,35 @@
+{
+  "id_str": "2107676801090920544",
+  "text": "Test 113: a square photo https://t.co/oQN7eo9DEm",
+  "display_text_range": [
+    0,
+    24
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/oQN7eo9DEm",
+        "expanded_url": "https://x.com/Postcheck_test/status/2107676801090920544/photo/1",
+        "indices": [
+          25,
+          48
+        ],
+        "url": "https://t.co/oQN7eo9DEm"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 1,
+  "media": [
+    {
+      "type": "photo",
+      "width": 1200,
+      "height": 1200
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
