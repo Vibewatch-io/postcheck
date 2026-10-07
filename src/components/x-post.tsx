@@ -37,8 +37,11 @@ interface Props {
   showMore: boolean;
   /** Called when Show more is clicked. */
   onShowMore?: () => void;
-  /** Called when the timeline cell itself is clicked: the preview folds or expands the post (not something X does). */
-  onToggle?: () => void;
+  /**
+   * Set when the timeline cell can fold or expand (a preview affordance, not something X does):
+   * whether it's expanded now, and what a click or Enter / Space on the cell does.
+   */
+  toggle?: { expanded: boolean; onToggle: () => void };
   hiddenUrlStart: number | null;
   card: CardData | "loading" | null;
   /** The post link that becomes the quote embed, and what the lookup found. */
@@ -206,7 +209,7 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
  * 12px → card → action row. The post page ("focal") variant runs the body at
  * 17px/24px under the header and adds the timestamp row.
  */
-export function XPost({ device, theme, identity, tokens, showMore, onShowMore, onToggle, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
+export function XPost({ device, theme, identity, tokens, showMore, onShowMore, toggle, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
   const font = { fontFamily: fontStack(device.font), fontSize: 15, lineHeight: "20px" } as const;
   const handle = identity.handle.replace(/^@/, "") || "yourhandle";
   const name = identity.name || "Your name";
@@ -279,17 +282,24 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, o
   const android = device.platform === "android";
   return (
     <article
-      // Focusable when it toggles, as X's own timeline cells are; Enter or Space on the cell itself
-      // (not on Show more inside it) toggles it, so the fold works without a mouse too.
-      tabIndex={onToggle ? 0 : undefined}
-      onClick={onToggle}
-      onKeyDown={onToggle ? (e) => {
+      // Focusable when it toggles, as X's own timeline cells are. It stays an article (a button role
+      // would put Show more inside another button), so its label carries the state and the action.
+      // Enter or Space on the cell itself (not on Show more inside it) toggles it, once per press.
+      tabIndex={toggle ? 0 : undefined}
+      aria-label={toggle ? (toggle.expanded ? "Post preview, expanded. Press Enter to fold it." : "Post preview, cut at Show more. Press Enter to expand it.") : undefined}
+      onClick={toggle ? (e) => {
+        // A drag that selects text in the post ends in a click; leave the selection alone.
+        const selection = window.getSelection();
+        if (selection && !selection.isCollapsed && e.currentTarget.contains(selection.anchorNode)) return;
+        toggle.onToggle();
+      } : undefined}
+      onKeyDown={toggle ? (e) => {
         if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
         e.preventDefault();
-        onToggle();
+        if (!e.repeat) toggle.onToggle();
       } : undefined}
       style={{
-        cursor: onToggle ? "pointer" : undefined,
+        cursor: toggle ? "pointer" : undefined,
         // App cell measured on an iPhone 15 Pro capture: 12px inset, 44px avatar, 8px gap, 12px right.
         // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
         padding: isPhone ? (android ? "12px" : "12px 13px 12px 12px") : "12px 16px",
