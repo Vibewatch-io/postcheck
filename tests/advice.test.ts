@@ -43,3 +43,17 @@ test("a word dangling on two previews names both in the tip", () => {
   const tip = buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [a, b] }).find((t) => t.id === "orphan-four");
   assert.match(tip?.detail ?? "", /^On Phone A and Phone B that paragraph wraps/);
 });
+
+// X builds no card for App Store links although their pages carry the tags (tests 122, 122b): the
+// tip must not blame the page.
+test("an App Store link's missing card is put down to X, not to the page", () => {
+  const text = "Get the app https://apps.apple.com/us/app/x/id333903271";
+  const entities = extractEntities(text);
+  const advice = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [] });
+  const tip = advice.find((a) => a.id === "no-card");
+  assert.match(tip?.detail ?? "", /no preview for App Store links/);
+  const other = "Read https://example.com";
+  const e2 = extractEntities(other);
+  const plain = buildAdvice({ text: other, entities: e2, length: weightedLength(other, e2), card: null, lineSets: [] }).find((a) => a.id === "no-card");
+  assert.match(plain?.detail ?? "", /no Open Graph or Twitter Card tags/);
+});

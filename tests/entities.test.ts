@@ -168,6 +168,17 @@ test("app fold keeps the longest prefix that fits beside Show more, then eats on
   const after80000 = sp3[5].right;
   const cut3 = appFoldCut(v, v.indexOf("\n"), { spans: sp3, tokenWidth: 322 - after80000 - 3, textWidth: 322 });
   assert.equal(v.slice(0, cut3), "Plus Trezor's leak grows to 80,00");
+  // A link on the fold line is one unit (assumed): the cut lands after it, eating nothing from it, or
+  // before it, never inside its display text, whose characters have no offsets in the post.
+  const w = "Read this https://apps.apple.com/us/app/x/id333903271 later\nmore";
+  const ls = w.indexOf("https"), le = ls + "https://apps.apple.com/us/app/x/id333903271".length;
+  const sp4 = [
+    { start: 0, end: 4, left: 0, right: 36 },
+    { start: 5, end: 9, left: 40, right: 72 },
+    { start: ls, end: le, left: 76, right: 280, link: true },
+  ];
+  assert.equal(w.slice(0, appFoldCut(w, le, { spans: sp4, tokenWidth: 40, textWidth: 322 })), w.slice(0, le));
+  assert.equal(w.slice(0, appFoldCut(w, le, { spans: sp4, tokenWidth: 60, textWidth: 322 })), "Read thi");
 });
 
 test("formatting markers become style runs and are never counted", () => {

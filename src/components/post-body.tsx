@@ -69,7 +69,7 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
       // @postcheck_test test 122b); the browser never breaks there on its own.
       const text = pane === "app" && t.entity.type === "url" ? t.text.split(/(?<=\/)(?=.)/).flatMap((s, j) => (j ? [<wbr key={j} />, s] : [s])) : t.text;
       nodes.push(
-        <span key={i} data-w="1" data-p={paragraph} data-e={t.end} style={{ color: linkColor }}>
+        <span key={i} data-w="1" data-link={t.entity.type === "url" ? t.start : undefined} data-p={paragraph} data-e={t.end} style={{ color: linkColor }}>
           {text}
         </span>,
       );

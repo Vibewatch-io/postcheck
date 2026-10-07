@@ -6,7 +6,7 @@ import {
   type Entity,
   type LengthInfo,
 } from "./entities";
-import type { CardData } from "./card";
+import { cardless, type CardData } from "./card";
 
 export type Severity = "fix" | "tip" | "note";
 
@@ -33,7 +33,7 @@ export interface LineInfo {
   /** UTF-16 offset just past the last word on the line. */
   end: number;
   /** Each word on the line with its text offsets and pixel edges (relative to the body's left edge). */
-  spans: Array<{ start: number; end: number; left: number; right: number }>;
+  spans: Array<{ start: number; end: number; left: number; right: number; link?: boolean }>;
 }
 
 export interface DeviceLines {
@@ -163,8 +163,9 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         id: "no-card",
         severity: "note",
         title: `No card for ${cu.host}`,
-        detail:
-          "That page has no Open Graph or Twitter Card tags, so X shows the link as plain text and no preview. The URL text stays visible even at the end of the post.",
+        detail: cardless(cu.href!)
+          ? "X shows no preview for App Store links, even though the page has the tags for one. The URL text stays visible even at the end of the post."
+          : "That page has no Open Graph or Twitter Card tags, so X shows the link as plain text and no preview. The URL text stays visible even at the end of the post.",
         marks: [{ at: cu.start }],
       });
     }
