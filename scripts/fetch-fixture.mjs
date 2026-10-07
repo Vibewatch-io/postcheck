@@ -24,8 +24,8 @@ for (const arg of args) {
     const t = (await fetch(`https://api.fxtwitter.com/status/${id}`).then((r) => (r.ok ? r.json() : null)).catch(() => null))?.tweet;
     const facets = t?.raw_text?.facets ?? [];
     const odd = facets.filter((f) => f.type !== "media" && f.type !== "url");
-    if (!t || odd.length) {
-      console.error(`skip ${id}: tombstoned${t ? `, facets ${odd.map((f) => f.type).join(" ")} not mapped` : ""}`);
+    if (typeof t?.raw_text?.text !== "string" || !Array.isArray(t.raw_text.display_text_range) || odd.length) {
+      console.error(`skip ${id}: tombstoned${odd.length ? `, facets ${odd.map((f) => f.type).join(" ")} not mapped` : ", and FxTwitter has no raw text for it"}`);
       continue;
     }
     const ent = (f) => ({ display_url: f.display, expanded_url: f.replacement, indices: f.indices, url: f.original });

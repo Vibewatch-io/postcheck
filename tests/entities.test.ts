@@ -179,6 +179,10 @@ test("app fold keeps the longest prefix that fits beside Show more, then eats on
   ];
   assert.equal(w.slice(0, appFoldCut(w, le, { spans: sp4, tokenWidth: 40, textWidth: 322 })), w.slice(0, le));
   assert.equal(w.slice(0, appFoldCut(w, le, { spans: sp4, tokenWidth: 60, textWidth: 322 })), "Read thi");
+  // A row the link only starts on ends at the link's start with an empty span: the fold lands before
+  // the link and still eats a character from the text before it.
+  const sp5 = [sp4[0], sp4[1], { start: ls, end: ls, left: 76, right: 76, cont: false }];
+  assert.equal(w.slice(0, appFoldCut(w, ls, { spans: sp5, tokenWidth: 40, textWidth: 322 })), "Read thi");
 });
 
 test("formatting markers become style runs and are never counted", () => {

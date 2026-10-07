@@ -64,13 +64,16 @@ export function measureLines(root: HTMLElement, lineHeight: number): { lines: Li
       }
     }
     // A row a link runs off ends at the link's start, so a fold there keeps the whole link behind Show
-    // more; only the row it ends on can cut after it (assumed; no capture has a link across the fold).
+    // more (an empty span there gives no cut inside it, and the fold still eats a character from the
+    // text before it); only the row it ends on can cut after it (assumed; no capture has a link across
+    // the fold). Every fragment after the first is `cont`: a token's tail, not a word the writer can move.
     for (const [r, f] of frags) {
       if (!rows[r]) continue;
       rows[r].words.push(f.text);
-      if (linkStart === null) rows[r].spans.push({ start: f.start, end: f.end, left: f.left, right: f.right });
-      else if (r === last) rows[r].spans.push({ start: linkStart, end, left: f.left, right: f.right, link: true, cont: true });
-      else rows[r].spans.push({ start: linkStart, end: linkStart, left: f.left, right: f.left, link: true });
+      const cont = r !== first ? { cont: true } : {};
+      if (linkStart === null) rows[r].spans.push({ start: f.start, end: f.end, left: f.left, right: f.right, ...cont });
+      else if (r === last) rows[r].spans.push({ start: linkStart, end, left: f.left, right: f.right, link: true, ...cont });
+      else rows[r].spans.push({ start: linkStart, end: linkStart, left: f.left, right: f.left, ...cont });
       rows[r].end = r === last ? end : linkStart ?? f.end;
       rows[r].paragraph = paragraph;
     }

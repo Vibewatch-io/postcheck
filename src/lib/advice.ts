@@ -238,7 +238,8 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     for (const lines of byPara.values()) {
       if (lines.length < 2) continue;
       const last = lines[lines.length - 1];
-      // The tail of a link that broke after "/" isn't a word the writer can move.
+      // The tail of a token that wrapped (a link after "/", a word after a hyphen, CJK) isn't a word the
+      // writer can move.
       if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "" && !last.spans[0]?.cont) {
         const key = last.words[0];
         let orphan = orphans.get(key);

@@ -1180,6 +1180,7 @@
   },
   {
    "id": "2107205404967211163",
+   "compose": "This has **bold** and __italic__ and **__both__**",
    "lines": [
     "This has bold and italic and both"
    ],
@@ -1587,6 +1588,7 @@
   },
   {
    "id": "2107674949947130122",
+   "compose": "Long styled test 70b: a post over 280 characters with one bold and one italic word, to see if the app timeline keeps the styling. the **quick** brown fox jumps over a __lazy__ dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
    "lines": [
     "Long styled test 70b: a post over 280",
     "characters with one bold and one italic word, to",
