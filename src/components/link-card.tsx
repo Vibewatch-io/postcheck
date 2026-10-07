@@ -66,6 +66,7 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web }: 
               left: 12,
               bottom: 12,
               maxWidth: "calc(100% - 24px)",
+              boxSizing: "border-box",
               height: 20,
               padding: web ? "0 8px" : "0 4px",
               borderRadius: 4,
