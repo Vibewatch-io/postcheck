@@ -14,9 +14,12 @@ export interface XTheme {
   badge: string;
 }
 
-// Light values are X's long-standing palette; dark values were read off the
-// live client (text rgb(230,233,234), secondary rgb(113,117,122),
-// row border rgb(43,46,49), card border rgb(50,54,57), card bg rgb(22,24,29)).
+// Both read off the logged-in x.com client on 2026-10-07 (C1/C2: test 20's
+// post page, light via prefers-color-scheme). Dark: text rgb(231,233,234),
+// secondary and icons rgb(113,118,123), row and card borders rgb(47,51,54).
+// Light matched X's long-standing palette exactly. x.com fills no link card in
+// either theme; cardBg fills the phone panes' cards and the loading and
+// unavailable boxes (values assumed).
 export const THEMES: Record<ThemeId, XTheme> = {
   light: {
     id: "light",
@@ -35,13 +38,13 @@ export const THEMES: Record<ThemeId, XTheme> = {
     id: "dark",
     label: "Dark",
     bg: "#000000",
-    text: "#E6E9EA",
-    secondary: "#71757A",
-    border: "#2B2E31",
-    cardBorder: "#323639",
+    text: "#E7E9EA",
+    secondary: "#71767B",
+    border: "#2F3336",
+    cardBorder: "#2F3336",
     cardBg: "#16181D",
     link: "#1D9BF0",
-    icon: "rgba(255,255,255,0.6)",
+    icon: "#71767B",
     badge: "#1D9BF0",
   },
 };
