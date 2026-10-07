@@ -6,6 +6,7 @@ export const TITLE = "Postcheck";
 /** The header line; also the browser and search title after the name. */
 export const TAGLINE = "See your post exactly as X will show it.";
 export const X_HANDLE = "@vibewatch_io";
+export const REPO_URL = "https://github.com/Vibewatch-io/postcheck";
 /** The "Looks different on X" issue form (.github/ISSUE_TEMPLATE/render-mismatch.yml). */
-export const MISMATCH_FORM = "https://github.com/Vibewatch-io/postcheck/issues/new?template=render-mismatch.yml";
+export const MISMATCH_FORM = `${REPO_URL}/issues/new?template=render-mismatch.yml`;
 export const DESCRIPTION = "1:1 previews of your X post on the web and on phones, rendered in your browser, with tips grounded in how X renders and ranks posts.";
