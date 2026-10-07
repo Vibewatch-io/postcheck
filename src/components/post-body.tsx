@@ -35,13 +35,12 @@ interface Props {
  * the DOM (see line-probe.tsx); the spans change nothing visually.
  */
 /**
- * x.com renders Premium bold at weight 700 (Chirp Bold) and italic as a
- * synthesized slant of the same face. The iOS app has no italic Chirp and
- * does not slant: an italic run shows upright in bold (observed on
- * Write/status/1646674962055565319, one sample).
+ * Premium bold is weight 700 (Chirp Bold) and italic a synthesized slant of the same face, on x.com
+ * and in the iOS app wherever the app shows styling at all (its post screen and an expanded row:
+ * tests 70, 70b; one older capture of Write/status/1646674962055565319 showed upright bold). The iOS
+ * timeline row shows none: see rowHidesStyles.
  */
-function styleCss(st: { bold: boolean; italic: boolean }, app: boolean): React.CSSProperties {
-  if (app) return st.bold || st.italic ? { fontWeight: 700 } : {};
+function styleCss(st: { bold: boolean; italic: boolean }): React.CSSProperties {
   return { ...(st.bold ? { fontWeight: 700 } : {}), ...(st.italic ? { fontStyle: "italic" as const } : {}) };
 }
 
@@ -76,7 +75,7 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
       return;
     }
     nodes.push(
-      <span key={i} data-w="1" data-p={paragraph} data-e={t.end} style={styleCss(styleAt(styles, t.start), pane === "app")}>
+      <span key={i} data-w="1" data-p={paragraph} data-e={t.end} style={styleCss(styleAt(styles, t.start))}>
         {t.text}
       </span>,
     );
