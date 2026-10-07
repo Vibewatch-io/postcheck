@@ -73,13 +73,13 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
   const room = maxHeight ? maxHeight - bezel * 2 : full;
   const chromeAll = statusH + headerH + tabsH + bottomBarH + indicatorH;
   // A post taller than the real screen's feed (an expanded long post) scrolls there, as it does on
-  // the phone. Shedding furniture can't show it whole, so it keeps it all (shedding everything for
-  // nothing jammed the post under the island) and the screen just takes the room there is.
+  // the phone, and no shedding shows it whole. It sheds only what a short window takes from the
+  // screen, and never the status bar or header: without them the post sat jammed under the island.
   const scrolls = postHeight > full - chromeAll;
   // Drop furniture only while the whole screen doesn't fit, least important first.
   const dropped = ((): { indicator: boolean; bottomBar: boolean; tabs: boolean; header: boolean; status: boolean } => {
     const drop = { indicator: false, bottomBar: false, tabs: false, header: false, status: false };
-    let over = postHeight > 0 && !scrolls ? chromeAll + postHeight - room : 0;
+    let over = postHeight === 0 ? 0 : scrolls ? full - room : chromeAll + postHeight - room;
     for (const [key, h] of [
       ["indicator", indicatorH],
       ["bottomBar", bottomBarH],
@@ -87,7 +87,7 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
       ["header", headerH],
       ["status", statusH],
     ] as const) {
-      if (over <= 0) break;
+      if (over <= 0 || (scrolls && key === "header")) break;
       drop[key] = true;
       over -= h;
     }
