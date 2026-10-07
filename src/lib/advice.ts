@@ -265,7 +265,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       id: "premium-styles",
       severity: "note",
       title: "Bold and italic need Premium",
-      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks and the phone fold move. In the iPhone app's timeline, X shows the post with no bold or italic at all (a long post gets it back once Show more is tapped); its post page shows the styling. That looks like an X bug, and the iPhone preview shows it the same way.",
+      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks move wherever the styling shows. In the iPhone app's timeline, X shows the post with no bold or italic at all (a long post gets it back once Show more is tapped), so the breaks and the fold there don't change; its post page shows the styling. That looks like an X bug, and the iPhone preview shows it the same way.",
     });
   }
 
