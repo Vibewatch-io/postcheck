@@ -71,11 +71,15 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
   const headerH = post ? 44 : 54;
   const full = device.height ?? 0;
   const room = maxHeight ? maxHeight - bezel * 2 : full;
+  const chromeAll = statusH + headerH + tabsH + bottomBarH + indicatorH;
+  // A post taller than the real screen's feed (an expanded long post) scrolls there, as it does on
+  // the phone, and no shedding shows it whole. It sheds only what a short window takes from the
+  // screen, and never the status bar or header: without them the post sat jammed under the island.
+  const scrolls = postHeight > full - chromeAll;
   // Drop furniture only while the whole screen doesn't fit, least important first.
   const dropped = ((): { indicator: boolean; bottomBar: boolean; tabs: boolean; header: boolean; status: boolean } => {
     const drop = { indicator: false, bottomBar: false, tabs: false, header: false, status: false };
-    const chromeAll = statusH + headerH + tabsH + bottomBarH + indicatorH;
-    let over = postHeight > 0 ? chromeAll + postHeight - room : 0;
+    let over = postHeight === 0 ? 0 : scrolls ? full - room : chromeAll + postHeight - room;
     for (const [key, h] of [
       ["indicator", indicatorH],
       ["bottomBar", bottomBarH],
@@ -83,7 +87,7 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
       ["header", headerH],
       ["status", statusH],
     ] as const) {
-      if (over <= 0) break;
+      if (over <= 0 || (scrolls && key === "header")) break;
       drop[key] = true;
       over -= h;
     }
@@ -92,7 +96,7 @@ export function PhoneFrame({ device, theme, children, maxHeight }: Props) {
   const { indicator: dropIndicator, bottomBar: dropBottomBar, tabs: dropTabs, header: dropHeader, status: dropStatus } = dropped;
   const chromeH =
     (dropStatus ? 0 : statusH) + (dropHeader ? 0 : headerH) + (dropTabs ? 0 : tabsH) + (dropBottomBar ? 0 : bottomBarH) + (dropIndicator ? 0 : indicatorH);
-  const screenHeight = postHeight === 0 ? full : Math.min(full, Math.max(chromeH + postHeight, Math.min(room, full)));
+  const screenHeight = postHeight === 0 ? full : scrolls ? Math.min(room, full) : Math.min(full, Math.max(chromeH + postHeight, Math.min(room, full)));
 
   return (
     <div style={{ padding: bezel, backgroundColor: "#111113", borderRadius: radius ? radius + bezel : 28, width: device.width + bezel * 2, boxSizing: "border-box" }}>
