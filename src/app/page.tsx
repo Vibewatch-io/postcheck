@@ -1,7 +1,5 @@
 import { Postcheck } from "@/components/postcheck";
-import { DESCRIPTION, SITE_URL, TAGLINE, TITLE } from "@/lib/site";
-
-const REPO = "https://github.com/Vibewatch-io/postcheck";
+import { DESCRIPTION, REPO_URL, SITE_URL, TAGLINE, TITLE } from "@/lib/site";
 
 const JSON_LD = {
   "@context": "https://schema.org",
@@ -14,7 +12,7 @@ const JSON_LD = {
   isAccessibleForFree: true,
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   publisher: { "@type": "Organization", name: "Vibewatch", url: "https://vibewatch.io" },
-  sameAs: [REPO],
+  sameAs: [REPO_URL],
 };
 
 export default function Page() {
@@ -53,7 +51,7 @@ export default function Page() {
         </span>
         <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span>Previews are made in your browser. We never store what you write.</span>
-          <a href={REPO} className="hover:text-brand-warm-dark hover:underline" rel="noopener noreferrer" target="_blank">
+          <a href={REPO_URL} className="hover:text-brand-warm-dark hover:underline" rel="noopener noreferrer" target="_blank">
             Open source on GitHub
           </a>
         </span>
