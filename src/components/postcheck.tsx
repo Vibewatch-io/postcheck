@@ -6,7 +6,7 @@ import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListed
 import { THEMES, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
 import type { CardData } from "@/lib/card";
-import { DESCRIPTION, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
+import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
 import socialCard from "@/app/opengraph-image.png";
 import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
 import { draftToDoc, serializeDoc, trimDraft, type Draft, type DocNode } from "@/lib/draft";
@@ -21,9 +21,9 @@ import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
 
 // The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
-// alone onto its own line on purpose, and the trailing link shows only its card. 259 of 280.
+// alone onto its own line on purpose, and the trailing link shows only its card. 261 of 280.
 const SAMPLE =
-  `We've seen lots of posts on X, so we know how yours will look.\n\nPostcheck counts your characters the way X does, shows exactly where Show more cuts in, and flags any single word stranded on its own line.\n\nWe never store what you write.\n${SITE_URL}`;
+  `We've seen lots of posts on X, so we know how yours will look.\n\nPostcheck counts your characters the way X does, shows exactly where "Show more" cuts in, and flags any single word stranded on its own line.\n\nWe never store what you write.\n${SITE_URL}`;
 
 /**
  * The sample links to Postcheck itself, so its card ships with the page instead of being looked up:
@@ -93,9 +93,10 @@ export function Postcheck() {
   const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
-  // Clicking Show more expands that preview in place, the way x.com does, keyed by device id. Any
-  // change to the text folds every preview again (see below); bold / italic alone don't, and a
-  // device stays expanded if you switch away and back.
+  // Clicking Show more expands that preview in place, the way x.com does, keyed by device id; a
+  // click anywhere on a cut or expanded post toggles it, so it can be folded again. Any change to
+  // the text folds every preview again (see below); bold / italic alone don't, and a device stays
+  // expanded if you switch away and back.
   const [expanded, setExpanded] = useState<Record<string, true>>({});
   const theme = THEMES[themeId];
   const fontTier = useFontTier();
@@ -259,6 +260,19 @@ export function Postcheck() {
     [clampFor, cut280, post, entities, styleCuts, expanded],
   );
   const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: true })), []);
+  const fold = useCallback((d: Device) => setExpanded((e) => {
+    const next = { ...e };
+    delete next[d.id];
+    return next;
+  }), []);
+  // A click on a post folds it if it's expanded and expands it if it's cut. It decides from this
+  // render's state, so the click that bubbles up from Show more (which has just expanded the post)
+  // expands it again rather than folding it.
+  const toggleFor = (d: Device, cut: boolean) => {
+    const open = Boolean(expanded[d.id]);
+    if (!open && !cut) return undefined;
+    return { expanded: open, onToggle: () => (open ? fold(d) : expand(d)) };
+  };
   const quoteProp = useMemo(() => (quote ? { entity: quote, state: quoteState } : null), [quote, quoteState]);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
@@ -577,6 +591,7 @@ export function Postcheck() {
         stacked={narrow}
         minWidth={widestPreview}
         marks={showTips ? advice : NO_MARKS}
+        report={previewOnly ? "never" : typed ? "shown" : "reserved"}
         view={view}
         setView={setView}
         actions={actions}
@@ -598,11 +613,11 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} toggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />;
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>
@@ -618,6 +633,9 @@ export function Postcheck() {
 
 /** The phone shrinks to fit a short window, down to this scale; below it the phone sheds app furniture instead. */
 const MIN_PHONE_SCALE = 0.7;
+/** The "Looks different on X?" line under the preview: its gap above and its height, both kept out of the phone's room. */
+const FOOT_GAP = 8;
+const FOOT_LINE = 16;
 /** The composer fills its half up to COMPOSER_MAX; below COMPOSER_MIN beside the preview, the page stacks. */
 const COMPOSER_MIN = 560;
 const COMPOSER_MAX = 640;
@@ -649,6 +667,11 @@ interface PreviewProps {
   setView: (v: "app" | "web") => void;
   /** Extra toolbar buttons (Share, or Edit a copy on a shared link). */
   actions: React.ReactNode;
+  /**
+   * The "Looks different on X?" line under the preview: shown for the user's own draft once they've
+   * typed, its space reserved before that, and no line at all on a shared link.
+   */
+  report: "never" | "reserved" | "shown";
 }
 
 /**
@@ -656,12 +679,14 @@ interface PreviewProps {
  * read X. The web view is always true size. The phone is laid out at true size and, in a short
  * window, drawn smaller as a whole (a transform, so line breaks can't move) to keep its real shape.
  */
-function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions }: PreviewProps) {
+function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions, report }: PreviewProps) {
   const areaRef = useRef<HTMLDivElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const [room, setRoom] = useState<number | null>(null);
+  // The height under the notices; the preview gets it less the "Looks different on X?" line's.
+  const [space, setSpace] = useState<number | null>(null);
+  const room = space === null ? null : space - (report === "never" ? 0 : FOOT_GAP + FOOT_LINE);
   const [areaWidth, setAreaWidth] = useState<number | null>(null);
   // The stage's layout height (unscaled). Whichever preview is showing is centred vertically;
   // switching views slides it into place.
@@ -675,7 +700,7 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
     const notice = noticeRef.current;
     if (!area || !notice) return;
     const measure = () => {
-      setRoom(area.getBoundingClientRect().height - notice.getBoundingClientRect().height);
+      setSpace(area.getBoundingClientRect().height - notice.getBoundingClientRect().height);
       setAreaWidth(area.clientWidth);
     };
     measure();
@@ -833,6 +858,20 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
       </div>
       {frameless && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Drawn at this phone&apos;s width, with default text size.</p>}
       {stacked && scale < 1 && <p className="mt-2 px-4 text-center text-xs text-brand-warm-secondary">Scaled down to fit this screen.</p>}
+      {/* Its line is kept while empty, so the phone doesn't resize when the first character goes in.
+          A shared link has no line, and the phone gets the room back. */}
+      {report !== "never" && (
+        <p className="flex-none px-4 text-center text-xs text-brand-warm-secondary" style={{ marginTop: FOOT_GAP, height: FOOT_LINE, lineHeight: `${FOOT_LINE}px` }}>
+          {report === "shown" && (
+            <>
+              Looks different on X?{" "}
+              <a href={MISMATCH_FORM} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-warm-dark">
+                Tell us
+              </a>
+            </>
+          )}
+        </p>
+      )}
     </div>
   );
 }

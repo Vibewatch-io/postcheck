@@ -1,53 +1,53 @@
-name: Post rendered differently
-description: A real post that doesn't match the Postcheck preview 1:1
+name: Looks different on X
+description: Your post looks different on X than it did in Postcheck
+title: "Looks different on X: "
 labels: [render-mismatch]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for telling us. Two screenshots are all we need: your post on X, and the same post in Postcheck. Drag or paste each one into its box below.
   - type: input
     id: url
     attributes:
-      label: Post URL
-      placeholder: https://x.com/user/status/123…
+      label: Link to the post on X
+      description: On the post, tap Share, then Copy link.
+      placeholder: https://x.com/yourname/status/123…
     validations:
       required: true
   - type: dropdown
     id: surface
     attributes:
-      label: Where you saw it
+      label: Where did you see it on X?
       options:
-        - x.com timeline
-        - x.com post page
-        - iOS app timeline
-        - iOS app post page
-        - Android app timeline
-        - Android app post page
+        - iPhone app
+        - Android app
+        - A web browser (x.com)
     validations:
       required: true
-  - type: input
-    id: device
-    attributes:
-      label: Device or window width
-      placeholder: iPhone 15 Pro, Pixel 8, 1280px window…
   - type: textarea
     id: real
     attributes:
-      label: Screenshot of the real post
-      description: Drag the image in. Keep the whole post visible, including any Show more.
+      label: Screenshot from X
+      description: Show the whole post, including "Show more" if X shows it.
     validations:
       required: true
   - type: textarea
     id: preview
     attributes:
-      label: What Postcheck showed
-      description: The PNG export or a screenshot, and which words or lines differ.
+      label: Screenshot from Postcheck
+      description: Show the whole preview, plus the switches and any note above it.
     validations:
       required: true
-  - type: dropdown
-    id: font
+  - type: textarea
+    id: what
     attributes:
-      label: Font tier shown above the preview
-      options:
-        - No banner (Chirp loaded)
-        - GT America banner
-        - System font banner
-    validations:
-      required: true
+      label: What looks different?
+      description: Optional. A sentence is plenty.
+      placeholder: The lines break in different places, X cuts it off sooner, a link looks wrong…
+  - type: input
+    id: device
+    attributes:
+      label: Which phone or computer?
+      description: Optional.
+      placeholder: iPhone 15 Pro, Pixel 8, MacBook Air…
