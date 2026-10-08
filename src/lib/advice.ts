@@ -130,7 +130,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       id: "poll-empty",
       severity: "note",
       title: "A poll needs two choices",
-      detail: "X won't post a poll until its first two choices are filled in. The preview draws it once they are.",
+      detail: "X won't post a poll with fewer than two choices filled in. The preview draws it once two are.",
     });
   }
 

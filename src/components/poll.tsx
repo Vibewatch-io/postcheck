@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import type { Device } from "@/lib/devices";
 import { filledChoices, isImagePoll, timeLeft, type Poll } from "@/lib/poll";
 import type { XTheme } from "@/lib/theme";
@@ -18,12 +18,16 @@ import { fontStack } from "@/lib/theme";
  * the pill beside the picture (x 56, 32 high, centred on the row) is assumed: the voter view of an
  * image poll has no capture.
  *
- * iOS timeline (iPhone 15 Pro, test 92 viewed from another account): pills as wide as the quote
+ * iOS timeline (iPhone 15 Pro, tests 90–92 viewed from another account): pills as wide as the quote
  * embed (screen − 71, from the text column), 30pt high on a 34pt pitch; label and footer text
  * fit 13.5px Chirp (their widths against the body line's). Image poll (test 57b): a sideways row of
  * 213pt squares, 222pt apart, each with its choice in a 28pt pill 7pt under it; footer "23h left".
- * Android has no capture: it takes the web layout in its own column (assumed).
+ * Android has no capture: it takes the web layout in its own column (assumed). The iOS post screen
+ * draws the poll across its text column (assumed). A click on a choice does nothing: on X it votes,
+ * so it must not fold or expand the post the way a click elsewhere on the cell does.
  */
+const stop = (e: MouseEvent) => e.stopPropagation();
+
 export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; theme: XTheme }) {
   const choices = filledChoices(poll);
   const images = isImagePoll(poll);
@@ -54,7 +58,7 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
     );
     if (images) {
       return (
-        <div data-poll="" style={{ width }}>
+        <div data-poll="" onClick={stop} style={{ width }}>
           <div style={{ display: "flex", gap: 9, overflow: "hidden" }}>
             {choices.map((c, i) => (
               <div key={i} data-poll-row="" style={{ width: 213, flexShrink: 0 }}>
@@ -68,7 +72,7 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
       );
     }
     return (
-      <div data-poll="" style={{ width, display: "flex", flexDirection: "column", gap: 4 }}>
+      <div data-poll="" onClick={stop} style={{ width, display: "flex", flexDirection: "column", gap: 4 }}>
         {choices.map((c, i) => <div key={i} data-poll-row="">{pill(c.label, 30, 13.5, 18)}</div>)}
         <div style={{ marginTop: -4 }}>{footer}</div>
       </div>
@@ -76,7 +80,7 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
   }
 
   return (
-    <div data-poll="" style={{ width }}>
+    <div data-poll="" onClick={stop} style={{ width }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {choices.map((c, i) =>
           images ? (

@@ -23,7 +23,10 @@ export const emptyPoll = (): Poll => ({ choices: ["", ""], images: [null, null],
 
 export const clampMinutes = (m: number) => Math.min(POLL_MAX_MINUTES, Math.max(POLL_MIN_MINUTES, Math.round(m)));
 
-/** The choices X would post: blanks dropped (assumed: X's Post button stays off until two are filled). */
+/**
+ * The choices X would post: blanks dropped, and a poll needs two of them. Assumed: no capture shows
+ * X's composer with fewer than two filled, or with a blank between filled ones (QUIRKS.md).
+ */
 export function filledChoices(poll: Poll): Array<{ label: string; image: string | null }> {
   return poll.choices.map((label, i) => ({ label: label.trim(), image: poll.images[i] ?? null })).filter((c) => c.label !== "");
 }
