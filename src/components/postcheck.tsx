@@ -365,7 +365,7 @@ export function Postcheck() {
         mediaKinds: media.map((m) => m.kind),
         mediaLayouts: [webDevice, phoneDevice].flatMap((d) => {
           const layout = mediaLayout(media, d);
-          return layout ? [{ deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, layout, ios: d.platform === "ios", tall: media.length === 1 && media[0].width / media[0].height < APP_MIN_RATIO }] : [];
+          return layout ? [{ deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, layout, ios: d.platform === "ios", tall: media.length === 1 && media[0].kind === "photo" && media[0].width / media[0].height < APP_MIN_RATIO }] : [];
         }),
         hasStyles: styles.length > 0,
         typed: draft.text,

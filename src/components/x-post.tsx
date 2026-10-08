@@ -250,11 +250,11 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={m.src} alt="" draggable={false} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
         {carousel && hairline}
-        {(badge === "GIF" || badge === "time" || (web && m.alt)) && (
+        {(badge === "GIF" || badge === "time" || (web && m.alt && m.kind === "photo")) && (
           <div style={{ position: "absolute", left: 8, bottom: 8, display: "flex", gap: 4 }}>
             {badge === "GIF" && <span style={{ ...badgeStyle, height: 20, padding: "0 4px", fontSize: 13, lineHeight: "16px" }}>GIF</span>}
             {badge === "time" && <span style={{ ...badgeStyle, height: 20, padding: "0 4px", fontSize: 13, lineHeight: "16px", fontWeight: 400 }}>{videoTime(m.durationMs ?? 0)}</span>}
-            {web && m.alt && <span data-media-alt="" style={{ ...badgeStyle, width: 23, height: 15, fontSize: 11, lineHeight: "15px" }}>ALT</span>}
+            {web && m.alt && m.kind === "photo" && <span data-media-alt="" style={{ ...badgeStyle, width: 23, height: 15, fontSize: 11, lineHeight: "15px" }}>ALT</span>}
           </div>
         )}
         {badge === "mute" && (

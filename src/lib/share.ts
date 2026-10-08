@@ -148,7 +148,7 @@ function sharedMedia(items: unknown, legacy: unknown): MediaItem[] {
     const k = KINDS.find((x) => x === kind);
     const side = (n: unknown): n is number => Number.isInteger(n) && (n as number) > 0 && (n as number) <= MAX_MEDIA_SIDE;
     if (!src || !k || !side(width) || !side(height) || (alt !== 0 && alt !== 1) || !Number.isInteger(ms) || ms < 0 || ms > MAX_VIDEO_MS) continue;
-    out.push({ src, kind: k, width, height, alt: alt === 1, ...(k === "video" ? { durationMs: ms } : {}) });
+    out.push({ src, kind: k, width, height, alt: alt === 1, ...(k === "video" && ms > 0 ? { durationMs: ms } : {}) });
   }
   return out;
 }

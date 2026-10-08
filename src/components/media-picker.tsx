@@ -4,6 +4,11 @@ import { MAX_MEDIA, type MediaItem } from "@/lib/media";
 
 /** A video's first frame is drawn no larger than this on its long side. */
 const POSTER_EDGE = 1280;
+/** A video the browser can't decode may never answer: give up on it, not on the files picked with it. */
+const VIDEO_TIMEOUT_MS = 10_000;
+
+const within = <T,>(p: Promise<T>, ms: number) =>
+  Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timed out")), ms))]);
 
 /**
  * Reads a picked file into a media item, in the browser: an image as a data URL with its natural
@@ -31,15 +36,21 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
         video.playsInline = true;
         video.preload = "auto";
         video.src = url;
-        await new Promise<void>((resolve, reject) => {
-          video.onloadeddata = () => resolve();
-          video.onerror = () => reject(new Error("unreadable video"));
-        });
+        await within(
+          new Promise<void>((resolve, reject) => {
+            video.onloadeddata = () => resolve();
+            video.onerror = () => reject(new Error("unreadable video"));
+          }),
+          VIDEO_TIMEOUT_MS,
+        );
         // Step just past the start: some files have a blank frame at 0.
-        await new Promise<void>((resolve) => {
-          video.onseeked = () => resolve();
-          video.currentTime = Math.min(0.1, (video.duration || 0) / 2);
-        });
+        await within(
+          new Promise<void>((resolve) => {
+            video.onseeked = () => resolve();
+            video.currentTime = Math.min(0.1, (video.duration || 0) / 2);
+          }),
+          VIDEO_TIMEOUT_MS,
+        );
         const { videoWidth: w, videoHeight: h } = video;
         if (!w || !h) return null;
         const k = Math.min(1, POSTER_EDGE / Math.max(w, h));
@@ -47,8 +58,9 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
         canvas.width = Math.round(w * k);
         canvas.height = Math.round(h * k);
         canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const durationMs = Number.isFinite(video.duration) ? Math.round(video.duration * 1000) : 0;
-        return { src: canvas.toDataURL("image/jpeg", 0.85), kind: "video", width: w, height: h, alt: false, durationMs };
+        // A length the browser can't read (a live stream, a broken header) gets no badge rather than "0:00".
+        const durationMs = Number.isFinite(video.duration) && video.duration > 0 ? Math.round(video.duration * 1000) : undefined;
+        return { src: canvas.toDataURL("image/jpeg", 0.85), kind: "video", width: w, height: h, alt: false, ...(durationMs ? { durationMs } : {}) };
       } finally {
         URL.revokeObjectURL(url);
       }
@@ -60,8 +72,8 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
 }
 
 /**
- * The composer's media controls: add up to 4 photos, GIFs or videos (X's limit), mark one as having
- * alt text (x.com then shows an ALT badge), remove one.
+ * The composer's media controls: add up to 4 photos, GIFs or videos (X's limit), mark a photo as
+ * having alt text (x.com then shows an ALT badge; only photos were captured with one), remove one.
  */
 export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange: (update: (m: MediaItem[]) => MediaItem[]) => void }) {
   const full = media.length >= MAX_MEDIA;
@@ -95,16 +107,18 @@ export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange:
             <li key={i} className="relative h-9 w-9 flex-none overflow-hidden rounded-md border border-brand-warm-border">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={m.src} alt="" className="h-full w-full object-cover" />
-              <button
-                type="button"
-                aria-pressed={m.alt}
-                aria-label={m.alt ? "Has alt text" : "No alt text"}
-                title={m.alt ? "Has alt text: x.com shows an ALT badge. Click to remove it." : "Mark as having alt text"}
-                onClick={() => onChange((all) => all.map((x, j) => (j === i ? { ...x, alt: !x.alt } : x)))}
-                className={`absolute bottom-0 left-0 rounded-tr px-0.5 text-[9px] font-bold leading-[11px] ${m.alt ? "bg-black/80 text-white" : "bg-white/80 text-brand-warm-secondary"}`}
-              >
-                ALT
-              </button>
+              {m.kind === "photo" && (
+                <button
+                  type="button"
+                  aria-pressed={m.alt}
+                  aria-label={m.alt ? "Has alt text" : "No alt text"}
+                  title={m.alt ? "Has alt text: x.com shows an ALT badge. Click to remove it." : "Mark as having alt text"}
+                  onClick={() => onChange((all) => all.map((x, j) => (j === i ? { ...x, alt: !x.alt } : x)))}
+                  className={`absolute bottom-0 left-0 rounded-tr px-0.5 text-[9px] font-bold leading-[11px] ${m.alt ? "bg-black/80 text-white" : "bg-white/80 text-brand-warm-secondary"}`}
+                >
+                  ALT
+                </button>
+              )}
               <button
                 type="button"
                 aria-label="Remove"
