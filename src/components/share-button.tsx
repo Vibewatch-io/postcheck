@@ -3,12 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { SHARE_LINK_BUDGET, SHARE_MAX_TEXT, encodeShare, type SharedPreview } from "@/lib/share";
 
-/** Attached image sizes to try, largest first, until the link fits the budget. */
+/** Attached image sizes to try, largest first, until the link fits the budget (every item at once). */
 const MEDIA_STEPS: Array<[maxEdge: number, quality: number]> = [
   [720, 0.72],
   [560, 0.66],
   [440, 0.6],
   [340, 0.55],
+  [260, 0.55],
+  [200, 0.5],
+  [160, 0.45],
+  [120, 0.45],
 ];
 const AVATAR_EDGE = 96;
 
@@ -16,7 +20,7 @@ type Status = { kind: "idle" | "working" | "copied" } | { kind: "note"; text: st
 
 /**
  * Copies a link that holds the whole preview. Images are shrunk to JPEG in the browser first, so
- * nothing is uploaded anywhere; the attached image steps down in size until the link fits.
+ * nothing is uploaded anywhere; the attached media steps down in size until the link fits.
  */
 export function ShareButton({ preview }: { preview: () => SharedPreview }) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -103,20 +107,24 @@ async function makeLink(p: SharedPreview): Promise<{ url: string | null; left: s
   const photoLost = Boolean(p.identity.avatar) && !avatar;
   const base = { ...p, identity: { ...p.identity, avatar } };
   const at = (fragment: string) => `${location.origin}${location.pathname}${fragment}`;
-  if (p.media) {
+  if (p.media.length) {
     for (const [edge, quality] of MEDIA_STEPS) {
-      const media = await shrink(p.media, edge, quality).catch(() => null);
-      if (!media) break;
-      const url = at(await encodeShare({ ...base, media }));
-      if (url.length <= SHARE_LINK_BUDGET) return { url, left: photoLost ? ["profile photo"] : [] };
+      // An item the browser can't redraw is left out on its own; the rest still travel.
+      const srcs = await Promise.all(p.media.map((m) => shrink(m.src, edge, quality).catch(() => null)));
+      const kept = p.media.flatMap((m, i) => (srcs[i] ? [{ ...m, src: srcs[i] }] : []));
+      if (!kept.length) break;
+      const url = at(await encodeShare({ ...base, media: kept }));
+      const dropped = p.media.length - kept.length;
+      const left = [...(dropped ? [`${dropped} of the ${p.media.length} attached items`] : []), ...(photoLost ? ["profile photo"] : [])];
+      if (url.length <= SHARE_LINK_BUDGET) return { url, left };
     }
   }
-  // Last resorts before refusing: no attached image, then no photo either.
-  const image = p.media ? ["image"] : [];
+  // Last resorts before refusing: no attached media, then no photo either.
+  const image = p.media.length ? [p.media.length > 1 ? "attached media" : p.media[0].kind === "photo" ? "image" : p.media[0].kind === "gif" ? "GIF" : "video"] : [];
   const attempts: Array<[SharedPreview["identity"], string[]]> = [[base.identity, [...image, ...(photoLost ? ["profile photo"] : [])]]];
   if (avatar) attempts.push([{ ...base.identity, avatar: null }, [...image, "profile photo"]]);
   for (const [identity, left] of attempts) {
-    const url = at(await encodeShare({ ...base, identity, media: null }));
+    const url = at(await encodeShare({ ...base, identity, media: [] }));
     if (url.length <= SHARE_LINK_BUDGET) return { url, left };
   }
   return { url: null, left: [] };
