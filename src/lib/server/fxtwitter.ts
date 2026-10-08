@@ -94,7 +94,8 @@ async function askProfile(url: URL, allow: (u: URL) => boolean, signal: AbortSig
       json = null;
     }
   }
-  return { status: res.status, ok: res.ok, user: pick(json) };
+  // A user record inside an error answer is not an answer.
+  return { status: res.status, ok: res.ok, user: res.ok ? pick(json) : null };
 }
 
 const fxUser = (json: unknown): FxUser | null => {
@@ -120,7 +121,7 @@ export async function lookupProfile(
   fetchImpl?: GuardFetch,
 ): Promise<{ user: FxUser; verified: boolean } | { user: null; missing: boolean }> {
   // An answer for some other account (a stale or confused cache) counts as no answer at all, so it
-  // can never add up to "no account" either.
+  // can never add up to "no account" either. (A record inside an error answer is already dropped.)
   const same = (u: FxUser) => String(u.screen_name).toLowerCase() === handle.toLowerCase();
   const ask = async (base: string, allow: (u: URL) => boolean, pick: (json: unknown) => FxUser | null) => {
     const a = await askProfile(new URL(`${base}/${handle}`), allow, signal, fetchImpl, pick).catch((): null => null);

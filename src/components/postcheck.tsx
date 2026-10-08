@@ -391,14 +391,10 @@ export function Postcheck() {
       if (!res.ok || !json.profile) throw new Error(json.error || "Lookup failed. Enter the details by hand.");
       // No badge in the answer (the fallback API can't tell): keep the one chosen by the time it
       // arrives, and don't keep the answer, so the next lookup of this handle asks for the badge again.
+      // An answer that arrives after the handle was changed belongs to the old one: it's dropped.
       const { badge, ...rest } = json.profile;
-      if (badge !== null) {
-        const found: Identity = { ...rest, badge };
-        profiles.current.set(u.toLowerCase(), found);
-        setIdentity(found);
-      } else {
-        setIdentity((prev) => ({ ...rest, badge: prev.badge }));
-      }
+      if (badge !== null) profiles.current.set(u.toLowerCase(), { ...rest, badge });
+      setIdentity((prev) => (prev.handle.trim().toLowerCase() !== u.toLowerCase() ? prev : { ...rest, badge: badge ?? prev.badge }));
       setLookupState("idle");
     } catch (e) {
       setLookupState(e instanceof Error ? e.message : "Lookup failed. Enter the details by hand.");
