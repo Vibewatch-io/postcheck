@@ -200,12 +200,13 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
 }
 
-/** The link card's box against the iPhone capture's, to 1pt (a null in the fixture is not checked). */
+/** The link card's box against the iPhone capture's, to 1pt (a null in the box is not checked); `want` null: X drew no card. */
 async function cardDiff(label, deviceLast, id, want) {
   const got = await page.evaluate(CARD_BOX(deviceLast));
   const near = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => b[i] === null || Math.abs(v - b[i]) <= 1);
   const problems = [];
-  if (!got) problems.push("no card");
+  if (!want) { if (got) problems.push("tool draws a card X doesn't"); }
+  else if (!got) problems.push("no card");
   else {
     if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
     if (want.thumb && !near(got.thumb, want.thumb)) problems.push(`thumbnail X ${want.thumb} / tool ${got.thumb}`);
@@ -276,6 +277,7 @@ for (const f of readdirSync("fixtures/app")) {
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.card?.box) await cardDiff("app ", true, p.id, p.card);
+    else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
   }
 }

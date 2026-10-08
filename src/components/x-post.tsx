@@ -240,7 +240,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
-    // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31: 322.4–322.8 wide at 393).
+    // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31 and 47: 322.4–322.8 wide at 393).
     <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} />
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
