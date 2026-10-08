@@ -7,6 +7,11 @@ import { HTML_CAP } from "./fetch-guard";
  * route's timeout).
  */
 
+/** A numeric reference past U+10FFFF is left as written: String.fromCodePoint would throw. */
+function codePoint(ref: string, n: number): string {
+  return n <= 0x10ffff ? String.fromCodePoint(n) : ref;
+}
+
 function decodeEntities(s: string): string {
   return s
     .replace(/&amp;/g, "&")
@@ -14,8 +19,8 @@ function decodeEntities(s: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (m, n) => codePoint(m, Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (m, h) => codePoint(m, parseInt(h, 16)))
     .replace(/\s+/g, " ")
     .trim();
 }

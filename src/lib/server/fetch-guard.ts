@@ -16,8 +16,8 @@ export const UA = "Mozilla/5.0 (compatible; Postcheck/1.0; +https://github.com/V
  * Addresses a fetch may never reach. node:net's BlockList checks an IPv4-mapped address
  * (`::ffff:7f00:1` is 127.0.0.1, which a dotted-decimal parser missed) against the IPv4 rules, so
  * `::ffff:0:0/96` must not be listed: BlockList maps every IPv4 address into it. The translated and
- * IPv4-compatible ranges are refused, as are NAT64 and 6to4, which embed an IPv4 address a gateway
- * may forward to.
+ * IPv4-compatible ranges are refused, as are the well-known NAT64 prefixes, 6to4 and Teredo, which embed
+ * an IPv4 address a gateway may forward to.
  */
 const BLOCKED = new BlockList();
 for (const [net, bits] of [
@@ -26,7 +26,8 @@ for (const [net, bits] of [
 ] as const) BLOCKED.addSubnet(net, bits, "ipv4");
 for (const [net, bits] of [
   ["::", 96], ["::ffff:0:0:0", 96], ["64:ff9b::", 96], ["64:ff9b:1::", 48], ["100::", 64],
-  ["2001:db8::", 32], ["2002::", 16], ["fc00::", 7], ["fe80::", 10], ["fec0::", 10], ["ff00::", 8],
+  // 2001::/23 is IETF protocol space: Teredo (2001::/32, embeds an IPv4 client), benchmarking, ORCHID.
+  ["2001::", 23], ["2001:db8::", 32], ["2002::", 16], ["fc00::", 7], ["fe80::", 10], ["fec0::", 10], ["ff00::", 8],
 ] as const) BLOCKED.addSubnet(net, bits, "ipv6");
 
 /** True for an address a fetch may connect to. Anything unparseable counts as private. */

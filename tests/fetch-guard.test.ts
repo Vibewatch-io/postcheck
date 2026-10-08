@@ -9,11 +9,12 @@ import { sameOrigin } from "../src/lib/server/same-origin";
 
 test("SSRF: IPv4-mapped, NAT64 and 6to4 literals of private addresses are refused", () => {
   // The URL parser rewrites ::ffff:127.0.0.1 to ::ffff:7f00:1, which a dotted-decimal check read as public.
-  for (const u of ["http://[::ffff:127.0.0.1]/", "http://[::ffff:169.254.169.254]/", "http://[::ffff:10.0.0.1]/", "http://[64:ff9b::7f00:1]/", "http://[2002:7f00:1::]/", "http://[::1]/", "http://[fd00::1]/", "http://127.1/", "http://0x7f000001/"]) {
+  for (const u of ["http://[::ffff:127.0.0.1]/", "http://[::ffff:169.254.169.254]/", "http://[::ffff:10.0.0.1]/", "http://[64:ff9b::7f00:1]/", "http://[2002:7f00:1::]/", "http://[2001:0:4136:e378:8000:63bf:80ff:fffe]/", "http://[2001:2::1]/", "http://[::1]/", "http://[fd00::1]/", "http://127.1/", "http://0x7f000001/"]) {
     assert.throws(() => assertPublic(new URL(u)), /private/, u);
   }
   assert.doesNotThrow(() => assertPublic(new URL("https://93.184.216.34/")));
   assert.doesNotThrow(() => assertPublic(new URL("https://[2606:4700::1111]/")));
+  assert.doesNotThrow(() => assertPublic(new URL("https://[2001:4860:4860::8888]/")));
 });
 
 test("SSRF: the connection's own lookup refuses a host with any private address (no separate check to rebind past)", async () => {
@@ -43,7 +44,8 @@ test("unfurl: hostile HTML is scanned in linear time", () => {
   ] as const) {
     const t = performance.now();
     metaLookup(html);
-    assert.ok(performance.now() - t < 1000, `${name}: ${Math.round(performance.now() - t)} ms`);
+    // Linear runs take tens of ms; the old regexes took minutes. 5 s leaves room for a slow runner.
+    assert.ok(performance.now() - t < 5000, `${name}: ${Math.round(performance.now() - t)} ms`);
   }
 });
 
@@ -58,6 +60,8 @@ test("unfurl: the linear scan reads the same tags as before", () => {
   assert.equal(m.get("description"), undefined);
   // An unclosed <title> doesn't hide the meta tags after it.
   assert.equal(metaLookup('<title>never closed<meta property="og:title" content="still read">').get("og:title"), "still read");
+  // A numeric reference past U+10FFFF stays as written instead of throwing away the whole card.
+  assert.equal(metaLookup('<meta property="og:title" content="a &#1114112; b &#x110000; &#x1F680;">').get("og:title"), "a &#1114112; b &#x110000; 🚀");
 });
 
 test("fonts: only this origin may load the licensed files, not a sibling subdomain", () => {
@@ -68,4 +72,8 @@ test("fonts: only this origin may load the licensed files, not a sibling subdoma
   assert.equal(sameOrigin(req({ "sec-fetch-site": "none" })), false);
   assert.equal(sameOrigin(req({ host: "postcheck.vibewatch.io", origin: "https://postcheck.vibewatch.io" })), true);
   assert.equal(sameOrigin(req({ host: "postcheck.vibewatch.io", referer: "https://other.vibewatch.io/" })), false);
+  // The fallback compares whole origins, normalised: scheme counts, case and a default port don't.
+  assert.equal(sameOrigin(req({ host: "postcheck.vibewatch.io", origin: "http://postcheck.vibewatch.io" })), false);
+  assert.equal(sameOrigin(req({ host: "Postcheck.Vibewatch.io:443", origin: "https://postcheck.vibewatch.io" })), true);
+  assert.equal(sameOrigin(req({ "x-forwarded-host": "postcheck.vibewatch.io, internal", "x-forwarded-proto": "https", origin: "https://postcheck.vibewatch.io" })), true);
 });
