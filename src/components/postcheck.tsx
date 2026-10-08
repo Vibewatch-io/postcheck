@@ -295,9 +295,10 @@ export function Postcheck() {
       setCards((c) => ({ ...c, [cardKey]: "loading" }));
       try {
         const res = await fetch("/api/unfurl", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: cardKey }), signal: ctrl.signal });
-        const json = (await res.json()) as { card: CardData | null };
+        // A refused lookup (a 400 carries no card field) is no card, never undefined.
+        const json = res.ok ? ((await res.json()) as { card?: CardData | null }) : null;
         inFlight = false;
-        setCards((c) => ({ ...c, [cardKey]: json.card }));
+        setCards((c) => ({ ...c, [cardKey]: json?.card ?? null }));
       } catch {
         if (ctrl.signal.aborted) return;
         inFlight = false;
@@ -356,14 +357,16 @@ export function Postcheck() {
         text: post,
         entities,
         length,
-        card: card === "loading" ? undefined : card,
+        // The route answers null both for a page without tags and for a lookup that failed (a timeout,
+        // a bot wall), so the "no card" advice stays with links the tool never looks up (App Store).
+        card: card === "loading" || (card === null && cardKey !== null) ? undefined : card,
         lineSets,
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
         hasMedia: media !== null,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, lineSets, phoneClamp, media, phoneDevice.label, phoneDevice.tipLabel, phoneDevice.id, styles.length, draft.text],
+    [post, entities, length, card, cardKey, lineSets, phoneClamp, media, phoneDevice.label, phoneDevice.tipLabel, phoneDevice.id, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
