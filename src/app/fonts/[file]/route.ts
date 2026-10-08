@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { get } from "@vercel/blob";
+import { sameOrigin } from "@/lib/server/same-origin";
 
 /**
  * Serves the GT America web fonts (Grilli Type), the stand-in for Chirp when
@@ -24,29 +25,11 @@ const PREFIX = (process.env.FONT_BLOB_PREFIX ?? "").replace(/^\/|\/$/g, "");
 
 /** One diagnostic per function instance, not one per request: a misconfigured store would otherwise log on every page view. */
 const warned = new Set<string>();
-function warnOnce(pathname: string, why: string) {
-  if (warned.has(pathname)) return;
-  warned.add(pathname);
-  console.warn(`[fonts] ${pathname}: ${why} (degrading to the system font; further failures for this file are not logged)`);
-}
-
-/** True when the browser is fetching for a page on this same host. */
-function sameOrigin(req: Request): boolean {
-  const site = req.headers.get("sec-fetch-site");
-  if (site === "same-origin" || site === "same-site") return true;
-  if (site === "cross-site") return false;
-  // No Fetch Metadata (older browsers, non-browser clients): fall back to Origin / Referer.
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  for (const name of ["origin", "referer"]) {
-    const value = req.headers.get(name);
-    if (!value) continue;
-    try {
-      return new URL(value).host === host;
-    } catch {
-      return false;
-    }
-  }
-  return false;
+/** Names the file only: the store folder (FONT_BLOB_PREFIX) stays out of the logs. */
+function warnOnce(file: string, why: string) {
+  if (warned.has(file)) return;
+  warned.add(file);
+  console.warn(`[fonts] ${file}: ${why} (degrading to the system font; further failures for this file are not logged)`);
 }
 
 export async function GET(req: Request, { params }: { params: Promise<{ file: string }> }) {
@@ -66,13 +49,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ file: st
     try {
       const result = await get(pathname, { access: "private" });
       if (!result) {
-        warnOnce(pathname, "not found in the linked Blob store");
+        warnOnce(file, "not found in the linked Blob store");
         return new NextResponse(null, { status: 404 });
       }
       if (result.statusCode !== 200) return new NextResponse(null, { status: 404 });
       return new NextResponse(result.stream, { headers });
     } catch (err) {
-      warnOnce(pathname, `Blob read failed: ${err instanceof Error ? err.message : String(err)}`);
+      warnOnce(file, `Blob read failed: ${err instanceof Error ? err.message : String(err)}`);
       return new NextResponse(null, { status: 404 });
     }
   }
