@@ -73,10 +73,10 @@ Recorded in QUIRKS.md (Android rows) with `fixtures/app/galaxy-s25.json` and `fi
 - **No line fold.** The Android app shows a post under 280 whole however many lines it runs (tests 11,
   12 and 13: 9, 10 and 30 lines). The iPhone app folds test 12 after line 9.
 - **The 280 cut, like x.com.** Long posts get Show more at the same character as the web (tests
-  05–08). The token wraps like a word.
+  05–08).
 - **Cell geometry.** The body runs from 60 dp to width − 12 dp (column = width − 72) at x.com's web
   tracking, 15/20 at 360 and 392 dp and 16/21.33 at 411.4 dp (the switch, between 392 and 411.4, is assumed at 400).
 - **Wrapping.** No break after a hyphen (an over-long word breaks at the last character that fits); a link breaks
-  after a "/"; the Show more token wraps like two words.
+  after a "/"; the Show more token wraps like two words, so "Show" can end a line with "more" on the next (tests 05, 94, 116).
 - **Links.** A trailing link to a post stays as text above the quote (x.com and the iPhone hide it).
 - **Styling.** The timeline row shows no Premium bold or italic (tests 70, 70b), like the iPhone's.
