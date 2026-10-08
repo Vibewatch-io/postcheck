@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { buildAdvice, type DeviceLines } from "../src/lib/advice";
 import { extractEntities, weightedLength } from "../src/lib/entities";
 import { DEVICES } from "../src/lib/devices";
+import { cardlessKind } from "../src/lib/card";
 import { mediaLayout } from "../src/lib/media";
 
 // Tip marks point the preview at a line. A word that dangles at one width must be marked only on
@@ -58,6 +59,37 @@ test("an App Store link's missing card is put down to X, not to the page", () =>
   const e2 = extractEntities(other);
   const plain = buildAdvice({ text: other, entities: e2, length: weightedLength(other, e2), card: null, lineSets: [] }).find((a) => a.id === "no-card");
   assert.match(plain?.detail ?? "", /no Open Graph or Twitter Card tags/);
+});
+
+// The route answers "failed" when it couldn't read the page (a timeout, a 403, a refused address), and
+// "none" only for a page read without tags: a failed lookup must never be blamed on the page's tags.
+test("a failed card lookup gets a hedged note, never the missing-tags advice", () => {
+  const text = "Read https://example.com/slow";
+  const entities = extractEntities(text);
+  const advice = buildAdvice({ text, entities, length: weightedLength(text, entities), card: "failed", lineSets: [] });
+  assert.equal(advice.find((a) => a.id === "no-card"), undefined);
+  assert.equal(advice.find((a) => a.id === "url-mid-text"), undefined);
+  assert.match(advice.find((a) => a.id === "card-lookup-failed")?.detail ?? "", /may still show a card/);
+});
+
+// A typed X article link is never looked up (test 46): its advice puts the missing card down to X.
+test("an X article link's missing card is put down to X, not to the page", () => {
+  const text = "Link to an X article https://x.com/i/article/2094473900864520192";
+  const entities = extractEntities(text);
+  const tip = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [] }).find((a) => a.id === "no-card");
+  assert.match(tip?.detail ?? "", /link to an X article as plain text/);
+  assert.doesNotMatch(tip?.detail ?? "", /Open Graph/);
+});
+
+// Only an article link itself skips the lookup: a near miss is an ordinary link that may have a card.
+test("X article links are recognised by host and the whole path", () => {
+  for (const href of ["https://x.com/i/article/123", "https://twitter.com/i/article/123/", "https://www.x.com/i/article/123?s=20", "https://mobile.twitter.com/i/article/123"]) {
+    assert.equal(cardlessKind(href), "x-article", href);
+  }
+  for (const href of ["https://x.com/i/article/123x", "https://x.com/i/article/123/more", "https://x.com/i/articles/123", "https://notx.com/i/article/123", "https://x.com.evil.test/i/article/123"]) {
+    assert.equal(cardlessKind(href), null, href);
+  }
+  assert.equal(cardlessKind("https://apps.apple.com/app/id333903271"), "app-store");
 });
 
 // A link that broke after "/" leaves its tail on the last row; that tail isn't a dangling word.

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { HTML_CAP, NO_STORE, discard, postOnly, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
-import { metaLookup } from "@/lib/server/meta";
-import type { CardData } from "@/lib/card";
+import { cardMeta } from "@/lib/server/meta";
+import type { CardData, NoCardReason, UnfurlAnswer } from "@/lib/card";
 
 /**
  * Fetches a page's Open Graph / Twitter Card metadata so the preview can show
@@ -10,10 +10,16 @@ import type { CardData } from "@/lib/card";
  * redirect hop), short timeouts, hard byte caps, and the image is inlined as a
  * data URL so the browser never fetches a third-party asset for the export.
  * The link arrives in a POST body and nothing is cached or logged: see readLookupField.
+ *
+ * No card comes with a reason (UnfurlAnswer): "none" only for a page read in full that carries no
+ * social tags, "failed" for anything that kept the page from being read, so the advice never blames
+ * a page's tags for a lookup that didn't get through.
  */
 export const runtime = "nodejs";
 
 const TIMEOUT_MS = 6000;
+
+const noCard = (reason: NoCardReason) => NextResponse.json<UnfurlAnswer>({ card: null, reason }, { headers: NO_STORE });
 
 /** POST only: a stray GET gets an uncacheable 405 (see postOnly). */
 export const GET = postOnly;
@@ -35,21 +41,15 @@ export async function POST(request: Request) {
     const type = (res.headers.get("content-type") || "").toLowerCase();
     if (!res.ok || !type.includes("html")) {
       discard(res);
-      return NextResponse.json({ card: null }, { headers: NO_STORE });
+      return noCard("failed");
     }
-    const bytes = await readCapped(res, HTML_CAP);
-    const html = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    const meta = metaLookup(html);
-
-    // X only builds a card from Twitter Card or Open Graph tags; a page with just a <title> gets a plain
-    // link (@postcheck_test test 23, example.com). Open Graph alone gives a small card (test 24).
-    const social = ["twitter:card", "twitter:title", "og:title", "og:image"].some((k) => meta.get(k));
-    const title = social ? meta.get("twitter:title") || meta.get("og:title") || meta.get("html:title") || "" : "";
-    const description = meta.get("twitter:description") || meta.get("og:description") || meta.get("description") || "";
-    const imageRaw = meta.get("twitter:image") || meta.get("twitter:image:src") || meta.get("og:image") || meta.get("og:image:url") || "";
-    const cardType = (meta.get("twitter:card") || "").toLowerCase();
-
-    if (!title) return NextResponse.json({ card: null }, { headers: NO_STORE });
+    // One byte past the cap tells a page cut off at the cap from one that ends there.
+    const bytes = await readCapped(res, HTML_CAP + 1);
+    const complete = bytes.byteLength <= HTML_CAP;
+    const html = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, HTML_CAP));
+    const found = cardMeta(html, complete);
+    if (typeof found === "string") return noCard(found);
+    const { title, description, imageRaw, cardType } = found;
 
     let image: string | null = null;
     if (imageRaw) {
@@ -68,9 +68,9 @@ export async function POST(request: Request) {
       image,
       layout: image && cardType === "summary_large_image" ? "large" : "small",
     };
-    return NextResponse.json({ card }, { headers: NO_STORE });
+    return NextResponse.json<UnfurlAnswer>({ card }, { headers: NO_STORE });
   } catch {
-    return NextResponse.json({ card: null }, { headers: NO_STORE });
+    return noCard("failed");
   } finally {
     clearTimeout(timer);
     controller.abort(); // nothing outlives the answer: an unread body or a pending image fetch is dropped
