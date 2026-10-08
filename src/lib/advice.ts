@@ -137,7 +137,8 @@ export function buildAdvice(input: AdviceInput): Advice[] {
   if (urls.length > 0) {
     const cu = quoteUrl(entities) ?? cardUrl(entities)!;
     const trailing = isTrailing(text, cu);
-    if (urls.length > 1 && !cu.isStatus) {
+    // With a photo or a poll there is no card at all, so the one-card tip would contradict theirs.
+    if (urls.length > 1 && !cu.isStatus && !hasMedia && poll !== "shown") {
       out.push({
         id: "multiple-urls",
         severity: "note",

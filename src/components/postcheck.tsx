@@ -19,7 +19,7 @@ import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
-import { emptyPoll, shownPoll, type Poll } from "@/lib/poll";
+import { POLL_MIN_CHOICES, emptyPoll, filledChoices, shownPoll, type Poll } from "@/lib/poll";
 import { PollEditor } from "./poll-editor";
 
 // The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
@@ -368,7 +368,8 @@ export function Postcheck() {
         lineSets,
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
         hasMedia: media !== null,
-        poll: poll ? (pollOnPost ? "shown" : length.weighted > MAX_WEIGHTED_LENGTH ? "dropped" : "empty") : null,
+        // An incomplete poll is unpostable whatever the length, so "empty" wins over "dropped".
+        poll: poll ? (pollOnPost ? "shown" : filledChoices(poll).length < POLL_MIN_CHOICES ? "empty" : "dropped") : null,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
@@ -573,9 +574,10 @@ export function Postcheck() {
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex items-center gap-3">
             <FormatBar editor={editor} />
+            {/* A slow image read must not attach a photo beside a poll added while it ran: the callback checks the latest state. */}
             <label className={`rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark ${poll ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-brand-warm-surface"}`} title={poll ? "X takes a photo or a poll, not both" : undefined}>
               {media ? "Replace image" : "Add image"}
-              <input type="file" accept="image/*" disabled={poll !== null} className="sr-only" onChange={(e) => readFile(e.target.files?.[0], setMedia)} />
+              <input type="file" accept="image/*" disabled={poll !== null} className="sr-only" onChange={(e) => readFile(e.target.files?.[0], (url) => latest.current.poll === null && setMedia(url))} />
             </label>
             {!poll && (
               <button type="button" disabled={media !== null} title={media ? "X takes a photo or a poll, not both" : undefined} className="rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent" onClick={() => setPoll(emptyPoll())}>
