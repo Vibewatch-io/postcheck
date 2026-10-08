@@ -16,7 +16,10 @@ const preview: SharedPreview = {
     { start: 9, end: 22, bold: true, italic: true },
   ],
   identity: { name: "Vibewatch", handle: "Vibewatch_io", badge: "gold", avatar: jpeg(96, 96) },
-  media: jpeg(720, 405),
+  media: [
+    { src: jpeg(720, 405), kind: "photo", width: 1600, height: 900, alt: true },
+    { src: jpeg(405, 720), kind: "video", width: 720, height: 1280, alt: false, durationMs: 6000 },
+  ],
   theme: "dark",
   phone: "iphone-17-pro-max-post",
   web: "web-post",
@@ -59,6 +62,23 @@ test("device ids must match their view's kind", () => {
 test("style runs outside the text or with unknown flags are dropped", () => {
   const p = parseWire({ v: 1, text: "hello", styles: [[0, 5, 1], [3, 9, 1], [2, 2, 2], [0, 1, 4], [0, 1.5, 1], "x"] });
   assert.deepEqual(p?.styles, [{ start: 0, end: 5, bold: true, italic: false }]);
+});
+
+// Links made before several items could be attached carry one image in `media`; they must still open.
+test("a link from before multi-media opens its image as one photo; bad items are dropped", () => {
+  assert.deepEqual(parseWire({ v: 1, text: "hi", media: jpeg(720, 405) })?.media, [{ src: jpeg(720, 405), kind: "photo", width: 720, height: 405, alt: false }]);
+  const p = parseWire({
+    v: 1,
+    text: "hi",
+    items: [
+      [jpeg(10, 10), "photo", 10, 10, 0, 0],
+      [jpeg(10, 10), "sticker", 10, 10, 0, 0],
+      ["https://example.com/a.jpg", "photo", 10, 10, 0, 0],
+      [jpeg(10, 10), "gif", 0, 10, 0, 0],
+      [jpeg(10, 10), "video", 10, 10, 2, 0],
+    ],
+  });
+  assert.deepEqual(p?.media, [{ src: jpeg(10, 10), kind: "photo", width: 10, height: 10, alt: false }]);
 });
 
 test("only JPEG data URLs Share could have made are shown", () => {

@@ -138,3 +138,10 @@ export function CameraIcon({ size = 20 }: { size?: number }) {
     </svg>
   );
 }
+
+/** A speaker with a cross: the iOS app's mute mark on a video in the timeline (drawn, not traced). */
+export const MuteIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3 9h4l5-4v14l-5-4H3V9zm13.3.3l1.4-1.4 2.3 2.3 2.3-2.3 1.4 1.4-2.3 2.3 2.3 2.3-1.4 1.4-2.3-2.3-2.3 2.3-1.4-1.4 2.3-2.3-2.3-2.3z" />
+  </svg>
+);
