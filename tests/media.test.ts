@@ -47,4 +47,5 @@ test("iPhone media boxes: every recorded post to 2pt", () => {
 test("video length reads m:ss", () => {
   assert.equal(videoTime(6000), "0:06");
   assert.equal(videoTime(75_400), "1:15");
+  assert.equal(videoTime(5_400_000), "1:30:00");
 });

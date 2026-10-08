@@ -1,14 +1,25 @@
 "use client";
 
-import { MAX_MEDIA, type MediaItem } from "@/lib/media";
+import { MAX_MEDIA, MAX_MEDIA_SIDE, MAX_VIDEO_MS, type MediaItem } from "@/lib/media";
 
 /** A video's first frame is drawn no larger than this on its long side. */
 const POSTER_EDGE = 1280;
 /** A video the browser can't decode may never answer: give up on it, not on the files picked with it. */
 const VIDEO_TIMEOUT_MS = 10_000;
 
-const within = <T,>(p: Promise<T>, ms: number) =>
-  Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timed out")), ms))]);
+function within<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("timed out")), ms);
+  });
+  return Promise.race([p, late]).finally(() => clearTimeout(timer));
+}
+
+/** A natural size scaled down, shape kept, to no more than MAX_MEDIA_SIDE on its long side. */
+function bounded(width: number, height: number): { width: number; height: number } {
+  const k = Math.min(1, MAX_MEDIA_SIDE / Math.max(width, height));
+  return { width: Math.max(1, Math.round(width * k)), height: Math.max(1, Math.round(height * k)) };
+}
 
 /**
  * Reads a picked file into a media item, in the browser: an image as a data URL with its natural
@@ -26,7 +37,8 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
       const img = new Image();
       img.src = src;
       await img.decode();
-      return { src, kind: file.type === "image/gif" ? "gif" : "photo", width: img.naturalWidth, height: img.naturalHeight, alt: false };
+      if (!img.naturalWidth || !img.naturalHeight) return null;
+      return { src, kind: file.type === "image/gif" ? "gif" : "photo", ...bounded(img.naturalWidth, img.naturalHeight), alt: false };
     }
     if (file.type.startsWith("video/")) {
       const url = URL.createObjectURL(file);
@@ -59,8 +71,8 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
         canvas.height = Math.round(h * k);
         canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
         // A length the browser can't read (a live stream, a broken header) gets no badge rather than "0:00".
-        const durationMs = Number.isFinite(video.duration) && video.duration > 0 ? Math.round(video.duration * 1000) : undefined;
-        return { src: canvas.toDataURL("image/jpeg", 0.85), kind: "video", width: w, height: h, alt: false, ...(durationMs ? { durationMs } : {}) };
+        const durationMs = Number.isFinite(video.duration) && video.duration > 0 ? Math.min(MAX_VIDEO_MS, Math.round(video.duration * 1000)) : undefined;
+        return { src: canvas.toDataURL("image/jpeg", 0.85), kind: "video", ...bounded(w, h), alt: false, ...(durationMs ? { durationMs } : {}) };
       } finally {
         URL.revokeObjectURL(url);
       }
@@ -78,8 +90,10 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
 export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange: (update: (m: MediaItem[]) => MediaItem[]) => void }) {
   const full = media.length >= MAX_MEDIA;
   const add = async (files: FileList | null) => {
-    if (!files?.length) return;
-    const read = (await Promise.all([...files].map(readMediaFile))).filter((m): m is MediaItem => m !== null);
+    // Only as many as there are free slots are read: a big pick never decodes files that can't be added.
+    const room = MAX_MEDIA - media.length;
+    if (!files?.length || room <= 0) return;
+    const read = (await Promise.all([...files].slice(0, room).map(readMediaFile))).filter((m): m is MediaItem => m !== null);
     onChange((m) => [...m, ...read].slice(0, MAX_MEDIA));
   };
   return (
@@ -111,7 +125,7 @@ export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange:
                 <button
                   type="button"
                   aria-pressed={m.alt}
-                  aria-label={m.alt ? "Has alt text" : "No alt text"}
+                  aria-label={`Media ${i + 1}: ${m.alt ? "has alt text" : "no alt text"}`}
                   title={m.alt ? "Has alt text: x.com shows an ALT badge. Click to remove it." : "Mark as having alt text"}
                   onClick={() => onChange((all) => all.map((x, j) => (j === i ? { ...x, alt: !x.alt } : x)))}
                   className={`absolute bottom-0 left-0 rounded-tr px-0.5 text-[9px] font-bold leading-[11px] ${m.alt ? "bg-black/80 text-white" : "bg-white/80 text-brand-warm-secondary"}`}
@@ -121,7 +135,7 @@ export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange:
               )}
               <button
                 type="button"
-                aria-label="Remove"
+                aria-label={`Remove media ${i + 1}`}
                 title="Remove"
                 onClick={() => onChange((all) => all.filter((_, j) => j !== i))}
                 className="absolute right-0 top-0 flex h-3.5 w-3.5 items-center justify-center rounded-bl bg-black/70 text-[10px] leading-none text-white"

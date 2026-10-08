@@ -24,6 +24,9 @@ export interface MediaItem {
 
 /** The composer's limit: "Please choose up to 4 photos, videos, or GIFs." */
 export const MAX_MEDIA = 4;
+/** Bounds a picked file is clamped to, so every item the composer makes survives a share link. */
+export const MAX_MEDIA_SIDE = 20_000;
+export const MAX_VIDEO_MS = 4 * 60 * 60 * 1000;
 
 export interface MediaBox {
   x: number;
@@ -42,7 +45,9 @@ export interface MediaLayout {
   /** Each item's image box, relative to the first item's top-left (the fixtures' frame of reference). */
   boxes: MediaBox[];
   /** Which part of the layout has no capture behind it, for the tip that says so. */
-  assumed: "narrow-carousel" | null;
+  assumed: "narrow-carousel" | "narrow-floor" | null;
+  /** Some item is drawn narrower than its own shape (cut at the sides). */
+  cropped: boolean;
 }
 
 type Shape = Pick<MediaItem, "kind" | "width" | "height">;
@@ -54,7 +59,7 @@ const ratio = (m: Shape) => (m.width > 0 && m.height > 0 ? m.width / m.height : 
  * One portrait item is capped at this height (9:16 → 287×510, 1:4 → 128×510). A square is not:
  * 516×516 (test 113). So the cap applies below 1:1; where between 1:1 and 9:16 it starts is inferred.
  */
-const WEB_MAX_HEIGHT = 510;
+export const WEB_MAX_HEIGHT = 510;
 /** ...a portrait video at 506 (one sample, test 114: 720×1280 → 285×506). */
 const WEB_VIDEO_MAX_HEIGHT = 506;
 /** ...and never narrower than this (87×1200 → 51×510, test 117). */
@@ -79,7 +84,7 @@ const WEB_NARROW_WIDTH = 45;
 
 // iOS app, 393pt screen: the media column is the quote embed's, screen − 71 (322pt).
 /** One item: capped at this height (9:16 → 226×402, a 9:16 video too). */
-const APP_MAX_HEIGHT = 402;
+export const APP_MAX_HEIGHT = 402;
 /**
  * A taller photo is cropped to this shape: 186×402 for 1:4 (test 116) and 1:13.8 (test 117) alike.
  * Where between 9:16 (whole) and 1:4 the crop starts is inferred: here, at this shape itself.
@@ -114,7 +119,7 @@ function lay(items: Shape[], h: number, gap: number, widthOf: (m: Shape) => numb
   let x = 0;
   return items.map((m) => {
     const w = widthOf(m);
-    const box = { x: Math.round(x), y: 0, w: Math.round(w), h: Math.round(h) };
+    const box = { x: Math.round(x), y: 0, w: Math.max(1, Math.round(w)), h: Math.round(h) };
     x += w + gap;
     return box;
   });
@@ -135,37 +140,52 @@ export function mediaLayout(items: Shape[], device: Device): MediaLayout | null 
       const cap = m.kind === "video" ? WEB_VIDEO_MAX_HEIGHT : WEB_MAX_HEIGHT;
       const h = r < 1 ? Math.min(inner / r, cap) : inner / r;
       const w = h < cap || r >= 1 ? inner : Math.max(WEB_MIN_WIDTH, cap * r);
-      return { mode: "single", column, border: 1, boxes: [{ x: 0, y: 0, w: Math.round(w), h: Math.round(h) }], assumed: null };
+      return { mode: "single", column, border: 1, boxes: [{ x: 0, y: 0, w: Math.round(w), h: Math.round(h) }], assumed: null, cropped: false };
     }
     // Two photos fill the row at one height (255 + 255; 388 + 122 at 218). Capped like one item: assumed.
     if (list.length === 2 && photosOnly) {
       const h = Math.min((inner - WEB_GAP) / sum, WEB_MAX_HEIGHT);
-      return { mode: "row", column, border: 1, boxes: lay(list, h, WEB_GAP, (m) => h * ratio(m)), assumed: null };
+      return { mode: "row", column, border: 1, boxes: lay(list, h, WEB_GAP, (m) => h * ratio(m)), assumed: null, cropped: false };
     }
     if (list.length === 4 && list.every((m) => ratio(m) < WEB_NARROW_RATIO)) {
-      return { mode: "carousel", column, border: 0, boxes: lay(list, WEB_NARROW_HEIGHT, WEB_GAP, () => WEB_NARROW_WIDTH), assumed: "narrow-carousel" };
+      return { mode: "carousel", column, border: 0, boxes: lay(list, WEB_NARROW_HEIGHT, WEB_GAP, () => WEB_NARROW_WIDTH), assumed: "narrow-carousel", cropped: false };
     }
     const h = WEB_CAROUSEL_HEIGHT;
     // A narrow item among wider ones keeps the strips' 45px: assumed.
-    return { mode: "carousel", column, border: 0, boxes: lay(list, h, WEB_GAP, (m) => Math.max(WEB_NARROW_WIDTH, h * Math.min(ratio(m), CAROUSEL_MAX_RATIO))), assumed: null };
+    const floored = list.some((m) => h * ratio(m) < WEB_NARROW_WIDTH);
+    return {
+      mode: "carousel",
+      column,
+      border: 0,
+      boxes: lay(list, h, WEB_GAP, (m) => Math.max(WEB_NARROW_WIDTH, h * Math.min(ratio(m), CAROUSEL_MAX_RATIO))),
+      assumed: floored ? "narrow-floor" : null,
+      cropped: list.some((m) => ratio(m) > CAROUSEL_MAX_RATIO),
+    };
   }
 
   if (list.length === 1) {
     const r = ratio(list[0]);
     const h = Math.min(column / r, APP_MAX_HEIGHT);
     const w = h < APP_MAX_HEIGHT ? column : APP_MAX_HEIGHT * Math.max(r, APP_MIN_RATIO);
-    return { mode: "single", column, border: 0, boxes: [{ x: 0, y: 0, w: Math.round(w), h: Math.round(h) }], assumed: null };
+    return { mode: "single", column, border: 0, boxes: [{ x: 0, y: 0, w: Math.round(w), h: Math.round(h) }], assumed: null, cropped: false };
   }
   const rowHeight = Math.min((column - APP_GAP * (list.length - 1)) / sum, APP_MAX_HEIGHT);
   if (photosOnly && rowHeight >= APP_ROW_MIN_HEIGHT) {
-    return { mode: "row", column, border: 0, boxes: lay(list, rowHeight, APP_GAP, (m) => rowHeight * ratio(m)), assumed: null };
+    return { mode: "row", column, border: 0, boxes: lay(list, rowHeight, APP_GAP, (m) => rowHeight * ratio(m)), assumed: null, cropped: false };
   }
   const h = APP_CAROUSEL_HEIGHT;
-  return { mode: "carousel", column, border: 0, boxes: lay(list, h, APP_GAP, (m) => h * Math.min(ratio(m), CAROUSEL_MAX_RATIO)), assumed: null };
+  return { mode: "carousel", column, border: 0, boxes: lay(list, h, APP_GAP, (m) => h * Math.min(ratio(m), CAROUSEL_MAX_RATIO)), assumed: null, cropped: list.some((m) => ratio(m) > CAROUSEL_MAX_RATIO) };
 }
 
-/** x.com's video badge: the length as m:ss ("0:06"). */
+/** Whether the layout runs past its column, so readers have to swipe to see the rest. */
+export function overflows(layout: MediaLayout): boolean {
+  const last = layout.boxes[layout.boxes.length - 1];
+  return last.x + last.w > layout.column;
+}
+
+/** x.com's video badge: the length as m:ss ("0:06"); h:mm:ss from an hour (assumed, no capture). */
 export function videoTime(ms: number): string {
   const s = Math.max(0, Math.round(ms / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const two = (n: number) => String(n).padStart(2, "0");
+  return s >= 3600 ? `${Math.floor(s / 3600)}:${two(Math.floor(s / 60) % 60)}:${two(s % 60)}` : `${Math.floor(s / 60)}:${two(s % 60)}`;
 }

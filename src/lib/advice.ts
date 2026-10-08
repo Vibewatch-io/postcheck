@@ -7,7 +7,7 @@ import {
   type LengthInfo,
 } from "./entities";
 import { cardless, type CardData } from "./card";
-import type { MediaKind, MediaLayout } from "./media";
+import { APP_MAX_HEIGHT, APP_MIN_RATIO, WEB_MAX_HEIGHT, overflows, type MediaKind, type MediaLayout } from "./media";
 
 export type Severity = "fix" | "tip" | "note";
 
@@ -278,17 +278,30 @@ export function buildAdvice(input: AdviceInput): Advice[] {
   }
 
   const layouts = input.mediaLayouts ?? [];
-  const sideways = layouts.filter((l) => l.layout.mode === "carousel");
+  // Only a carousel that runs past its column needs a swipe: four narrow strips fit in it whole.
+  const sideways = layouts.filter((l) => l.layout.mode === "carousel" && overflows(l.layout));
   if (sideways.length) {
     const n = sideways[0].layout.boxes.length;
     const on = sideways.map((l) => l.deviceLabel).join(" and ");
-    const assumed = sideways.some((l) => l.layout.assumed === "narrow-carousel");
+    const cut = sideways.some((l) => l.layout.cropped) ? ", cutting wide ones at the sides" : "";
     out.push({
       id: "media-carousel",
       severity: "note",
       title: "Readers swipe to see the rest",
-      detail: `On ${on}, X puts these ${n} items in a sideways carousel at one height, cutting wide ones at the sides. The next item peeks in from the edge; the rest take a swipe.${assumed ? " How tall X makes a row of four very narrow images comes from one capture, so the preview copies that one." : ""}`,
+      detail: `On ${on}, X puts these ${n} items in a sideways carousel at one height${cut}. The next item peeks in from the edge; the rest take a swipe.`,
       marks: [{ el: "attachment", devices: sideways.map((l) => l.deviceId) }],
+    });
+  }
+  const guessed = layouts.filter((l) => l.layout.assumed);
+  if (guessed.length) {
+    out.push({
+      id: "media-assumed",
+      severity: "note",
+      title: "Very narrow images: sizes partly assumed",
+      detail: guessed.some((l) => l.layout.assumed === "narrow-carousel")
+        ? "How X sizes a row of four very narrow images comes from one capture (45 by 643 pixels each on x.com), so the preview copies it. Other counts and shapes may come out differently."
+        : "No capture shows a very narrow image among wider ones in X's carousel, so the preview's 45px width for it is a guess.",
+      marks: [{ el: "attachment", devices: guessed.map((l) => l.deviceId) }],
     });
   }
   const cropped = layouts.filter((l) => l.ios && l.tall && l.layout.mode === "single");
@@ -297,7 +310,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       id: "media-tall-crop",
       severity: "note",
       title: "Tall photo cropped on iPhone",
-      detail: "The iPhone timeline shows a photo this tall cropped to 186 by 402 points, so its top and bottom don't show there. x.com shows more of it, up to 510px high.",
+      detail: `The iPhone timeline shows a photo this tall cropped to ${Math.round(APP_MIN_RATIO * APP_MAX_HEIGHT)} by ${APP_MAX_HEIGHT} points, so its top and bottom don't show there. x.com shows more of it, up to ${WEB_MAX_HEIGHT}px high.`,
       marks: [{ el: "attachment", devices: cropped.map((l) => l.deviceId) }],
     });
   }

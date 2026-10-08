@@ -109,10 +109,14 @@ async function makeLink(p: SharedPreview): Promise<{ url: string | null; left: s
   const at = (fragment: string) => `${location.origin}${location.pathname}${fragment}`;
   if (p.media.length) {
     for (const [edge, quality] of MEDIA_STEPS) {
-      const srcs = await Promise.all(p.media.map((m) => shrink(m.src, edge, quality))).catch(() => null);
-      if (!srcs) break;
-      const url = at(await encodeShare({ ...base, media: p.media.map((m, i) => ({ ...m, src: srcs[i] })) }));
-      if (url.length <= SHARE_LINK_BUDGET) return { url, left: photoLost ? ["profile photo"] : [] };
+      // An item the browser can't redraw is left out on its own; the rest still travel.
+      const srcs = await Promise.all(p.media.map((m) => shrink(m.src, edge, quality).catch(() => null)));
+      const kept = p.media.flatMap((m, i) => (srcs[i] ? [{ ...m, src: srcs[i] }] : []));
+      if (!kept.length) break;
+      const url = at(await encodeShare({ ...base, media: kept }));
+      const dropped = p.media.length - kept.length;
+      const left = [...(dropped ? [`${dropped} of the ${p.media.length} attached items`] : []), ...(photoLost ? ["profile photo"] : [])];
+      if (url.length <= SHARE_LINK_BUDGET) return { url, left };
     }
   }
   // Last resorts before refusing: no attached media, then no photo either.

@@ -245,6 +245,7 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
         key={i}
         data-media-item=""
         data-badge={badge}
+        data-kind={m.kind}
         style={{ position: "relative", flex: "none", width: b.w, height: b.h, marginLeft: prev ? b.x - prev.x - prev.w : 0, overflow: "hidden", borderRadius: carousel ? radius : undefined, scrollSnapAlign: carousel ? "start" : undefined }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -268,7 +269,7 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
   if (carousel) {
     // Clipped to the column and scrolled sideways, with no scrollbar showing.
     return (
-      <div data-media="carousel" style={{ width: layout.column, height, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+      <div data-media="carousel" role="region" aria-label="Post media" style={{ width: layout.column, height, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
         {cells}
       </div>
     );

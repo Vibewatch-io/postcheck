@@ -1,6 +1,6 @@
 import type { StyleRun } from "./entities";
 import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
-import { MAX_MEDIA, type MediaItem, type MediaKind } from "./media";
+import { MAX_MEDIA, MAX_MEDIA_SIDE, MAX_VIDEO_MS, type MediaItem, type MediaKind } from "./media";
 
 /**
  * Share links. The whole preview (text, styling, identity, shrunk images, device, theme) is
@@ -21,9 +21,6 @@ const MAX_STYLE_RUNS = 2_000;
 /** Shared images are JPEGs Share made itself; anything bigger than these was not. */
 const MAX_IMAGE_BYTES = 200_000;
 const MAX_IMAGE_EDGE = 2_048;
-/** A shared item's recorded shape and a video's length: generous bounds, only there to refuse nonsense. */
-const MAX_MEDIA_SIDE = 20_000;
-const MAX_VIDEO_MS = 4 * 60 * 60 * 1000;
 const KINDS: MediaKind[] = ["photo", "gif", "video"];
 
 const BADGES = ["none", "blue", "gold", "gray"] as const;

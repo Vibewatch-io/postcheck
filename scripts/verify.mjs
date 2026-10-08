@@ -71,7 +71,7 @@ const MEDIA_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
   const items = [...art.querySelectorAll('[data-media-item]')]; if (!items.length) return null; const o = items[0].getBoundingClientRect();
-  return { items: items.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left - o.left), Math.round(r.top - o.top), Math.round(r.width), Math.round(r.height), e.dataset.badge]; }), alt: art.querySelectorAll('[data-media-alt]').length };
+  return { items: items.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left - o.left), Math.round(r.top - o.top), Math.round(r.width), Math.round(r.height), e.dataset.badge, e.dataset.kind]; }), alt: art.querySelectorAll('[data-media-alt]').length };
 })()`;
 
 const browser = await chromium.launch();
@@ -247,11 +247,15 @@ async function quoteDiff(label, deviceLast, id, want) {
 async function mediaDiff(label, deviceLast, id, want, web) {
   const got = await page.evaluate(MEDIA_BOX(deviceLast));
   const tol = web ? 1 : 2;
-  const same = (exp, items) => items && (web ? items.length === exp.length : items.length >= exp.length) &&
-    exp.every((e, i) => e.slice(0, 4).every((v, k) => v === null || Math.abs(v - items[i][k]) <= tol) && (e[4] === items[i][4] || (e[4] === "" && (items[i][4] === "time" || (e[2] === null && items[i][4] === "mute")))));
-  const show = (items) => (items ?? []).map((b) => `[${b.join(",")}]`).join(" ");
+  // Only a video's badge can be missing from a capture: its countdown (x.com) or its off-screen mute mark (iPhone).
+  const same = (exp, items, exact = web) => Array.isArray(exp) && Array.isArray(items) && (exact ? items.length === exp.length : items.length >= exp.length) &&
+    exp.every((e, i) => e.slice(0, 4).every((v, k) => v === null || Math.abs(v - items[i][k]) <= tol) &&
+      (e[4] === items[i][4] || (e[4] === "" && items[i][5] === "video" && (items[i][4] === "time" || (e[2] === null && items[i][4] === "mute")))));
+  const show = (items) => (items ?? []).map((b) => `[${b.slice(0, 5).join(",")}]`).join(" ");
   if (want.gap) {
-    if (same(want.gapTool ?? [], got?.items)) { gap++; console.log(`  gap  ${label} media ${id}  (${want.gap})`); }
+    // A gap pins every box the tool draws, so nothing new can appear under it unnoticed.
+    if (!Array.isArray(want.gapTool)) { fail++; console.log(`  FAIL ${label} media ${id}  (marked gap has no gapTool pin)`); }
+    else if (same(want.gapTool, got?.items, true)) { gap++; console.log(`  gap  ${label} media ${id}  (${want.gap})`); }
     else { fail++; console.log(`  FAIL ${label} media ${id}  (marked gap, but the tool no longer draws its pinned gapTool boxes)\n         pinned: ${show(want.gapTool)}\n         tool:   ${show(got?.items)}`); }
     return;
   }

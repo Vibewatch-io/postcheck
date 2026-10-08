@@ -95,8 +95,9 @@ test("only an unexpanded iOS timeline row hides styling", async () => {
   assert.equal(rowHidesStyles(web), false);
 });
 
-// The carousel tip points only at the previews where X lays the media out sideways: two photos fill
-// a row on the iPhone and sit in a row on x.com, four go into the carousel on x.com only.
+// The carousel tip points only at the previews where the media runs past the column: four squares
+// do on both; four narrow strips fit whole (in x.com's carousel, in the iPhone's row), and get the
+// note that their x.com sizing comes from one capture instead.
 test("the media carousel tip marks only the previews that scroll sideways", () => {
   const text = "four photos";
   const entities = extractEntities(text);
@@ -109,6 +110,8 @@ test("the media carousel tip marks only the previews that scroll sideways", () =
     });
   const tip = (items: typeof squares) => buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasMedia: true, mediaLayouts: on(items) }).find((a) => a.id === "media-carousel");
   assert.deepEqual(tip(squares)?.marks, [{ el: "attachment", devices: ["web", "iphone-16"] }]);
-  assert.deepEqual(tip(strips)?.marks, [{ el: "attachment", devices: ["web"] }]);
-  assert.match(tip(strips)!.detail, /one capture/);
+  assert.equal(tip(strips), undefined);
+  const assumed = buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasMedia: true, mediaLayouts: on(strips) }).find((a) => a.id === "media-assumed");
+  assert.deepEqual(assumed?.marks, [{ el: "attachment", devices: ["web"] }]);
+  assert.match(assumed!.detail, /one capture/);
 });
