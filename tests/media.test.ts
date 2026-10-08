@@ -36,7 +36,7 @@ function check(file: string, deviceId: string, tolerance: number) {
 }
 
 test("x.com media boxes: every recorded post to 1px", () => {
-  assert.equal(check("fixtures/web/postcheck_test.json", "web", 1), 21);
+  assert.equal(check("fixtures/web/postcheck_test.json", "web", 1), 22);
 });
 
 // Screen captures read ±1pt at each edge: the same 16:9 photo reads 322×182 (test 50) and 324×183 (test 110).

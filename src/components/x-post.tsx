@@ -274,9 +274,12 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
     );
   });
   if (carousel) {
-    // Clipped to the column and scrolled sideways, with no scrollbar showing.
+    // Clipped to the column and scrolled sideways, with no scrollbar showing. x.com frames the row 1px
+    // above and below: its block is 352 for 350px items (a sensitive cover over it, test 111b; the tag
+    // line 4px under it, 110c). On the 643px four-strip row it is assumed; the app's carousel frame
+    // is not measured.
     return (
-      <div data-media="carousel" role="region" aria-label="Post media" style={{ width: layout.column, height, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+      <div data-media="carousel" role="region" aria-label="Post media" style={{ width: layout.column, height: web ? height + 2 : height, padding: web ? "1px 0" : undefined, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
         {cells}
       </div>
     );
@@ -429,12 +432,11 @@ function SensitiveCover({ items, device, theme }: { items: MediaItem[]; device: 
     );
   }
   // The media keeps its own box, the blur over it (of the first item: which image x.com's served blur
-  // comes from is not recorded). With several items x.com covers them all as one
-  // (test 111b), and frames a carousel 1px above and below (a 518×352 cover over the 350 row).
-  const framed = mediaLayout(items, device)?.border === 0;
+  // comes from is not recorded). With several items x.com covers them all as one (test 111b): a
+  // 518×352 cover over the framed carousel.
   return (
     // Clipped to the cover's corners, so a carousel's square-cut edge never shows past them.
-    <div data-sensitive="" style={{ position: "relative", width: "fit-content", padding: framed ? "1px 0" : undefined, borderRadius: 16, overflow: "hidden" }}>
+    <div data-sensitive="" style={{ position: "relative", width: "fit-content", borderRadius: 16, overflow: "hidden" }}>
       <MediaBlock items={items} device={device} theme={theme} />
       <div aria-hidden style={{ position: "absolute", inset: 0, borderRadius: 16, overflow: "hidden" }}>{blurred}</div>
       <div style={{ position: "absolute", inset: 0, borderRadius: 16, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "12px 16px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", color: white, fontSize: 15, lineHeight: "20px" }}>

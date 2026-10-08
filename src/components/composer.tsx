@@ -213,7 +213,6 @@ export function PostOptions({ state, onChange, media, onMedia }: { state: PostSt
           <div className="my-1 border-t border-brand-warm-border" />
           {hasImage ? (
             <>
-              {perItem("Sensitive", "sensitive", media.map((m, i) => ({ m, i })))}
               <label className={row}>
                 Tagged
                 <input
@@ -228,6 +227,7 @@ export function PostOptions({ state, onChange, media, onMedia }: { state: PostSt
                   className="w-40 rounded-lg border border-brand-warm-border px-2 py-1 text-sm outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal"
                 />
               </label>
+              {perItem("Sensitive", "sensitive", media.map((m, i) => ({ m, i })))}
               {photos.length > 0 && perItem("Alt text", "alt", photos)}
             </>
           ) : (

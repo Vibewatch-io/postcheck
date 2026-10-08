@@ -270,6 +270,7 @@ Files are in `fixtures/media/`: `t110-tagged.jpg`, `t111-sensitive.jpg`, `t112-p
 | 111 | `t111-sensitive.jpg`, flagged in the composer as sensitive | Content-warning overlay. |
 | 111b | `t50-landscape.jpg` + `t111-sensitive.jpg`, only the second flagged sensitive: `Test 111b: two photos, only the second flagged sensitive` | Does one flagged item cover all the media or only itself? |
 | 110b | `t110-tagged.jpg`, @Vibewatch_io and @goodforbtc tagged: `Test 110b: one photo with two people tagged` | How the tag line reads for two people. |
+| 110c | `t50-landscape.jpg` + `t110-tagged.jpg`, @Vibewatch_io tagged: `Test 110c: two photos with one person tagged` | Is a tag per photo or per post? |
 | 112 | `t112-panorama.jpg` (4:1) | Wide crop cap. |
 | 113 | `t113-square.jpg` (1:1) | Square photo box. |
 | 114 | `t114-portrait.mp4` (9:16, 6 s) | Portrait video box and duration badge. |
@@ -285,7 +286,7 @@ Long media test 116: a post over 280 characters with a tall photo under it, to s
 
 Posted 2026-10-06 (batch 7), texts `Test 110: …` to `Test 115: …` as in 51–56. 110 tags only @Vibewatch_io (@marshallmixing refuses media tags) and says "one person". The first 114 upload stalled at "Ready" with Post disabled; a page reload and a fresh drag worked, and Post enabled about a minute after "Ready".
 
-110b and 111b posted 2026-10-08 (2108321329640550731, 2108321093534789794). x.com covers all of 111b's media with one warning, though the composer flags per item, and puts 111b's two 16:9 photos in the 412×350 carousel, not a row; 110b's line reads "Vibewatch and Good For Bitcoin".
+110b and 111b posted 2026-10-08 (2108321329640550731, 2108321093534789794). x.com covers all of 111b's media with one warning, though the composer flags per item, and puts 111b's two 16:9 photos in the 412×350 carousel, not a row; 110b's line reads "Vibewatch and Good For Bitcoin". 110c (2108340075964825869, posted the same day): the composer offers one "Tag people" for both photos and no photo to choose; x.com draws one line under the whole carousel.
 
 ## 12. More link cards
 
