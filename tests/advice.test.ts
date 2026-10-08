@@ -104,7 +104,11 @@ test("a poll past 280 is flagged as dropped; a shown poll replaces the card tips
   const entities = extractEntities(text);
   const ids = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [], poll: "shown" }).map((a) => a.id);
   assert.ok(ids.includes("poll-beats-card"));
-  assert.ok(!ids.includes("no-card") && !ids.includes("trailing-url-hidden"));
+  assert.ok(!ids.includes("no-card"));
+  // With a fetched card for the trailing link, the poll still wins: no "card shown" tip.
+  const card = { url: "https://github.com/vercel/next.js", host: "github.com", title: "Next.js", description: "", image: null, layout: "large" as const };
+  const withCard = buildAdvice({ text, entities, length: weightedLength(text, entities), card, lineSets: [], poll: "shown" }).map((a) => a.id);
+  assert.ok(withCard.includes("poll-beats-card") && !withCard.includes("trailing-url-hidden"));
   const two = "Two links https://github.com/vercel/next.js and https://vibewatch.io";
   const te = extractEntities(two);
   const twoIds = buildAdvice({ text: two, entities: te, length: weightedLength(two, te), card: null, lineSets: [], poll: "shown" }).map((a) => a.id);

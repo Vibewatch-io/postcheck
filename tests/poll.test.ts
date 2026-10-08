@@ -12,8 +12,10 @@ test("a poll shows only at 280 or under and with two choices", () => {
   assert.equal(shownPoll({ ...poll, choices: ["Yes", "", ""] }, 10), null);
 });
 
-// The footer just after posting, per client: x.com "23 hours left" (test 57), the app's two units
-// ("22 hours 10 minutes left", test 57) and its image-poll short form ("23h left", test 57b).
+// The footer just after posting, per client. The captures were taken a while after posting, so only
+// their form carries over: x.com's largest unit ("23 hours left", test 57), the app's two units (test
+// 57 read "22 hours 10 minutes left" about 1h50m in; a fresh 1-day poll would read 23 hours 59
+// minutes) and its image-poll short form ("23h left", test 57b).
 test("time left reads the way each client prints it", () => {
   assert.equal(timeLeft(1440, "web"), "23 hours left");
   assert.equal(timeLeft(7 * 1440, "web"), "6 days left");

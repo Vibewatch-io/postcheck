@@ -76,7 +76,7 @@ const POLL_BOX = (deviceLast) => `(() => {
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement;
   const choices = [...p.querySelectorAll('[data-poll-choice]')];
   return { size: [Math.round(b.width), Math.round(b.height)], gap: body ? Math.round(b.top - body.getBoundingClientRect().bottom) : null,
-    labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('img')].map(rel), footer: rel(p.querySelector('[data-poll-footer]')),
+    labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('img')].map(rel), footer: rel(p.querySelector('[data-poll-footer]')), footerText: p.querySelector('[data-poll-footer]')?.textContent.trim() ?? '',
     card: !!art.querySelector('[data-attachment] > :not([data-poll])') };
 })()`;
 
@@ -265,6 +265,7 @@ async function pollDiff(label, deviceLast, id, want, typed) {
     if (want.choices && want.choices.join("|") !== got.labels.join("|")) problems.push(`choices X ${want.choices.join(" / ")} / tool ${got.labels.join(" / ")}`);
     if (got.card) problems.push("tool draws a card or quote beside the poll");
     if (want.size && !near(got.size, want.size)) problems.push(`box X ${want.size} / tool ${got.size}`);
+    if (typeof want.images === "number" && got.images.length !== want.images) problems.push(`pictures X ${want.images} / tool ${got.images.length}`);
     if (want.gap !== undefined && Math.abs(got.gap - want.gap) > 1) problems.push(`gap above X ${want.gap} / tool ${got.gap}`);
     const pitch = got.rows.length > 1 ? got.rows[1][1] - got.rows[0][1] : null;
     if (want.row && (!near([got.rows[0]?.[3], pitch], want.row))) problems.push(`row height, pitch X ${want.row} / tool ${got.rows[0]?.[3]}, ${pitch}`);
@@ -277,6 +278,8 @@ async function pollDiff(label, deviceLast, id, want, typed) {
     }
     const last = got.rows[got.rows.length - 1];
     if (!got.footer || !last || got.footer[1] < last[1] + last[3]) problems.push("footer missing or above the choices");
+    // The tool draws a just-posted poll; a capture's time left (or "Final results") is when it was taken, so only the form is checked.
+    if (!/^0 votes · \S.* left$/.test(got.footerText)) problems.push(`footer "${got.footerText}"`);
   }
   if (problems.length) {
     fail++;
