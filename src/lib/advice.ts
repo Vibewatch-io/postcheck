@@ -7,6 +7,7 @@ import {
   type LengthInfo,
 } from "./entities";
 import { cardless, type CardData } from "./card";
+import type { MediaKind, MediaLayout } from "./media";
 
 export type Severity = "fix" | "tip" | "note";
 
@@ -60,6 +61,10 @@ export interface AdviceInput {
   appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId?: string } | null;
   /** An image is attached: X shows it instead of any link card. */
   hasMedia?: boolean;
+  /** What is attached, in order. */
+  mediaKinds?: MediaKind[];
+  /** How the media is laid out on each preview shown (the selected web layout and phone). */
+  mediaLayouts?: Array<{ deviceId: string; deviceLabel: string; layout: MediaLayout; ios: boolean; tall: boolean }>;
   /** Bold / italic runs are present. */
   hasStyles?: boolean;
   /** The draft exactly as typed, before X's trimming and blank-line collapsing. */
@@ -123,11 +128,13 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       });
     }
     if (hasMedia) {
+      const kinds = input.mediaKinds ?? ["photo"];
+      const noun = kinds.length > 1 ? "Media" : kinds[0] === "gif" ? "GIF" : kinds[0] === "video" ? "Video" : "Photo";
       out.push({
         id: "media-beats-card",
         severity: "note",
-        title: "Photo attached, so no card",
-        detail: `With an image on the post X shows the image and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
+        title: `${noun} attached, so no card`,
+        detail: `With media on the post X shows the media and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
         marks: [{ at: cu.start }],
       });
     } else if (cu.isStatus) {
@@ -267,6 +274,31 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "note",
       title: "Bold and italic need Premium",
       detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks move wherever the styling shows. In the iPhone app's timeline, X shows the post with no bold or italic at all (a post that folds behind Show more gets it back once that's tapped), so the breaks and the fold there don't change; its post page shows the styling. That looks like an X bug, and the iPhone preview shows it the same way.",
+    });
+  }
+
+  const layouts = input.mediaLayouts ?? [];
+  const sideways = layouts.filter((l) => l.layout.mode === "carousel");
+  if (sideways.length) {
+    const n = sideways[0].layout.boxes.length;
+    const on = sideways.map((l) => l.deviceLabel).join(" and ");
+    const assumed = sideways.some((l) => l.layout.assumed === "narrow-carousel");
+    out.push({
+      id: "media-carousel",
+      severity: "note",
+      title: "Readers swipe to see the rest",
+      detail: `On ${on}, X puts these ${n} items in a sideways carousel at one height, cutting wide ones at the sides. The next item peeks in from the edge; the rest take a swipe.${assumed ? " How tall X makes a row of four very narrow images comes from one capture, so the preview copies that one." : ""}`,
+      marks: [{ el: "attachment", devices: sideways.map((l) => l.deviceId) }],
+    });
+  }
+  const cropped = layouts.filter((l) => l.ios && l.tall && l.layout.mode === "single");
+  if (cropped.length) {
+    out.push({
+      id: "media-tall-crop",
+      severity: "note",
+      title: "Tall photo cropped on iPhone",
+      detail: "The iPhone timeline shows a photo this tall cropped to 186 by 402 points, so its top and bottom don't show there. x.com shows more of it, up to 510px high.",
+      marks: [{ el: "attachment", devices: cropped.map((l) => l.deviceId) }],
     });
   }
 

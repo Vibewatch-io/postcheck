@@ -66,6 +66,13 @@ const QUOTE_BOX = (deviceLast) => `(() => {
   const text = [...q.querySelectorAll('[data-w]')][0]?.parentElement;
   return { box: [Math.round(b.width), Math.round(b.height)], avatar: rel(q.querySelector('img, svg')), text: rel(text), photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
 })()`;
+/** The attached media's item boxes [x, y, w, h] relative to the first item, each item's badge, and the ALT badges. */
+const MEDIA_BOX = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const items = [...art.querySelectorAll('[data-media-item]')]; if (!items.length) return null; const o = items[0].getBoundingClientRect();
+  return { items: items.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left - o.left), Math.round(r.top - o.top), Math.round(r.width), Math.round(r.height), e.dataset.badge]; }), alt: art.querySelectorAll('[data-media-alt]').length };
+})()`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
@@ -150,7 +157,9 @@ const LONG_POST_TAIL = " " + "x".repeat(60);
 async function load(id) {
   const fx = JSON.parse(readFileSync(`fixtures/posts/${id}.json`, "utf8"));
   const text = typedText(fx);
-  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, { photo: fx.photos > 0 });
+  // Media as X recorded it (kind, size, alt text, video length); older fixtures only count photos.
+  const media = fx.media?.map((m) => ({ kind: m.type === "animated_gif" ? "gif" : m.type, width: m.width, height: m.height, alt: Boolean(m.alt), ...(m.duration_ms !== undefined ? { durationMs: m.duration_ms } : {}) }));
+  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, media ? { media } : { photo: fx.photos > 0 });
 }
 async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
@@ -226,6 +235,33 @@ async function quoteDiff(label, deviceLast, id, want) {
   }
 }
 
+/**
+ * The media boxes against X's. x.com boxes match to 1px and every item is recorded; iPhone captures
+ * read ±1pt at each edge (the same 16:9 photo reads 322×182 in test 50 and 324×183 in test 110), so
+ * they match to 2pt, and only the items on screen are recorded (a carousel's next item has no
+ * width). Badges match, except where the capture couldn't see one: x.com's video countdown vanishes
+ * once autoplay starts, and the app's mute mark sits at the bottom right of a carousel item that is
+ * still off screen, so a recorded "" there accepts the tool's badge. A fixture `gap` pins what the
+ * tool draws instead.
+ */
+async function mediaDiff(label, deviceLast, id, want, web) {
+  const got = await page.evaluate(MEDIA_BOX(deviceLast));
+  const tol = web ? 1 : 2;
+  const same = (exp, items) => items && (web ? items.length === exp.length : items.length >= exp.length) &&
+    exp.every((e, i) => e.slice(0, 4).every((v, k) => v === null || Math.abs(v - items[i][k]) <= tol) && (e[4] === items[i][4] || (e[4] === "" && (items[i][4] === "time" || (e[2] === null && items[i][4] === "mute")))));
+  const show = (items) => (items ?? []).map((b) => `[${b.join(",")}]`).join(" ");
+  if (want.gap) {
+    if (same(want.gapTool ?? [], got?.items)) { gap++; console.log(`  gap  ${label} media ${id}  (${want.gap})`); }
+    else { fail++; console.log(`  FAIL ${label} media ${id}  (marked gap, but the tool no longer draws its pinned gapTool boxes)\n         pinned: ${show(want.gapTool)}\n         tool:   ${show(got?.items)}`); }
+    return;
+  }
+  const problems = [];
+  if (!same(want.items, got?.items)) problems.push(`items\n         X:    ${show(want.items)}\n         tool: ${show(got?.items)}`);
+  if ((want.alt ?? 0) !== (got?.alt ?? 0)) problems.push(`ALT badges X ${want.alt} / tool ${got?.alt ?? 0}`);
+  if (problems.length) { fail++; console.log(`  FAIL ${label} media ${id}\n       ${problems.join("\n       ")}`); }
+  else { pass++; console.log(`  ok   ${label} media ${id}`); }
+}
+
 for (const f of readdirSync("fixtures/web")) {
   const fx = JSON.parse(readFileSync(`fixtures/web/${f}`, "utf8"));
   console.log(`\nweb · ${f}`);
@@ -236,6 +272,7 @@ for (const f of readdirSync("fixtures/web")) {
     const got = await page.evaluate(ROWS("false"));
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
+    if (p.media) await mediaDiff("web ", false, p.id, p.media, true);
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -248,6 +285,7 @@ for (const f of readdirSync("fixtures/app")) {
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
+    if (p.media) await mediaDiff("app ", true, p.id, p.media, false);
   }
 }
 console.log(`\n${pass} passed, ${edge} within font tolerance, ${gap} known gaps, ${fail} failed`);
