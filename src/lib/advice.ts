@@ -6,7 +6,7 @@ import {
   type Entity,
   type LengthInfo,
 } from "./entities";
-import { cardless, type CardData } from "./card";
+import { cardlessKind, type CardData } from "./card";
 import { APP_MAX_HEIGHT, APP_MIN_RATIO, WEB_MAX_HEIGHT, overflows, type MediaKind, type MediaLayout } from "./media";
 
 export type Severity = "fix" | "tip" | "note";
@@ -53,8 +53,11 @@ export interface AdviceInput {
   text: string;
   entities: Entity[];
   length: LengthInfo;
-  /** Card lookup result for the card URL: undefined = not fetched yet, null = no card. */
-  card: CardData | null | undefined;
+  /**
+   * Card for the card URL: undefined = not answered yet; null = no card for certain (the page has no
+   * tags, or X never builds one for this kind of link); "failed" = the lookup couldn't read the page.
+   */
+  card: CardData | null | "failed" | undefined;
   /** Rendered line metrics per device, for dangling-word checks. */
   lineSets: DeviceLines[];
   /** Set when the app's line clamp would fold the post. */
@@ -195,6 +198,15 @@ export function buildAdvice(input: AdviceInput): Advice[] {
           : `A link to a post becomes a quote post. Move it to the end and the URL text disappears too.${urls.length > 1 ? " The quote replaces any link card." : ""}`,
         marks: [trailing ? { el: "attachment" } : { at: cu.start }],
       });
+    } else if (card === "failed") {
+      // The lookup couldn't tell (the page didn't answer, or answered without a title): say only that.
+      out.push({
+        id: "card-lookup-failed",
+        severity: "note",
+        title: `Couldn't check ${cu.host}`,
+        detail: "Postcheck couldn't read a card from that page, so the preview shows the link as plain text. X may still show a card when you post.",
+        marks: [{ at: cu.start }],
+      });
     } else if (card) {
       if (trailing) {
         out.push({
@@ -214,13 +226,17 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         });
       }
     } else if (card === null) {
+      const kind = cardlessKind(cu.href!);
       out.push({
         id: "no-card",
         severity: "note",
         title: `No card for ${cu.host}`,
-        detail: cardless(cu.href!)
-          ? "X shows no preview for App Store links, even though the page has the tags for one. The URL text stays visible even at the end of the post."
-          : "That page has no Open Graph or Twitter Card tags, so X shows the link as plain text and no preview. The URL text stays visible even at the end of the post.",
+        detail:
+          kind === "app-store"
+            ? "X shows no preview for App Store links, even though the page has the tags for one. The URL text stays visible even at the end of the post."
+            : kind === "x-article"
+              ? "X shows a link to an X article as plain text, with no preview. The URL text stays visible even at the end of the post."
+              : "Postcheck found no Open Graph or Twitter Card tags on that page. X builds a preview only from those, so the link shows as plain text. The URL text stays visible even at the end of the post.",
         marks: [{ at: cu.start }],
       });
     }
