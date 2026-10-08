@@ -1,5 +1,5 @@
 {
- "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #; @Postcheck_test batch 6 captured 2026-10-05 (02, 61b, 66–66d, 70–77, 90–97 with 91b/94b, 120–124): voter-view poll pills, 93 read after it closed; 66d shows the ticker tile and no link card; 70's timeline row shows no bold/italic (the post page does); 123 gets a large card here (small on the web); @Postcheck_test batch 7 captured 2026-10-07 (100–104, 107, 70b, 110–117b, 122b, 131), viewed as @marshallmixing: 70b read folded (its styling shows only once expanded); 100's 3/3 read from the Replies tab; 111's box is the content-warning cover; link-card boxes measured 2026-10-08 on the captures of tests 07, 20–31 and 47 (scripts/phone t07*, t2*, t30*, t31*, t47* in the main checkout; edges 70.3 and 393.1 in every capture, 322.4–322.8 × 168.4–169.2 large, 81 tall small): card.box [x, y, w, h] in points, x from the text column's left edge, y not recorded (null: the cell's vertical metrics aren't modelled); card.thumb is the small card's thumbnail",
+ "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #; @Postcheck_test batch 6 captured 2026-10-05 (02, 61b, 66–66d, 70–77, 90–97 with 91b/94b, 120–124): voter-view poll pills, 93 read after it closed; 66d shows the ticker tile and no link card; 70's timeline row shows no bold/italic (the post page does); 123 gets a large card here (small on the web); @Postcheck_test batch 7 captured 2026-10-07 (100–104, 107, 70b, 110–117b, 122b, 131), viewed as @marshallmixing: 70b read folded (its styling shows only once expanded); 100's 3/3 read from the Replies tab; 111's box is the content-warning cover; link-card boxes measured 2026-10-08 on the captures of tests 07, 20–31 and 47 (scripts/phone t07*, t2*, t30*, t31*, t47* in the main checkout; edges 70.3 and 393.1 in every capture, 322.4–322.8 × 168.4–169.2 large, 81 tall small): card.box [x, y, w, h] in points, x from the text column's left edge, y from the bottom of the body text's line box (the app's card top sits 24.3pt under the last line's ink top, which in this tool's font is 8 under its line box, 7 for a small card, whose hairline the app draws outside its box; measured 2026-10-08, QUIRKS.md \"Layout: app\"); card.thumb is the small card's thumbnail; cell: the iOS timeline cell's height in points, separator centre to separator centre, the mean over every capture of that post in scripts/phone and .captures/iphone-15-pro in the main checkout (2026-10-08; each capture reads ±0.5, the 1/3pt separator landing on a different screen pixel), checked by verify to 1.5pt",
  "device": "iphone-16",
  "posts": [
   {
@@ -199,7 +199,8 @@
     "four spaces, and a trailing space."
    ],
    "showMore": false,
-   "note": "The 4 spaces before 'four' in the source are not visibly rendered at the wrap point (trimmed); recorded lines omit them."
+   "note": "The 4 spaces before 'four' in the source are not visibly rendered at the wrap point (trimmed); recorded lines omit them.",
+   "cell": 106.3
   },
   {
    "id": "2100300597098688990",
@@ -209,7 +210,8 @@
     "long-term real-time high-quality cross-platform",
     "open-source user-friendly up-to-date"
    ],
-   "showMore": false
+   "showMore": false,
+   "cell": 145.1
   },
   {
    "id": "2100300464600633836",
@@ -219,7 +221,8 @@
     "some-more-letters sits in the middle of this",
     "sentence to see where it wraps."
    ],
-   "showMore": false
+   "showMore": false,
+   "cell": 144.6
   },
   {
    "id": "2100300298313183628",
@@ -276,7 +279,8 @@
     "eight",
     "nine"
    ],
-   "showMore": false
+   "showMore": false,
+   "cell": 241.4
   },
   {
    "id": "2100299700960370848",
@@ -290,7 +294,8 @@
     "seven",
     "eight"
    ],
-   "showMore": false
+   "showMore": false,
+   "cell": 222.0
   },
   {
    "id": "2100299521561706589",
@@ -336,7 +341,8 @@
     "going past the cut so the post needs Show more",
     "on the web timeline."
    ],
-   "showMore": false
+   "showMore": false,
+   "cell": 240.8
   },
   {
    "id": "2100298868282077295",
@@ -348,7 +354,8 @@
     "ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
     "ok ok ok ok ok ok ok ok ok ok ok ok 🚀"
    ],
-   "showMore": false
+   "showMore": false,
+   "cell": 182.6
   },
   {
    "id": "2100298643605709117",
@@ -383,7 +390,8 @@
     "Email user@vibewatch.io is not a mention or a",
     "link"
    ],
-   "showMore": false
+   "showMore": false,
+   "cell": 105.8
   },
   {
    "id": "2100652600748327317",
@@ -438,11 +446,12 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     8,
      323,
      169
     ]
-   }
+   },
+   "cell": 284
   },
   {
    "id": "2100652180256837990",
@@ -466,11 +475,12 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     8,
      323,
      169
     ]
-   }
+   },
+   "cell": 303.2
   },
   {
    "id": "2100651909187240216",
@@ -486,11 +496,12 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     8,
      323,
      169
     ]
-   }
+   },
+   "cell": 303.2
   },
   {
    "id": "2100651772096422319",
@@ -506,11 +517,12 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     8,
      323,
      169
     ]
-   }
+   },
+   "cell": 303.3
   },
   {
    "id": "2100651637895528592",
@@ -525,7 +537,7 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     7,
      323,
      81
     ],
@@ -533,7 +545,8 @@
      80,
      80
     ]
-   }
+   },
+   "cell": 175.0
   },
   {
    "id": "2100651502826410031",
@@ -555,7 +568,7 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     7,
      323,
      81
     ],
@@ -563,7 +576,8 @@
      80,
      80
     ]
-   }
+   },
+   "cell": 175.1
   },
   {
    "id": "2100651232109142223",
@@ -579,11 +593,12 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     8,
      323,
      169
     ]
-   }
+   },
+   "cell": 303.5
   },
   {
    "id": "2100651092556333450",
@@ -598,11 +613,12 @@
     "hasImage": true,
     "box": [
      0,
-     null,
+     8,
      323,
      169
     ]
-   }
+   },
+   "cell": 284.0
   },
   {
    "id": "2100650875857629266",
@@ -766,7 +782,8 @@
     "hasCard": false,
     "hasName": true
    },
-   "replyChrome": null
+   "replyChrome": null,
+   "cell": 243.6
   },
   {
    "id": "2100668333914030498",
@@ -781,7 +798,8 @@
     "hasCard": false,
     "hasName": true
    },
-   "replyChrome": null
+   "replyChrome": null,
+   "cell": 184.9
   },
   {
    "id": "2100668421813960865",
@@ -1538,7 +1556,8 @@
      ]
     ],
     "alt": 0
-   }
+   },
+   "cell": 497.4
   },
   {
    "id": "2107679528940454347",
@@ -1637,7 +1656,8 @@
      ]
     ],
     "alt": 0
-   }
+   },
+   "cell": 418.6
   },
   {
    "id": "2107676353667760235",
@@ -1658,7 +1678,8 @@
      ]
     ],
     "alt": 0
-   }
+   },
+   "cell": 176
   },
   {
    "id": "2107676172104716423",
@@ -1727,7 +1748,8 @@
     "id333…"
    ],
    "showMore": false,
-   "card": null
+   "card": null,
+   "cell": 105.7
   },
   {
    "id": "2107674949947130122",
@@ -1767,7 +1789,8 @@
     "Reply settings: only @Vibewatch_io can reply"
    ],
    "showMore": false,
-   "card": null
+   "card": null,
+   "cell": 87.1
   },
   {
    "id": "2107674333208518700",
@@ -1775,7 +1798,8 @@
     "Reply settings: verified accounts"
    ],
    "showMore": false,
-   "card": null
+   "card": null,
+   "cell": 86.6
   },
   {
    "id": "2107674128757252425",
@@ -1783,7 +1807,8 @@
     "Reply settings: accounts I follow"
    ],
    "showMore": false,
-   "card": null
+   "card": null,
+   "cell": 87.6
   },
   {
    "id": "2107674006552035510",
