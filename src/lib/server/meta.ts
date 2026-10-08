@@ -1,4 +1,5 @@
 import { HTML_CAP } from "./fetch-guard";
+import type { NoCardReason } from "../card";
 
 /**
  * Reads a page's <meta> tags and its <title>. The HTML is whatever a stranger's server sent, so
@@ -30,7 +31,8 @@ const ATTR = /(?<![a-zA-Z:-])([a-zA-Z:-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+
 const OPEN = /<(meta|title)(?=[\s/>])/gi;
 const CLOSE_TITLE = /<\/title\s*>/gi;
 
-export function metaLookup(html: string): Map<string, string> {
+/** `seen`, when given, collects every meta key on the page, including those with empty content. */
+export function metaLookup(html: string, seen?: Set<string>): Map<string, string> {
   const out = new Map<string, string>();
   const head = html.slice(0, HTML_CAP);
   let titleDone = false;
@@ -46,6 +48,7 @@ export function metaLookup(html: string): Map<string, string> {
       }
       const key = (attrs.get("property") || attrs.get("name") || "").toLowerCase();
       const content = attrs.get("content");
+      if (key) seen?.add(key);
       if (key && content && !out.has(key)) out.set(key, content);
     } else if (!titleDone) {
       // The first <title> only, and its closing tag is looked for once.
@@ -59,4 +62,35 @@ export function metaLookup(html: string): Map<string, string> {
     }
   }
   return out;
+}
+
+/** The tags a card is built from. */
+export interface CardMeta {
+  title: string;
+  description: string;
+  imageRaw: string;
+  cardType: string;
+}
+
+/**
+ * The card a page's tags make, or why there is none. X only builds a card from Twitter Card or Open
+ * Graph tags; a page with just a <title> gets a plain link (@postcheck_test test 23, example.com).
+ * Open Graph alone gives a small card (test 24). "none" means a page read to its end with no og: or
+ * twitter: tag at all, empty or not. A page cut off at the cap may carry its tags past the cut, and
+ * one whose tags make no card here (no title, empty, or none of the card keys) has no proof of what
+ * X does, so both are "failed": Postcheck can't tell. Tags found before the cut still make a card.
+ */
+export function cardMeta(html: string, complete: boolean): CardMeta | NoCardReason {
+  const seen = new Set<string>();
+  const meta = metaLookup(html, seen);
+  if (![...seen].some((k) => k.startsWith("og:") || k.startsWith("twitter:"))) return complete ? "none" : "failed";
+  const social = ["twitter:card", "twitter:title", "og:title", "og:image"].some((k) => meta.get(k));
+  const title = social ? meta.get("twitter:title") || meta.get("og:title") || meta.get("html:title") || "" : "";
+  if (!title) return "failed";
+  return {
+    title,
+    description: meta.get("twitter:description") || meta.get("og:description") || meta.get("description") || "",
+    imageRaw: meta.get("twitter:image") || meta.get("twitter:image:src") || meta.get("og:image") || meta.get("og:image:url") || "",
+    cardType: (meta.get("twitter:card") || "").toLowerCase(),
+  };
 }
