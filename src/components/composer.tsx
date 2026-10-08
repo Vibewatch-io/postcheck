@@ -141,8 +141,8 @@ export function PostOptions({ state, onChange, hasImage }: { state: PostState; o
   const row = "flex min-h-9 items-center justify-between gap-3 text-sm text-brand-warm-dark";
   const box = "h-4 w-4 accent-brand-teal";
   return (
-    // From sm up the panel hangs under the button; on a phone it spans the toolbar (the nearest
-    // positioned box) so it never runs past the screen edge.
+    // From sm up the panel hangs under the button; on a phone, under the toolbar (the nearest
+    // positioned box). Its cap is the screen, never the 36px box it hangs from.
     <div ref={root} className="sm:relative">
       <button
         ref={button}
@@ -163,7 +163,7 @@ export function PostOptions({ state, onChange, hasImage }: { state: PostState; o
         {hasPostState(state) && <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-brand-teal" />}
       </button>
       {open && (
-        <div id={id} role="group" aria-label="Post options" className="absolute left-0 top-full z-30 mt-2 w-80 max-w-full rounded-xl sm:top-11 sm:mt-0 border border-brand-warm-border bg-white px-4 py-2 shadow-lg">
+        <div id={id} role="group" aria-label="Post options" className="absolute left-0 top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl sm:top-11 sm:mt-0 border border-brand-warm-border bg-white px-4 py-2 shadow-lg">
           <label className={row}>
             Pinned
             <input type="checkbox" className={box} checked={state.pinned} onChange={(e) => set({ pinned: e.target.checked })} />

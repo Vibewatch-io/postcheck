@@ -8,9 +8,10 @@ import type { CardData } from "@/lib/card";
 import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type StyleRun } from "@/lib/entities";
 import { quoteTime, type QuoteState } from "@/lib/quote";
 import { NO_POST_STATE, type PostState } from "@/lib/post-state";
+import { mediaColumn, mediaLayout, videoTime, type MediaItem } from "@/lib/media";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
-import { BookmarkIcon, EyeSlashIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, PaidPartnershipIcon, PersonIcon, PinIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
+import { BookmarkIcon, EyeSlashIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, MuteIcon, PaidPartnershipIcon, PersonIcon, PinIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
 
 export interface Identity {
   name: string;
@@ -47,8 +48,8 @@ interface Props {
   card: CardData | "loading" | null;
   /** The post link that becomes the quote embed, and what the lookup found. */
   quote: { entity: Entity; state: QuoteState | null } | null;
-  /** Attached image (data URL). A post with media never shows a link card. */
-  media?: string | null;
+  /** Attached photos, GIFs and videos, up to 4. A post with media never shows a link card or a quote. */
+  media?: MediaItem[];
   /** Premium bold / italic runs. */
   styles?: StyleRun[];
   /** Pinned, paid partnership, reply limit, and the photo's sensitive flag and tag. */
@@ -219,6 +220,76 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
   );
 }
 
+/** Small dark label on a photo, GIF or video. Placement and styling are assumed; only ALT's 23×15 is measured. */
+const badgeStyle: CSSProperties = { display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, backgroundColor: "rgba(0,0,0,0.77)", color: "#fff", fontWeight: 700 };
+
+/**
+ * Attached media, laid out by `mediaLayout()` (QUIRKS.md, "Web media" and "App media"): one item,
+ * a row sharing one height, or a sideways ScrollSnap carousel with the next item peeking in.
+ * x.com frames a single item or a row in the card border; the app's frame is drawn on the image
+ * (assumed), and so is each carousel item's. Corner radius 16 on x.com (the card's) and 12 on the
+ * app (the quote embed's fit): assumed, not measured on media. Badges: x.com shows "GIF", a video's
+ * length and a 23×15 "ALT"; the iOS timeline shows a "GIF" pill and a mute mark on a video, and no
+ * ALT. A video is drawn as its first frame.
+ */
+function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Device; theme: XTheme }) {
+  const layout = mediaLayout(items, device);
+  if (!layout) return null;
+  const { web } = mediaColumn(device);
+  const radius = web ? 16 : 12;
+  const carousel = layout.mode === "carousel";
+  const height = Math.max(...layout.boxes.map((b) => b.h));
+  const hairline = <div aria-hidden style={{ position: "absolute", inset: 0, border: `1px solid ${theme.cardBorder}`, borderRadius: radius, pointerEvents: "none" }} />;
+  const cells = layout.boxes.map((b, i) => {
+    const m = items[i];
+    const prev = layout.boxes[i - 1];
+    const badge = m.kind === "gif" ? "GIF" : m.kind === "video" ? (web ? (m.durationMs !== undefined ? "time" : "") : "mute") : "";
+    return (
+      <div
+        key={i}
+        data-media-item=""
+        data-badge={badge}
+        data-kind={m.kind}
+        style={{ position: "relative", flex: "none", width: b.w, height: b.h, marginLeft: prev ? b.x - prev.x - prev.w : 0, overflow: "hidden", borderRadius: carousel ? radius : undefined, scrollSnapAlign: carousel ? "start" : undefined }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={m.src} alt="" draggable={false} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+        {carousel && hairline}
+        {(badge === "GIF" || badge === "time" || (web && m.alt && m.kind === "photo")) && (
+          <div style={{ position: "absolute", left: 8, bottom: 8, display: "flex", gap: 4 }}>
+            {badge === "GIF" && <span style={{ ...badgeStyle, height: 20, padding: "0 4px", fontSize: 13, lineHeight: "16px" }}>GIF</span>}
+            {badge === "time" && <span style={{ ...badgeStyle, height: 20, padding: "0 4px", fontSize: 13, lineHeight: "16px", fontWeight: 400 }}>{videoTime(m.durationMs ?? 0)}</span>}
+            {web && m.alt && m.kind === "photo" && <span data-media-alt="" style={{ ...badgeStyle, width: 23, height: 15, fontSize: 11, lineHeight: "15px" }}>ALT</span>}
+          </div>
+        )}
+        {badge === "mute" && (
+          <div style={{ position: "absolute", right: 8, bottom: 8, width: 24, height: 24, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <MuteIcon size={16} />
+          </div>
+        )}
+      </div>
+    );
+  });
+  if (carousel) {
+    // Clipped to the column and scrolled sideways, with no scrollbar showing.
+    return (
+      <div data-media="carousel" role="region" aria-label="Post media" style={{ width: layout.column, height, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+        {cells}
+      </div>
+    );
+  }
+  const width = layout.boxes[layout.boxes.length - 1].x + layout.boxes[layout.boxes.length - 1].w;
+  return (
+    <div
+      data-media={layout.mode}
+      style={{ position: "relative", display: "flex", width: width + 2 * layout.border, boxSizing: "border-box", border: layout.border ? `1px solid ${theme.cardBorder}` : undefined, borderRadius: radius, overflow: "hidden" }}
+    >
+      {cells}
+      {!layout.border && hairline}
+    </div>
+  );
+}
+
 /**
  * Where X puts the post-state rows (QUIRKS.md, "Post chrome"). Web: x.com's logged-in DOM
  * (2026-10-08), timeline and post page. iOS: iPhone 15 Pro captures of tests 104, 110, 111 and 131
@@ -297,7 +368,8 @@ function PaidRow({ device, theme }: { device: Device; theme: XTheme }) {
  * explanation and a "Show" pill. The iOS app swaps the photo for a 324×163 cover at 393pt whatever
  * its shape, its pieces at fixed offsets from the cover's edges.
  */
-function SensitiveCover({ src, device, width, maxHeight, theme }: { src: string; device: Device; width: number; maxHeight: number; theme: XTheme }) {
+function SensitiveCover({ items, device, theme }: { items: MediaItem[]; device: Device; theme: XTheme }) {
+  const src = items[0].src;
   const blurred = (
     // A blur fades out over about three radii at the image's edges: draw it that far past the box,
     // which clips it, so the cover stays even to its corners.
@@ -327,15 +399,12 @@ function SensitiveCover({ src, device, width, maxHeight, theme }: { src: string;
       </div>
     );
   }
+  // The media keeps its own box (one photo measured; several assumed covered as one), the blur over it.
   return (
-    <div data-sensitive="" style={{ position: "relative", width, boxSizing: "border-box", border: `1px solid ${theme.cardBorder}`, borderRadius: 16 }}>
-      <div style={{ position: "relative", borderRadius: 15, overflow: "hidden" }}>
-        {/* The photo's own box (same rule as an unflagged photo), drawn invisibly under the blur. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" style={{ width: "100%", display: "block", maxHeight, objectFit: "cover", visibility: "hidden" }} />
-        {blurred}
-      </div>
-      <div style={{ position: "absolute", inset: -1, borderRadius: 16, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "12px 16px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", color: white, fontSize: 15, lineHeight: "20px" }}>
+    <div data-sensitive="" style={{ position: "relative", width: "fit-content" }}>
+      <MediaBlock items={items} device={device} theme={theme} />
+      <div aria-hidden style={{ position: "absolute", inset: 0, borderRadius: 16, overflow: "hidden" }}>{blurred}</div>
+      <div style={{ position: "absolute", inset: 0, borderRadius: 16, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "12px 16px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", color: white, fontSize: 15, lineHeight: "20px" }}>
         <div style={{ width: "100%", maxWidth: 400, padding: "0 12px", boxSizing: "border-box" }}>
           <div style={{ display: "flex", justifyContent: "center", height: 24 }}>
             <EyeSlashIcon data-cover-icon="" size={24} />
@@ -374,11 +443,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
 
   // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
   // the attachment through it.
-  const attached = media && state.sensitive ? (
-    <SensitiveCover src={media} device={device} width={bodyWidth} maxHeight={bodyWidth * 1.25} theme={theme} />
-  ) : media ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={media} alt="" style={{ width: bodyWidth, display: "block", borderRadius: 16, border: `1px solid ${theme.cardBorder}`, boxSizing: "border-box", maxHeight: bodyWidth * 1.25, objectFit: "cover" }} />
+  const attached = media?.length ? (
+    state.sensitive ? <SensitiveCover items={media} device={device} theme={theme} /> : <MediaBlock items={media} device={device} theme={theme} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
@@ -387,7 +453,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
   // Under the text and attachment: the tag, then the disclosure. Each was captured alone; the order
   // when both show is assumed (QUIRKS.md).
-  const tagged = media && state.tagged.trim() ? state.tagged.trim() : null;
+  const tagged = media?.length && state.tagged.trim() ? state.tagged.trim() : null;
   const below = (
     <>
       {tagged && <TagRow device={device} theme={theme} name={tagged} />}

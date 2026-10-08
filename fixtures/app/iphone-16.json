@@ -883,7 +883,17 @@
       "mute"
      ]
     ],
-    "alt": 0
+    "alt": 0,
+    "gap": "a 16:9 video reads 3pt taller than the same-shape photo (185 vs 182); one sample, not modelled",
+    "gapTool": [
+     [
+      0,
+      0,
+      322,
+      181,
+      "mute"
+     ]
+    ]
    }
   },
   {
@@ -1545,7 +1555,17 @@
       ""
      ]
     ],
-    "alt": 0
+    "alt": 0,
+    "gap": "the sensitive-content cover is 2:1 (324×163) whatever the photo; the corpus types the post without its sensitive flag, and the cover is checked from fixtures/post-states.json",
+    "gapTool": [
+     [
+      0,
+      0,
+      322,
+      181,
+      ""
+     ]
+    ]
    }
   },
   {

@@ -1,6 +1,7 @@
 import type { StyleRun } from "./entities";
 import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
 import { NO_POST_STATE, REPLY_LIMITS, TAG_MAX, hasPostState, type PostState } from "./post-state";
+import { MAX_MEDIA, MAX_MEDIA_SIDE, MAX_VIDEO_MS, type MediaItem, type MediaKind } from "./media";
 
 /**
  * Share links. The whole preview (text, styling, identity, shrunk images, device, theme) is
@@ -21,6 +22,7 @@ const MAX_STYLE_RUNS = 2_000;
 /** Shared images are JPEGs Share made itself; anything bigger than these was not. */
 const MAX_IMAGE_BYTES = 200_000;
 const MAX_IMAGE_EDGE = 2_048;
+const KINDS: MediaKind[] = ["photo", "gif", "video"];
 
 const BADGES = ["none", "blue", "gold", "gray"] as const;
 const THEMES = ["light", "dark"] as const;
@@ -31,7 +33,8 @@ export interface SharedPreview {
   text: string;
   styles: StyleRun[];
   identity: { name: string; handle: string; badge: (typeof BADGES)[number]; avatar: string | null };
-  media: string | null;
+  /** Up to 4 items, each a JPEG Share made (a GIF's or video's first frame). */
+  media: MediaItem[];
   /** Pinned, paid partnership, reply limit, sensitive photo, tag. */
   post: PostState;
   theme: (typeof THEMES)[number];
@@ -42,8 +45,10 @@ export interface SharedPreview {
 }
 
 /**
- * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. `post` (the
- * post states) is optional and left out when nothing is set, so a plain preview's link is unchanged.
+ * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. Media travels
+ * as `items`, [jpeg, kind, width, height, alt (0/1), video ms]; links made before several items
+ * could be attached carry one photo in `media`, which still opens. `post` (the post states) is
+ * optional and left out when nothing is set, so a plain preview's link is unchanged.
  */
 interface Wire {
   v: 1;
@@ -54,6 +59,7 @@ interface Wire {
   badge: string;
   avatar: string | null;
   media: string | null;
+  items?: Array<[string, string, number, number, number, number]>;
   post?: { pinned?: boolean; paid?: boolean; replies?: string; sensitive?: boolean; tagged?: string };
   theme: string;
   phone: string;
@@ -63,7 +69,7 @@ interface Wire {
 
 export async function encodeShare(p: SharedPreview): Promise<string> {
   // A photo's own states mean nothing without the photo (a link too long for it drops it).
-  const post = p.media ? p.post : { ...p.post, sensitive: false, tagged: "" };
+  const post = p.media.length ? p.post : { ...p.post, sensitive: false, tagged: "" };
   const wire: Wire = {
     v: 1,
     text: p.text,
@@ -72,7 +78,8 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     handle: p.identity.handle,
     badge: p.identity.badge,
     avatar: p.identity.avatar,
-    media: p.media,
+    media: null,
+    items: p.media.map((m) => [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0]),
     ...(hasPostState(post) ? { post: { pinned: post.pinned, paid: post.paid, replies: post.replies, sensitive: post.sensitive, tagged: post.tagged.trim().slice(0, TAG_MAX) } } : {}),
     theme: p.theme,
     phone: p.phone,
@@ -119,10 +126,10 @@ export function parseWire(raw: unknown): SharedPreview | null {
   const phone = typeof w.phone === "string" && PHONE_IDS.has(w.phone) ? w.phone : DEFAULT_PHONE_ID;
   const web = typeof w.web === "string" && WEB_IDS.has(w.web) ? w.web : "web";
   const view = w.view === "web" ? "web" : "app";
-  const media = sharedImage(w.media);
+  const media = sharedMedia(w.items, w.media);
   // A photo's own states only come with the photo (a link Share made never has one without the other).
   const parsed = parsePostState(w.post);
-  const post = media ? parsed : { ...parsed, sensitive: false, tagged: "" };
+  const post = media.length ? parsed : { ...parsed, sensitive: false, tagged: "" };
   return {
     text,
     styles,
@@ -147,6 +154,26 @@ function parsePostState(raw: unknown): PostState {
     sensitive: p.sensitive === true,
     tagged: typeof p.tagged === "string" ? p.tagged.trim().slice(0, TAG_MAX) : "",
   };
+}
+
+/** The shared items, each checked; a bad item is dropped. A v1 link's single image opens as one photo. */
+function sharedMedia(items: unknown, legacy: unknown): MediaItem[] {
+  if (!Array.isArray(items)) {
+    const src = sharedImage(legacy);
+    const size = src ? jpegSize(Uint8Array.from(atob(src.slice(src.indexOf(",") + 1)), (c) => c.charCodeAt(0))) : null;
+    return src && size ? [{ src, kind: "photo", width: size.width, height: size.height, alt: false }] : [];
+  }
+  const out: MediaItem[] = [];
+  for (const it of items.slice(0, MAX_MEDIA)) {
+    if (!Array.isArray(it) || it.length !== 6) continue;
+    const [raw, kind, width, height, alt, ms] = it;
+    const src = sharedImage(raw);
+    const k = KINDS.find((x) => x === kind);
+    const side = (n: unknown): n is number => Number.isInteger(n) && (n as number) > 0 && (n as number) <= MAX_MEDIA_SIDE;
+    if (!src || !k || !side(width) || !side(height) || (alt !== 0 && alt !== 1) || !Number.isInteger(ms) || ms < 0 || ms > MAX_VIDEO_MS) continue;
+    out.push({ src, kind: k, width, height, alt: alt === 1, ...(k === "video" && ms > 0 ? { durationMs: ms } : {}) });
+  }
+  return out;
 }
 
 /**
