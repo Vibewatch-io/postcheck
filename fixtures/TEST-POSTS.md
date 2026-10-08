@@ -146,7 +146,7 @@ Long test 08: an emoji starts on character 280 and ends on 281. the quick brown 
 | 54 | Four photos | Layout. (Web: sideways carousel, no 2x2 grid.) |
 | 55 | A GIF | GIF badge and layout. Corpus gap. |
 | 56 | A short video | Video poster and duration badge. |
-| 57 | Poll with 4 options | Poll layout. Corpus gap; the tool doesn't draw polls. |
+| 57 | Poll with 4 options | Poll layout (drawn since 2026-10-08; `verify` checks it). |
 | 58 | Photo with alt text | ALT badge. |
 | 57b | Poll with 4 options, an image on each choice (tiles 1–4) | Image poll layout (`poll_choice_images` card). The first web attempt never uploaded the choice images; it worked after a page refresh. |
 | 59b | A photo and a video | Mixed media in one post. |

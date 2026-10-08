@@ -1,5 +1,6 @@
 import type { StyleRun } from "./entities";
 import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
+import { POLL_CHOICE_MAX, POLL_MAX_CHOICES, POLL_MAX_MINUTES, POLL_MIN_CHOICES, POLL_MIN_MINUTES, type Poll } from "./poll";
 
 /**
  * Share links. The whole preview (text, styling, identity, shrunk images, device, theme) is
@@ -31,6 +32,7 @@ export interface SharedPreview {
   styles: StyleRun[];
   identity: { name: string; handle: string; badge: (typeof BADGES)[number]; avatar: string | null };
   media: string | null;
+  poll: Poll | null;
   theme: (typeof THEMES)[number];
   /** Device ids: a phone for the Mobile view, a web layout for the Web view. */
   phone: string;
@@ -38,7 +40,11 @@ export interface SharedPreview {
   view: "app" | "web";
 }
 
-/** Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. */
+/**
+ * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. A poll is
+ * optional, so links made before polls existed still open: its choices and minutes. The composer
+ * makes text polls only, so no pictures travel.
+ */
 interface Wire {
   v: 1;
   text: string;
@@ -48,6 +54,7 @@ interface Wire {
   badge: string;
   avatar: string | null;
   media: string | null;
+  poll?: { c: string[]; m: number };
   theme: string;
   phone: string;
   web: string;
@@ -64,6 +71,7 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     badge: p.identity.badge,
     avatar: p.identity.avatar,
     media: p.media,
+    ...(p.poll ? { poll: { c: p.poll.choices, m: p.poll.minutes } } : {}),
     theme: p.theme,
     phone: p.phone,
     web: p.web,
@@ -109,16 +117,29 @@ export function parseWire(raw: unknown): SharedPreview | null {
   const phone = typeof w.phone === "string" && PHONE_IDS.has(w.phone) ? w.phone : DEFAULT_PHONE_ID;
   const web = typeof w.web === "string" && WEB_IDS.has(w.web) ? w.web : "web";
   const view = w.view === "web" ? "web" : "app";
+  const media = sharedImage(w.media);
   return {
     text,
     styles,
     identity: { name, handle, badge, avatar: sharedImage(w.avatar) },
-    media: sharedImage(w.media),
+    media,
+    // X takes a photo or a poll, never both: a link carrying both keeps the photo.
+    poll: media ? null : sharedPoll(w.poll),
     theme,
     phone,
     web,
     view,
   };
+}
+
+/** A shared poll, or null when it isn't one the composer could have made (a bad poll is dropped, not the link). */
+export function sharedPoll(v: unknown): Poll | null {
+  if (!v || typeof v !== "object") return null;
+  const { c, m } = v as { c?: unknown; m?: unknown };
+  if (!Array.isArray(c) || c.length < POLL_MIN_CHOICES || c.length > POLL_MAX_CHOICES) return null;
+  if (!c.every((x) => typeof x === "string" && x.length <= POLL_CHOICE_MAX)) return null;
+  if (!Number.isInteger(m) || (m as number) < POLL_MIN_MINUTES || (m as number) > POLL_MAX_MINUTES) return null;
+  return { choices: c as string[], minutes: m as number, images: c.map(() => null) };
 }
 
 /**

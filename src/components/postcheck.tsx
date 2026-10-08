@@ -19,6 +19,8 @@ import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
+import { emptyPoll, shownPoll, type Poll } from "@/lib/poll";
+import { PollEditor } from "./poll-editor";
 
 // The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
 // alone onto its own line on purpose, and the trailing link shows only its card. 261 of 280.
@@ -57,6 +59,8 @@ export function Postcheck() {
   const editor = useComposer(setDraft);
   const [identity, setIdentity] = useState<Identity>({ name: "", handle: "", avatar: null, badge: "none" });
   const [media, setMedia] = useState<string | null>(null);
+  // X's composer takes a photo or a poll, never both: each one disables the other's button.
+  const [poll, setPoll] = useState<Poll | null>(null);
   const [webDevice, setWebDevice] = useState<Device>(DEFAULT_DEVICE);
   const [phoneDevice, setPhoneDevice] = useState<Device>(DEFAULT_PHONE);
   // On a phone, the preview defaults to that phone itself, drawn at its own width (see thisPhone).
@@ -112,9 +116,9 @@ export function Postcheck() {
   const [opening, setOpening] = useState(false);
   // What the page showed before a share took over, so going Back (or to a damaged link) returns to
   // it. `latest` mirrors the current state for the hashchange listener, which is bound once.
-  const latest = useRef({ draft, identity, media, phoneDevice, webDevice, themeId, themeChosen, view });
+  const latest = useRef({ draft, identity, media, poll, phoneDevice, webDevice, themeId, themeChosen, view });
   useLayoutEffect(() => {
-    latest.current = { draft, identity, media, phoneDevice, webDevice, themeId, themeChosen, view };
+    latest.current = { draft, identity, media, poll, phoneDevice, webDevice, themeId, themeChosen, view };
   });
   const beforeShare = useRef<typeof latest.current | null>(null);
   useLayoutEffect(() => {
@@ -128,6 +132,7 @@ export function Postcheck() {
       setDraft(b.draft);
       setIdentity(b.identity);
       setMedia(b.media);
+      setPoll(b.poll);
       setPhoneDevice(b.phoneDevice);
       setWebDevice(b.webDevice);
       setThemeChosen(b.themeChosen);
@@ -152,6 +157,7 @@ export function Postcheck() {
           setDraft({ text: p.text, styles: p.styles });
           setIdentity(p.identity);
           setMedia(p.media);
+          setPoll(p.poll);
           setPhoneChosen(true);
           setPhoneDevice(DEVICES.find((d) => d.id === p.phone) ?? DEFAULT_PHONE);
           setWebDevice(DEVICES.find((d) => d.id === p.web) ?? DEFAULT_DEVICE);
@@ -202,14 +208,17 @@ export function Postcheck() {
   const length = useMemo(() => weightedLength(post, entities), [post, entities]);
   const cut280 = useMemo(() => showMoreCut(post, length.limitIndex), [post, length.limitIndex]);
 
+  // Over 280 X keeps the post and drops its poll (tests 94, 94b), so the preview drops it too.
+  const pollOnPost = useMemo(() => shownPoll(poll, length.weighted), [poll, length.weighted]);
   // A link to a post becomes a quote wherever it sits, and a quote beats a link card (@postcheck_test
-  // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46).
-  const quote = !media ? quoteUrl(entities) ?? null : null;
+  // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46). A photo or
+  // a poll replaces both, and the link stays as text (test 95; the quote case is assumed).
+  const quote = !media && !pollOnPost ? quoteUrl(entities) ?? null : null;
   const quoteId = quote ? statusId(quote.href) : null;
   // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
-  const cardKey = cardEntity && !cardEntity.isStatus && !media && !cardless(cardEntity.href!) ? cardEntity.href! : null;
+  const cardKey = cardEntity && !cardEntity.isStatus && !media && !pollOnPost && !cardless(cardEntity.href!) ? cardEntity.href! : null;
   const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;
@@ -359,10 +368,11 @@ export function Postcheck() {
         lineSets,
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
         hasMedia: media !== null,
+        poll: poll ? (pollOnPost ? "shown" : length.weighted > MAX_WEIGHTED_LENGTH ? "dropped" : "empty") : null,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, lineSets, phoneClamp, media, phoneDevice.label, phoneDevice.tipLabel, phoneDevice.id, styles.length, draft.text],
+    [post, entities, length, card, lineSets, phoneClamp, media, poll, pollOnPost, phoneDevice.label, phoneDevice.tipLabel, phoneDevice.id, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
@@ -402,11 +412,12 @@ export function Postcheck() {
     const w = window as unknown as { __postcheck?: object };
     w.__postcheck = {
       ready: Boolean(editor),
-      // **bold** / __italic__ markers become style runs; `photo` attaches a stand-in image.
-      setDraft: (raw: string, opts: { photo?: boolean } = {}) => {
+      // **bold** / __italic__ markers become style runs; `photo` attaches a stand-in image, `poll` a poll.
+      setDraft: (raw: string, opts: { photo?: boolean; poll?: Poll } = {}) => {
         const { text, styles } = stripFormatting(raw);
         editor?.commands.setContent(draftToDoc(text, styles));
         setMedia(opts.photo ? STAND_IN_PHOTO : null);
+        setPoll(opts.poll ?? null);
       },
       getText: () => (editor ? serializeDoc(editor.getJSON() as DocNode).text : draft.text),
     };
@@ -444,8 +455,8 @@ export function Postcheck() {
   const typed = draft.text.trim() !== "";
   const sharePreview = useCallback(
     // A link made on someone's own phone names the listed phone nearest to it.
-    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
-    [typed, post, styles, identity, media, themeId, phoneDevice, webDevice.id, view],
+    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, poll, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
+    [typed, post, styles, identity, media, poll, themeId, phoneDevice, webDevice.id, view],
   );
   const actions = shared ? (
     <button type="button" onClick={editCopy} className="h-8 flex-none whitespace-nowrap rounded-lg bg-brand-warm-dark px-3 text-[13px] font-medium text-white hover:bg-brand-warm-dark/90">
@@ -557,14 +568,20 @@ export function Postcheck() {
         </form>
 
         <ComposerField editor={editor} placeholder={SAMPLE} />
+        {poll && <PollEditor poll={poll} onChange={setPoll} />}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex items-center gap-3">
             <FormatBar editor={editor} />
-            <label className="cursor-pointer rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface">
+            <label className={`rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark ${poll ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-brand-warm-surface"}`} title={poll ? "X takes a photo or a poll, not both" : undefined}>
               {media ? "Replace image" : "Add image"}
-              <input type="file" accept="image/*" className="sr-only" onChange={(e) => readFile(e.target.files?.[0], setMedia)} />
+              <input type="file" accept="image/*" disabled={poll !== null} className="sr-only" onChange={(e) => readFile(e.target.files?.[0], setMedia)} />
             </label>
+            {!poll && (
+              <button type="button" disabled={media !== null} title={media ? "X takes a photo or a poll, not both" : undefined} className="rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent" onClick={() => setPoll(emptyPoll())}>
+                Add poll
+              </button>
+            )}
             {media && (
               <button type="button" className="text-sm text-brand-warm-secondary hover:underline" onClick={() => setMedia(null)}>
                 Remove image
@@ -613,11 +630,11 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} toggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} toggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={styles} />
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} />;
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>

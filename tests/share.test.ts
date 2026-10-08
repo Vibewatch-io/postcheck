@@ -17,6 +17,7 @@ const preview: SharedPreview = {
   ],
   identity: { name: "Vibewatch", handle: "Vibewatch_io", badge: "gold", avatar: jpeg(96, 96) },
   media: jpeg(720, 405),
+  poll: null,
   theme: "dark",
   phone: "iphone-17-pro-max-post",
   web: "web-post",
@@ -84,4 +85,19 @@ test("text past the shared page's limit compresses small but never opens", async
   const hash = await encodeShare(long);
   assert.ok(hash.length < 1_000, "compresses far below the link budget");
   assert.equal(await decodeShare(hash), null);
+});
+
+// X takes a photo or a poll: a link carries the poll's choices and length, and one claiming both
+// opens with the photo only. A poll the composer couldn't have made is dropped, the link still opens.
+test("a shared poll round-trips; a bad one or one beside a photo is dropped", async () => {
+  const withPoll: SharedPreview = { ...preview, media: null, poll: { choices: ["Yes", "No", ""], images: [null, null, null], minutes: 90 } };
+  assert.deepEqual(await decodeShare(await encodeShare(withPoll)), withPoll);
+  const both = parseWire({ v: 1, text: "hi", media: jpeg(10, 10), poll: { c: ["a", "b"], m: 60 } });
+  assert.equal(both?.poll, null);
+  assert.ok(both?.media);
+  for (const poll of [{ c: ["a"], m: 60 }, { c: ["a", "b", "c", "d", "e"], m: 60 }, { c: ["a", "x".repeat(26)], m: 60 }, { c: ["a", "b"], m: 4 }, { c: ["a", "b"], m: 10_081 }, { c: ["a", 2], m: 60 }]) {
+    const p = parseWire({ v: 1, text: "hi", poll });
+    assert.equal(p?.text, "hi");
+    assert.equal(p?.poll, null, JSON.stringify(poll));
+  }
 });

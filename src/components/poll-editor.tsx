@@ -1,0 +1,58 @@
+"use client";
+
+import { POLL_CHOICE_MAX, POLL_MAX_CHOICES, POLL_MIN_CHOICES, clampMinutes, type Poll } from "@/lib/poll";
+
+const field = "min-w-0 flex-1 rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-base sm:text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal";
+const small = "flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-brand-warm-border text-brand-warm-gray hover:bg-brand-warm-surface";
+const select = "rounded-lg border border-brand-warm-border bg-white px-2 py-1.5 text-base sm:text-sm text-brand-warm-dark";
+const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/**
+ * The poll under the editor, as X's composer has it: two to four choices of up to 25 characters and
+ * how long it runs (5 minutes to 7 days). Image polls are drawn (verify replays test 57b) but not
+ * offered here: the web voter view of one has no capture yet.
+ */
+export function PollEditor({ poll, onChange }: { poll: Poll; onChange: (p: Poll | null) => void }) {
+  const days = Math.floor(poll.minutes / 1440);
+  const hours = Math.floor((poll.minutes % 1440) / 60);
+  const minutes = poll.minutes % 60;
+  const setLength = (d: number, h: number, m: number) => onChange({ ...poll, minutes: clampMinutes(d === 7 ? 7 * 1440 : d * 1440 + h * 60 + m) });
+  const setChoice = (i: number, label: string) => onChange({ ...poll, choices: poll.choices.map((c, j) => (j === i ? label : c)) });
+  const remove = (i: number) => onChange({ ...poll, choices: poll.choices.filter((_, j) => j !== i), images: poll.images.filter((_, j) => j !== i) });
+
+  return (
+    <fieldset className="mt-3 space-y-2 rounded-xl border border-brand-warm-border bg-white p-3" aria-label="Poll">
+      {poll.choices.map((label, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <input className={field} value={label} maxLength={POLL_CHOICE_MAX} placeholder={`Choice ${i + 1}`} aria-label={`Choice ${i + 1}`} autoComplete="off" onChange={(e) => setChoice(i, e.target.value)} />
+          {poll.choices.length > POLL_MIN_CHOICES && (
+            <button type="button" className={small} aria-label={`Remove choice ${i + 1}`} title="Remove choice" onClick={() => remove(i)}>
+              −
+            </button>
+          )}
+        </div>
+      ))}
+      <div className="flex flex-wrap items-center gap-2 pt-1 text-sm text-brand-warm-gray">
+        {poll.choices.length < POLL_MAX_CHOICES && (
+          <button type="button" className="rounded-lg border border-brand-warm-border px-3 py-1.5 font-medium text-brand-warm-dark hover:bg-brand-warm-surface" onClick={() => onChange({ ...poll, choices: [...poll.choices, ""], images: [...poll.images, null] })}>
+            Add choice
+          </button>
+        )}
+        <span className="ml-auto">Length</span>
+        <select className={select} aria-label="Days" value={days} onChange={(e) => setLength(Number(e.target.value), hours, minutes)}>
+          {range(8).map((d) => <option key={d} value={d}>{plural(d, "day")}</option>)}
+        </select>
+        <select className={select} aria-label="Hours" value={hours} disabled={days === 7} onChange={(e) => setLength(days, Number(e.target.value), minutes)}>
+          {range(24).map((h) => <option key={h} value={h}>{plural(h, "hour")}</option>)}
+        </select>
+        <select className={select} aria-label="Minutes" value={minutes} disabled={days === 7} onChange={(e) => setLength(days, hours, Number(e.target.value))}>
+          {range(60).map((m) => <option key={m} value={m}>{plural(m, "minute")}</option>)}
+        </select>
+        <button type="button" className="text-sm text-brand-warm-secondary hover:underline" onClick={() => onChange(null)}>
+          Remove poll
+        </button>
+      </div>
+    </fieldset>
+  );
+}

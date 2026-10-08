@@ -92,3 +92,17 @@ test("only an unexpanded iOS timeline row hides styling", async () => {
   assert.equal(rowHidesStyles(android), false);
   assert.equal(rowHidesStyles(web), false);
 });
+
+// @postcheck_test tests 94/94b: X posts a long post without its poll. Test 95: a poll replaces the
+// link card and the link stays as text, so no card tip may claim otherwise.
+test("a poll past 280 is flagged as dropped; a shown poll replaces the card tips", () => {
+  const long = "word ".repeat(60).trim();
+  const le = extractEntities(long);
+  const dropped = buildAdvice({ text: long, entities: le, length: weightedLength(long, le), card: undefined, lineSets: [], poll: "dropped" });
+  assert.ok(dropped.some((a) => a.id === "poll-dropped" && a.severity === "fix"));
+  const text = "Poll with a link https://github.com/vercel/next.js";
+  const entities = extractEntities(text);
+  const ids = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [], poll: "shown" }).map((a) => a.id);
+  assert.ok(ids.includes("poll-beats-card"));
+  assert.ok(!ids.includes("no-card") && !ids.includes("trailing-url-hidden"));
+});

@@ -67,6 +67,19 @@ const QUOTE_BOX = (deviceLast) => `(() => {
   return { box: [Math.round(b.width), Math.round(b.height)], avatar: rel(q.querySelector('img, svg')), text: rel(text), photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
 })()`;
 
+/** The poll under the post: its box, where it starts under the text, each choice (pill, label, picture) and the footer, relative to the poll. */
+const POLL_BOX = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const p = art.querySelector('[data-poll]'); if (!p) return null; const b = p.getBoundingClientRect();
+  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
+  const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement;
+  const choices = [...p.querySelectorAll('[data-poll-choice]')];
+  return { size: [Math.round(b.width), Math.round(b.height)], gap: body ? Math.round(b.top - body.getBoundingClientRect().bottom) : null,
+    labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('img')].map(rel), footer: rel(p.querySelector('[data-poll-footer]')),
+    card: !!art.querySelector('[data-attachment] > :not([data-poll])') };
+})()`;
+
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
 // Quote lookups replay FxTwitter answers recorded in fixtures/fx (tests/quote.test.ts checks the
@@ -147,10 +160,18 @@ function typedText(fx) {
 // X's JSON for a long post carries only the part before Show more, not the words after it. Pad it
 // with one word too long to fit, so the tool has to find X's cut on its own.
 const LONG_POST_TAIL = " " + "x".repeat(60);
-async function load(id) {
+/**
+ * The poll X stored with the post (labels, and a grey stand-in for each choice's picture), or the
+ * choices the author attached that X dropped (`pollTyped` on the fixture post: tests 94, 94b).
+ */
+function pollFor(fx, p) {
+  const choices = fx.poll ?? (p.pollTyped ?? []).map((label) => ({ label, image: false }));
+  return choices.length ? { choices: choices.map((c) => c.label), images: choices.map((c) => (c.image ? STAND_IN : null)), minutes: 1440 } : undefined;
+}
+async function load(id, p = {}) {
   const fx = JSON.parse(readFileSync(`fixtures/posts/${id}.json`, "utf8"));
   const text = typedText(fx);
-  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, { photo: fx.photos > 0 });
+  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, { photo: fx.photos > 0, poll: pollFor(fx, p) });
 }
 async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
@@ -226,16 +247,57 @@ async function quoteDiff(label, deviceLast, id, want) {
   }
 }
 
+/**
+ * The poll against X's. Web fixtures record x.com's poll box and choices, and where measured the
+ * gap above it and each row's height and pitch; app fixtures the iPhone's choices, pill size and
+ * pitch, or an image poll's picture, next item and pill. A post X stored without its poll
+ * (`pollTyped`) must draw none. The footer's time is when the capture was taken, so only its place
+ * is checked.
+ */
+async function pollDiff(label, deviceLast, id, want, typed) {
+  if (!want && !typed) return;
+  const got = await page.evaluate(POLL_BOX(deviceLast));
+  const near = (a, b, tol = 1) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) <= tol);
+  const problems = [];
+  if (!want) { if (got) problems.push("tool draws a poll X dropped"); }
+  else if (!got) problems.push("no poll");
+  else {
+    if (want.choices && want.choices.join("|") !== got.labels.join("|")) problems.push(`choices X ${want.choices.join(" / ")} / tool ${got.labels.join(" / ")}`);
+    if (got.card) problems.push("tool draws a card or quote beside the poll");
+    if (want.size && !near(got.size, want.size)) problems.push(`box X ${want.size} / tool ${got.size}`);
+    if (want.gap !== undefined && Math.abs(got.gap - want.gap) > 1) problems.push(`gap above X ${want.gap} / tool ${got.gap}`);
+    const pitch = got.rows.length > 1 ? got.rows[1][1] - got.rows[0][1] : null;
+    if (want.row && (!near([got.rows[0]?.[3], pitch], want.row))) problems.push(`row height, pitch X ${want.row} / tool ${got.rows[0]?.[3]}, ${pitch}`);
+    if (want.pill && !near(got.pills[0]?.slice(2), want.pill.slice(2))) problems.push(`pill size X ${want.pill.slice(2)} / tool ${got.pills[0]?.slice(2)}`);
+    if (want.pitch && !want.carousel && Math.abs(pitch - want.pitch) > 1) problems.push(`pitch X ${want.pitch} / tool ${pitch}`);
+    if (want.carousel) {
+      if (!near(got.images[0]?.slice(2), want.image.slice(2))) problems.push(`picture X ${want.image.slice(2)} / tool ${got.images[0]?.slice(2)}`);
+      if (Math.abs((got.images[1]?.[0] ?? -99) - want.nextChoiceX) > 1) problems.push(`next choice at X ${want.nextChoiceX} / tool ${got.images[1]?.[0]}`);
+      if (!near([got.pills[0]?.[1], got.pills[0]?.[3]], [want.button[1], want.button[3]])) problems.push(`choice pill y, height X ${[want.button[1], want.button[3]]} / tool ${[got.pills[0]?.[1], got.pills[0]?.[3]]}`);
+    }
+    const last = got.rows[got.rows.length - 1];
+    if (!got.footer || !last || got.footer[1] < last[1] + last[3]) problems.push("footer missing or above the choices");
+  }
+  if (problems.length) {
+    fail++;
+    console.log(`  FAIL ${label} poll ${id}\n       ${problems.join("\n       ")}`);
+  } else {
+    pass++;
+    console.log(`  ok   ${label} poll ${id}${want ? "" : " (dropped)"}`);
+  }
+}
+
 for (const f of readdirSync("fixtures/web")) {
   const fx = JSON.parse(readFileSync(`fixtures/web/${f}`, "utf8"));
   console.log(`\nweb · ${f}`);
   await page.click('[role="tab"]:has-text("Web")');
   await page.selectOption('select[aria-label="Web device"]', fx.device || "web");
   for (const p of fx.posts) {
-    if (p.compose) await compose(p.compose); else await load(p.id);
+    if (p.compose) await compose(p.compose); else await load(p.id, p);
     const got = await page.evaluate(ROWS("false"));
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
+    await pollDiff("web ", false, p.id, p.poll, p.pollTyped);
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -244,10 +306,11 @@ for (const f of readdirSync("fixtures/app")) {
   await page.click('[role="tab"]:has-text("Mobile")');
   await page.selectOption('select[aria-label="App device"]', fx.device);
   for (const p of fx.posts) {
-    if (p.compose) await compose(p.compose); else await load(p.id);
+    if (p.compose) await compose(p.compose); else await load(p.id, p);
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
+    await pollDiff("app ", true, p.id, p.poll, p.pollTyped);
   }
 }
 console.log(`\n${pass} passed, ${edge} within font tolerance, ${gap} known gaps, ${fail} failed`);

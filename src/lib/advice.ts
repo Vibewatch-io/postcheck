@@ -60,6 +60,11 @@ export interface AdviceInput {
   appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId?: string } | null;
   /** An image is attached: X shows it instead of any link card. */
   hasMedia?: boolean;
+  /**
+   * A poll is attached: "shown" (X shows it instead of any link card), "dropped" (the post is over
+   * 280, and X posts it without the poll) or "empty" (fewer than two choices filled in).
+   */
+  poll?: "shown" | "dropped" | "empty" | null;
   /** Bold / italic runs are present. */
   hasStyles?: boolean;
   /** The draft exactly as typed, before X's trimming and blank-line collapsing. */
@@ -72,7 +77,7 @@ const RANK: Record<Severity, number> = { fix: 0, tip: 1, note: 2 };
 // 2d4a03c, 2026-09-15). "The ranker doesn't penalize it" is not the same as "do it".
 
 export function buildAdvice(input: AdviceInput): Advice[] {
-  const { text, entities, length, card, lineSets, hasMedia } = input;
+  const { text, entities, length, card, lineSets, hasMedia, poll } = input;
   const out: Advice[] = [];
   const trimmed = text.trim();
   if (!trimmed) return out;
@@ -110,6 +115,25 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     });
   }
 
+  // @postcheck_test tests 94 and 94b: the composer took the poll both times, and X stored the long
+  // post with no poll.
+  if (poll === "dropped") {
+    out.push({
+      id: "poll-dropped",
+      severity: "fix",
+      title: "X drops the poll past 280 characters",
+      detail: "X lets you attach a poll to a longer post, then posts the text without it. Cut the post to 280 characters to keep the poll. The preview shows the post as X will publish it.",
+      marks: [{ el: "more" }],
+    });
+  } else if (poll === "empty") {
+    out.push({
+      id: "poll-empty",
+      severity: "note",
+      title: "A poll needs two choices",
+      detail: "X won't post a poll until its first two choices are filled in. The preview draws it once they are.",
+    });
+  }
+
   if (urls.length > 0) {
     const cu = quoteUrl(entities) ?? cardUrl(entities)!;
     const trailing = isTrailing(text, cu);
@@ -130,6 +154,17 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         detail: `With an image on the post X shows the image and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
         marks: [{ at: cu.start }],
       });
+    } else if (poll === "shown" && !cu.isStatus) {
+      // @postcheck_test test 95: the poll and the link text, no card.
+      out.push({
+        id: "poll-beats-card",
+        severity: "note",
+        title: "Poll attached, so no card",
+        detail: `With a poll on the post X shows the poll and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
+        marks: [{ at: cu.start }],
+      });
+    } else if (poll === "shown") {
+      // A post link with a poll: drawn like a photo (no quote, link text kept), which no capture shows.
     } else if (cu.isStatus) {
       out.push({
         id: "status-link",

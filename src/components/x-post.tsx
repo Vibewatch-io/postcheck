@@ -9,6 +9,8 @@ import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type St
 import { quoteTime, type QuoteState } from "@/lib/quote";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
+import { PollCard } from "./poll";
+import type { Poll } from "@/lib/poll";
 import { BookmarkIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
 
 export interface Identity {
@@ -48,6 +50,8 @@ interface Props {
   quote: { entity: Entity; state: QuoteState | null } | null;
   /** Attached image (data URL). A post with media never shows a link card. */
   media?: string | null;
+  /** The poll X shows under the text, if any. Like a photo, it replaces any link card. */
+  poll?: Poll | null;
   /** Premium bold / italic runs. */
   styles?: StyleRun[];
   bodyRef?: Ref<HTMLDivElement>;
@@ -221,7 +225,7 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
  * 12px → card → action row. The post page ("focal") variant runs the body at
  * 17px/24px under the header and adds the timestamp row.
  */
-export function XPost({ device, theme, identity, tokens, showMore, onShowMore, toggle, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
+export function XPost({ device, theme, identity, tokens, showMore, onShowMore, toggle, hiddenUrlStart, card, quote, media, poll, styles, bodyRef }: Props) {
   const font = { fontFamily: fontStack(device.font), fontSize: 15, lineHeight: "20px" } as const;
   const handle = identity.handle.replace(/^@/, "") || "yourhandle";
   const name = identity.name || "Your name";
@@ -235,6 +239,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const attached = media ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={media} alt="" style={{ width: bodyWidth, display: "block", borderRadius: 16, border: `1px solid ${theme.cardBorder}`, boxSizing: "border-box", maxHeight: bodyWidth * 1.25, objectFit: "cover" }} />
+  ) : poll ? (
+    <PollCard poll={poll} device={device} theme={theme} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
