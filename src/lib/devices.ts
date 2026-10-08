@@ -35,8 +35,7 @@ export interface Device {
 // Web numbers were measured on x.com (Sept 2026): a 600px column with 1px
 // borders and 16px padding = 566px of content; avatar 40px + 8px gap leaves
 // 518px for timeline text. The post page runs the text under the header at
-// full 566px. Phone numbers assume the app's 16px inset, 40px avatar and 8px
-// gap, so body width = screen width − 80.
+// full 566px. Phone numbers come from device captures (see phone() below).
 /**
  * The iOS app folds a post behind "Show more" past this many rendered lines, even
  * under 280 characters; the web shows all of it. The Android app has no line fold:
@@ -60,15 +59,14 @@ const phone = (
   kind: "phone",
   width,
   height,
-  // App cell: 12px inset, 44px avatar, 8px gap, ~13px right → column = width − 77 (the oracle's window is 316–317).
-  // CoreText with the app's own Chirp-UI (wght 300, opsz 15, tracking −0.2)
-  // reproduces all 14 captured cells at 316–317px on a 393pt iPhone 15 Pro.
-  // In the browser, x.com's current web Chirp with −0.32px tracking matches
-  // that font's line widths to ±0.5px (77 lines, see scripts/ios/README.md).
+  // App cell: 12px inset, 44px avatar, 8px gap → the body runs in the media column, width − 71
+  // (64→386 on a 393pt iPhone 15 Pro). Body ink on 110 captured lines (21 posts) matches x.com's web
+  // Chirp at −0.18px (globals.css; sd 1.1px). Line breaks fix only the ratio of tracking to column:
+  // this pair reproduces the captures as well as the old 316 / −0.32px one did (QUIRKS.md).
   // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 60dp to width − 12dp, so
   // column = width − 72; four lines of test 05 match x.com's untracked web Chirp at 15px to within ink side
   // bearings, and the line pitch is 20dp (scripts/android/README.md).
-  textWidth: platform === "ios" ? width - 77 : width - 72,
+  textWidth: platform === "ios" ? width - 71 : width - 72,
   pane: platform === "ios" ? "app" : "web",
   fontSize: 15,
   lineHeight: 20,

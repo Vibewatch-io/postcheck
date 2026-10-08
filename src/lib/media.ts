@@ -108,7 +108,7 @@ const APP_ROW_MIN_HEIGHT = 120;
 /** The column media fills on a device, and whether it takes x.com's rules or the app's. */
 export function mediaColumn(device: Device): { width: number; web: boolean } {
   if (device.kind !== "phone") return { width: device.textWidth, web: true };
-  // iOS timeline: the quote embed's column, 6pt past the text. The post screen and Android have
+  // iOS timeline: the quote embed's column, which is also the text's. The post screen and Android have
   // no capture: the app's rules at their body column, assumed.
   if (device.platform === "ios" && device.view !== "post") return { width: device.width - 71, web: false };
   return { width: device.textWidth, web: false };

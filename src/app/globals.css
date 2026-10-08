@@ -36,10 +36,11 @@
   }
 }
 
-/* Tracking per loaded font, calibrated against x.com (web pane) and the app's
-   own Chirp (app pane); see scripts/ios/README.md. Stamped by font-tier.tsx. */
-:root { --ls-web: 0px; --ls-app: -0.32px; }
-html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.196px; }
+/* Tracking per loaded font, calibrated against x.com (web pane) and the iOS
+   app's body ink on iPhone captures (app pane; QUIRKS.md, "Layout: app"). GT
+   America is fitted to Chirp at those values. Stamped by font-tier.tsx. */
+:root { --ls-web: 0px; --ls-app: -0.18px; }
+html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.057px; }
 html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; }
 
 /* On a phone the preview becomes that phone once the page knows its width (useThisPhone); until then

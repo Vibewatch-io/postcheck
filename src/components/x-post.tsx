@@ -75,19 +75,25 @@ export function DefaultAvatar({ size, className, style }: { size: number | strin
   );
 }
 
-function Actions({ theme, full }: { theme: XTheme; full: boolean }) {
+/**
+ * The action row. iOS timeline (iPhone 15 Pro captures, 2026-09-17 and 10-07): smaller icons (17.5,
+ * fit to the ink of all six), reply to views in four equal slots from the text's left edge, then
+ * bookmark and share 15 apart, share ending at the media column's right edge (QUIRKS.md).
+ */
+function Actions({ theme, full, ios = false }: { theme: XTheme; full: boolean; ios?: boolean }) {
+  const size = ios ? 17.5 : 20;
   const item = (icon: ReactNode, grow: boolean) => (
     <div style={{ flex: grow ? "1 1 0" : "0 0 auto", minWidth: 0, display: "flex", alignItems: "center", height: 36, color: theme.icon }}>{icon}</div>
   );
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: full ? "space-between" : undefined, width: "100%" }}>
-      {item(<ReplyIcon size={20} />, !full)}
-      {item(<RepostIcon size={20} />, !full)}
-      {item(<LikeIcon size={20} />, !full)}
-      {item(<ViewsIcon size={20} />, !full)}
-      <div style={{ display: "flex", gap: 16, color: theme.icon, alignItems: "center", height: 36 }}>
-        <BookmarkIcon size={20} />
-        <ShareIcon size={20} />
+      {item(<ReplyIcon size={size} />, !full)}
+      {item(<RepostIcon size={size} />, !full)}
+      {item(<LikeIcon size={size} />, !full)}
+      {item(<ViewsIcon size={size} />, !full)}
+      <div style={{ display: "flex", gap: ios ? 15 : 16, color: theme.icon, alignItems: "center", height: 36 }}>
+        <BookmarkIcon size={size} />
+        <ShareIcon size={size} />
       </div>
     </div>
   );
@@ -95,24 +101,26 @@ function Actions({ theme, full }: { theme: XTheme; full: boolean }) {
 
 /**
  * Name, check, @handle and time on one line, as the timeline cell and the quote embed print them.
- * x.com shrinks the name and the @handle together. The iOS timeline row gives way with the handle
- * first: a name too long for the row leaves no handle at all, "Name… · 4m" (test 80). Whether a
- * name that nearly fits shows a cut "@hand…" first is assumed, not captured.
+ * x.com shrinks the name and the @handle together. The iOS timeline row (`app`) gives way with the
+ * handle first: a name too long for the row leaves no handle at all, "Name… · 4m" (test 80). Whether
+ * a name that nearly fits shows a cut "@hand…" first is assumed, not captured. The app's row is set
+ * at the body's tracking with the handle 4pt after the check (iPhone captures, QUIRKS.md).
  */
-function NameRow({ name, handle, badge, time, theme, handleFirst = false }: { name: string; handle: string; badge: Badge; time: string; theme: XTheme; handleFirst?: boolean }) {
+function NameRow({ name, handle, badge, time, theme, app = false }: { name: string; handle: string; badge: Badge; time: string; theme: XTheme; app?: boolean }) {
+  const handleGap = app ? 4 : 8;
   return (
-    <div style={{ display: "flex", alignItems: "center", minWidth: 0, color: theme.secondary, whiteSpace: "nowrap" }}>
+    <div style={{ display: "flex", alignItems: "center", minWidth: 0, color: theme.secondary, whiteSpace: "nowrap", letterSpacing: app ? "var(--ls-app)" : undefined }}>
       <span style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
         <span style={{ color: theme.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
         <BadgeIcon badge={badge} theme={theme} />
       </span>
-      {handleFirst ? (
+      {app ? (
         // The gap sits inside the clipped box, so a handle shrunk to nothing leaves no space behind.
         <span style={{ flexShrink: 1e4, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>
-          <span style={{ marginLeft: 8 }}>@{handle}</span>
+          <span style={{ marginLeft: handleGap }}>@{handle}</span>
         </span>
       ) : (
-        <span style={{ marginLeft: 8, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>@{handle}</span>
+        <span style={{ marginLeft: handleGap, overflow: "hidden", textOverflow: "ellipsis", fontFeatureSettings: '"ss01"' }}>@{handle}</span>
       )}
       <span style={{ padding: "0 4px" }}>·</span>
       <span>{time}</span>
@@ -126,8 +134,8 @@ function NameRow({ name, handle, badge, time, theme, handleFirst = false }: { na
  * column wide (518 timeline, 566 post page), radius 16, 12px inset inside a 1px border, 24px
  * avatar, text 4px under it at 15/20, links in the text colour, 5-line clamp (x.com's
  * -webkit-line-clamp).
- * iOS timeline, from iPhone 15 Pro captures of tests 42 and 43 at 393pt: 322pt wide (screen − 71:
- * it starts at the text column and runs 6pt past its right edge), radius 12 (fit to the capture),
+ * iOS timeline, from iPhone 15 Pro captures of tests 42 and 43 at 393pt: 322pt wide (screen − 71,
+ * the text's own column), radius 12 (fit to the capture),
  * 20pt avatar, text 6pt under it with a 19pt line pitch, links blue, 5 lines then "…".
  * The iOS post screen and Android have no capture: assumed iOS-like and web-like respectively.
  */
@@ -385,9 +393,10 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       } : undefined}
       style={{
         cursor: toggle ? "pointer" : undefined,
-        // App cell measured on an iPhone 15 Pro capture: 12px inset, 44px avatar, 8px gap, 12px right.
+        // App cell measured on iPhone 15 Pro captures: 12px inset, 44px avatar, 8px gap.
         // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
-        padding: isPhone ? (android ? "12px" : "12px 13px 12px 12px") : "12px 16px",
+        // iOS: the body, media and action row share one 322pt column on a 393pt screen (screen − 71), so 7 right.
+        padding: isPhone ? (android ? "12px" : "12px 7px 12px 12px") : "12px 16px",
         backgroundColor: theme.bg,
         width: device.width,
         boxSizing: "border-box",
@@ -401,14 +410,15 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20 }}>
-            <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} handleFirst={device.pane === "app"} />
+            <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} app={device.pane === "app"} />
             {device.pane === "app" && (
               // iPhone captures (test 80, 2026-10-07): the Grok mark at x 343–357 on a 393pt screen, so the name row stops near 334.
               <div style={{ color: theme.icon, width: 16, height: 20, display: "flex", alignItems: "center", justifyContent: "center", marginLeft: "auto", marginRight: -10, flexShrink: 0 }}>
                 <GrokIcon size={16} />
               </div>
             )}
-            <div style={{ color: theme.icon, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", margin: "-6px -8px 0 0", flexShrink: 0 }}>
+            {/* iOS pads the cell 7 on the right, not 13; the more mark keeps its measured place. */}
+            <div style={{ color: theme.icon, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", margin: isPhone && !android ? "-6px -2px 0 0" : "-6px -8px 0 0", flexShrink: 0 }}>
               <MoreIcon size={16} />
             </div>
           </div>
@@ -416,8 +426,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
             {hasBody && body}
             {attachment}
           </div>
-          <div style={{ marginTop: 4, marginLeft: -8 }}>
-            <Actions theme={theme} full={false} />
+          <div style={{ marginTop: 4, marginLeft: isPhone && !android ? 0 : -8 }}>
+            <Actions theme={theme} full={false} ios={isPhone && !android} />
           </div>
         </div>
       </div>
