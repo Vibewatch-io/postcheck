@@ -148,7 +148,7 @@ export function mediaLayout(items: Shape[], device: Device): MediaLayout | null 
       return { mode: "row", column, border: 1, boxes: lay(list, h, WEB_GAP, (m) => h * ratio(m)), assumed: null, cropped: false };
     }
     if (list.length === 4 && list.every((m) => ratio(m) < WEB_NARROW_RATIO)) {
-      return { mode: "carousel", column, border: 0, boxes: lay(list, WEB_NARROW_HEIGHT, WEB_GAP, () => WEB_NARROW_WIDTH), assumed: "narrow-carousel", cropped: false };
+      return { mode: "carousel", column, border: 0, boxes: lay(list, WEB_NARROW_HEIGHT, WEB_GAP, () => WEB_NARROW_WIDTH), assumed: "narrow-carousel", cropped: list.some((m) => ratio(m) > WEB_NARROW_WIDTH / WEB_NARROW_HEIGHT) };
     }
     const h = WEB_CAROUSEL_HEIGHT;
     // A narrow item among wider ones keeps the strips' 45px: assumed.
