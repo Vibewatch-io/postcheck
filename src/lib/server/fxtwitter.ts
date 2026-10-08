@@ -1,5 +1,5 @@
 import type { QuoteBadge, QuoteData, QuoteResult } from "@/lib/quote";
-import { UA, fetchImageAsDataUrl, readCapped } from "./fetch-guard";
+import { UA, fetchImageAsDataUrl, guardedFetch, readCapped, type GuardFetch } from "./fetch-guard";
 
 /**
  * FxTwitter's public API (api.fxtwitter.com): X's own lookups are paid ($0.01 a
@@ -62,6 +62,72 @@ type ImageFetcher = (src: URL, signal: AbortSignal, cap: number) => Promise<stri
 
 /** An image from X's CDN, refused if any redirect hop leaves it. */
 export const fetchTwimg: ImageFetcher = (src, signal, cap) => fetchImageAsDataUrl(src, signal, cap, (u) => twimgUrl(u.href) !== null);
+
+/**
+ * vxtwitter's public API, asked only when FxTwitter has no user: on 2026-10-08 FxTwitter's user
+ * endpoint answered 404 "User not found" for accounts that exist on 1 to 4 requests in 10, at random
+ * and in bursts (retries a few hundred ms apart didn't escape them), while vxtwitter answered every
+ * time. vxtwitter carries no verification and caches an account for up to a day.
+ */
+export const VX_API = "https://api.vxtwitter.com";
+export const onVxTwitter = (u: URL) => u.origin === VX_API;
+
+/** Largest profile answer read from either API (they run a few KB). */
+const PROFILE_JSON_CAP = 256 * 1024;
+
+interface ProfileAnswer {
+  status: number;
+  ok: boolean;
+  user: FxUser | null;
+}
+
+/** One profile request through the guard: every hop public and on `allow`'s host, the answer capped. */
+async function askProfile(url: URL, allow: (u: URL) => boolean, signal: AbortSignal, fetchImpl: GuardFetch | undefined, pick: (json: unknown) => FxUser | null): Promise<ProfileAnswer> {
+  const { res } = await guardedFetch(url, "application/json", signal, allow, fetchImpl);
+  const body = await readCapped(res, PROFILE_JSON_CAP + 1);
+  let json: unknown = null;
+  if (body.byteLength <= PROFILE_JSON_CAP) {
+    try {
+      json = JSON.parse(new TextDecoder().decode(body));
+    } catch {
+      json = null;
+    }
+  }
+  return { status: res.status, ok: res.ok, user: pick(json) };
+}
+
+const fxUser = (json: unknown): FxUser | null => {
+  const u = (json as { user?: FxUser } | null)?.user;
+  return u?.screen_name ? u : null;
+};
+
+/** vxtwitter's flat record, in FxTwitter's shape (no verification). */
+const vxUser = (json: unknown): FxUser | null => {
+  const j = json as { name?: unknown; screen_name?: unknown; profile_image_url?: unknown } | null;
+  return typeof j?.screen_name === "string" && j.screen_name ? { name: typeof j.name === "string" ? j.name : "", screen_name: j.screen_name, avatar_url: typeof j.profile_image_url === "string" ? j.profile_image_url : undefined } : null;
+};
+
+/**
+ * An account's name, handle and avatar URL: FxTwitter first, vxtwitter when FxTwitter has no user or
+ * fails. `verified` is false when the answer came from vxtwitter, which can't tell. `missing` is true
+ * only when both answer 404; anything else unanswered (an error, an answer for another account) is a
+ * failed lookup.
+ */
+export async function lookupProfile(
+  handle: string,
+  signal: AbortSignal,
+  fetchImpl?: GuardFetch,
+): Promise<{ user: FxUser; verified: boolean } | { user: null; missing: boolean }> {
+  // An answer for some other account (a stale or confused cache) counts as no answer.
+  const same = (u: FxUser | null) => (u && String(u.screen_name).toLowerCase() === handle.toLowerCase() ? u : null);
+  const ask = (base: string, allow: (u: URL) => boolean, pick: (json: unknown) => FxUser | null) =>
+    askProfile(new URL(`${base}/${handle}`), allow, signal, fetchImpl, (json) => same(pick(json))).catch((): null => null);
+  const fx = await ask(FX_API, onFxTwitter, fxUser);
+  if (fx?.user) return { user: fx.user, verified: true };
+  const vx = await ask(VX_API, onVxTwitter, vxUser);
+  if (vx?.user) return { user: vx.user, verified: false };
+  return { user: null, missing: fx?.status === 404 && vx?.status === 404 };
+}
 
 /** The 200×200 rendition of an account's avatar, if FxTwitter gave a URL at all. */
 export function avatarSrc(user: FxUser): string | null {
