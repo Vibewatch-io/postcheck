@@ -178,8 +178,9 @@ export function extractEntities(text: string): Entity[] {
   const free = (s: number, e: number) => !taken.some(([a, b]) => s < b && e > a);
 
   const urlMatches = [...text.matchAll(SCHEME_URL_RE), ...text.matchAll(BARE_URL_RE)];
-  // No part of an email address links: in "a@mail.example.co.uk" the match would start at
-  // "example.co.uk", after a "." (twitter-text never links a bare domain after "-", "_", "." or "/").
+  // No part of an email address links as a bare domain: in "a@mail.example.co.uk" the match would
+  // start at "example.co.uk", after a "." (twitter-text never links a bare domain after "-", "_", "."
+  // or "/"). A scheme URL still links, even straight after an address ("a@b.com.https://…").
   const emails = emailRanges(text);
   for (const m of urlMatches) {
     const lead = m[1].length;
@@ -187,8 +188,9 @@ export function extractEntities(text: string): Entity[] {
     const matched = trimUrlTail(m[2]);
     if (!matched) continue;
     const end = start + matched.length;
-    if (!free(start, end) || emails.some(([a, b]) => start < b && end > a)) continue;
-    const href = /^https?:\/\//i.test(matched) ? matched : `https://${matched}`;
+    const schemed = /^https?:\/\//i.test(matched);
+    if (!free(start, end) || (!schemed && emails.some(([a, b]) => start < b && end > a))) continue;
+    const href = schemed ? matched : `https://${matched}`;
     const host = hostOf(matched);
     out.push({
       type: "url",

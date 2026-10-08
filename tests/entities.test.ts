@@ -241,4 +241,7 @@ test("the iOS app's blue email runs: a dotted domain only, never a link entity (
   assert.deepEqual(emailRanges(end).map(([s, e]) => end.slice(s, e)), ["first.last+x@mail.example.co.uk"]);
   // A later domain label must not link on its own and split the address (PR #42 review).
   assert.deepEqual(extractEntities(end), []);
+  // ...but a scheme URL straight after an address still links (and quotes): only bare domains are held back.
+  const glued = "foo@example.com.https://x.com/u/status/123";
+  assert.deepEqual(extractEntities(glued).map((x) => [x.text, x.isStatus]), [["https://x.com/u/status/123", true]]);
 });
