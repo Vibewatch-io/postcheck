@@ -111,12 +111,12 @@ if (args.includes("--no-chirp")) { if (tier !== "gt") { console.error(`expected 
 else if (tier !== "chirp" || Math.abs(widths.web - 320.3) > 1 || Math.abs(widths.app - 313.0) > 1) { console.error("font metrics drifted; x.com may have shipped a new Chirp build. Re-measure and update globals.css."); process.exit(3); }
 
 let pass = 0, fail = 0, edge = 0, gap = 0;
-/** Width of a line of text in the pane's body font, and the body width, for edge-case classification. */
-async function lineFit(deviceLast, text) {
-  return page.evaluate(({ deviceLast, text }) => {
+/** Width of a line of text in the pane's body font (the quote embed's with `quote`), and that body's width, for edge-case classification. */
+async function lineFit(deviceLast, text, quote = false) {
+  return page.evaluate(({ deviceLast, text, quote }) => {
     const arts = [...document.querySelectorAll("article")];
     const art = deviceLast ? arts[arts.length - 1] : arts[0];
-    const body = [...art.querySelectorAll("[data-w]")].find((w) => !w.closest("[data-quote]")).parentElement;
+    const body = [...art.querySelectorAll("[data-w]")].find((w) => !w.closest("[data-quote]") !== quote).parentElement;
     const cs = getComputedStyle(body);
     const s = document.createElement("span");
     s.style.cssText = `position:absolute;white-space:pre;font-family:${cs.fontFamily};font-size:${cs.fontSize}`;
@@ -125,7 +125,7 @@ async function lineFit(deviceLast, text) {
     const w = s.getBoundingClientRect().width;
     s.remove();
     return { width: Math.round(w * 10) / 10, limit: Math.round(body.getBoundingClientRect().width * 10) / 10 };
-  }, { deviceLast, text });
+  }, { deviceLast, text, quote });
 }
 /** Type a draft straight into the composer (**bold** / __italic__ markers become styling). */
 async function compose(text, opts = {}) {
@@ -210,10 +210,26 @@ async function quoteDiff(label, deviceLast, id, want) {
   const rows = (await page.evaluate(ROWS(String(deviceLast), true))).rows.map(norm);
   const near = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => b[i] === null || Math.abs(v - b[i]) <= 1);
   const problems = [];
+  let edgeNote = null;
   if (!got) problems.push("no quote embed");
   else if (Array.isArray(want.lines)) {
     const exp = want.lines.map(norm);
-    if (exp.join("\n") !== rows.join("\n")) problems.push(`lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`);
+    if (exp.join("\n") !== rows.join("\n")) {
+      const lines = `lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`;
+      // The same coin flip as diff(): the first differing line lands within 5px of the quote's text
+      // column, and only where the lines wrap moved. The quoted text must match character for
+      // character (whitespace aside, so a break inside a hyphenated word, CJK or a link still counts),
+      // so a dropped or changed word fails even when the 5-line clamp (x-post.tsx maxLines) keeps the
+      // box the same. When both sides fill the clamp, the shift may push the tail out of view.
+      const bad = exp.findIndex((l, i) => l !== rows[i]);
+      const [a, b] = [exp[bad], rows[bad]];
+      const [ea, ra] = [exp.join(""), rows.join("")].map((t) => t.replace(/\s+/g, ""));
+      const clamped = exp.length === 5 && rows.length === 5;
+      const wrapOnly = a && b && (a.startsWith(b) || b.startsWith(a)) && (ea === ra || (clamped && (ea.startsWith(ra) || ra.startsWith(ea))));
+      const fit = wrapOnly ? await lineFit(deviceLast, a.length > b.length ? a : b, true) : null;
+      if (fit && Math.abs(fit.width - fit.limit) <= 5) edgeNote = [`${fit.width}px vs ${fit.limit}px text`, lines];
+      else problems.push(lines);
+    }
     if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
     if (want.avatar && !near(got.avatar, want.avatar)) problems.push(`avatar X ${want.avatar} / tool ${got.avatar}`);
     if (want.text && !near(got.text, want.text)) problems.push(`text box X ${want.text} / tool ${got.text}`);
@@ -229,6 +245,9 @@ async function quoteDiff(label, deviceLast, id, want) {
   if (problems.length) {
     fail++;
     console.log(`  FAIL ${label} quote ${id}\n       ${problems.join("\n       ")}`);
+  } else if (edgeNote) {
+    edge++;
+    console.log(`  edge ${label} quote ${id}  (${edgeNote[0]})\n       ${edgeNote[1]}`);
   } else {
     pass++;
     console.log(`  ok   ${label} quote ${id}`);
