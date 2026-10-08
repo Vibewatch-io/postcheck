@@ -211,10 +211,11 @@ Bullets as typed:
 
 C1/C2 measured 2026-10-07 on the post pages of tests 20, 22, 42 and 60 (light through `prefers-color-scheme`, the pane's X display set to "Use system setting"); no new post needed.
 
-Post a short text post (`Display name test 80`, `Display name test 81`) after each rename so a fresh post
-sits at the top of the profile, capture it, then put the name back to `Postcheck`.
+Group 8 is closed: 80 is posted and captured, 81 is skipped (below), and the name is `Postcheck` again.
+The procedure 80 used: rename, post a short text post (`Display name test 80`) so a fresh post sits at
+the top of the profile, capture it, then put the name back to `Postcheck` once X allows another rename.
 
-80 posted 2026-10-07 (2107957996760494575) with the name `Postcheck display name test 80, fifty chars long🚀`: X counts the limit in UTF-16 units, so the emoji costs 2 and the name only fit with no space before it. A rename sends a Premium profile to "Under review": the check disappears and X refuses further renames until the review ends. **81 and restoring the name to `Postcheck` wait for that review**; until then every @postcheck_test post shows the test-80 name and no check.
+80 posted 2026-10-07 (2107957996760494575) with the name `Postcheck display name test 80, fifty chars long🚀`: X counts the limit in UTF-16 units, so the emoji costs 2 and the name only fit with no space before it. A rename sends a Premium profile to "Under review": the check disappears and X refuses further renames until the review ends. Until the name went back (below), every @postcheck_test post showed the test-80 name and no check.
 
 The review ended by 2026-10-08 (check back) and the name went back to `Postcheck` that day, which started another review. **81 is skipped**: a one-character name leaves the name row uncut, which every short name already shows, and the tool has no short-name rule for it to check. Another rename would have meant another review before the name could be restored.
 
