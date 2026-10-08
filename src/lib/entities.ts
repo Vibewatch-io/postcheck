@@ -65,7 +65,7 @@ const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,15}(?:[._][A-Za-z]{1,2})?)(?
 
 // The iOS app colours an email address in link blue ("user@vibewatch.io", @postcheck_test test 32,
 // every iPhone capture); x.com and Android leave it plain, and X's data has no entity for it. The
-// domain needs a dot: "a@Vibewatch_io" (test 65) is assumed plain on iOS, uncaptured.
+// domain needs a dot: "a@Vibewatch_io" (test 65) stays plain on iOS (observed when it was transcribed).
 const EMAIL_RE = /(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])/g;
 
 /**
