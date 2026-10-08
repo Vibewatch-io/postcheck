@@ -19,6 +19,8 @@ import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
+import { APP_MIN_RATIO, mediaLayout, type MediaItem, type MediaKind } from "@/lib/media";
+import { MediaPicker } from "./media-picker";
 
 // The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
 // alone onto its own line on purpose, and the trailing link shows only its card. 261 of 280.
@@ -38,8 +40,9 @@ const PRECACHED_CARDS: Record<string, CardData> = {
 
 type CardState = CardData | null | "loading";
 
-/** A 1×1 image for the verify harness: a post with a photo never shows a link card. */
+/** A 1×1 grey image for the verify harness, standing in for media of any recorded size. */
 const STAND_IN_PHOTO = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
+const NO_MEDIA: MediaItem[] = [];
 
 /** Fix = something X will do to the post that you'll regret (error); tip = worth changing (warning); note = good to know (info). */
 const SEVERITY_STYLE = {
@@ -56,7 +59,7 @@ export function Postcheck() {
   // The sample is the editor's placeholder; the previews and checks run on it until the user types.
   const editor = useComposer(setDraft);
   const [identity, setIdentity] = useState<Identity>({ name: "", handle: "", avatar: null, badge: "none" });
-  const [media, setMedia] = useState<string | null>(null);
+  const [media, setMedia] = useState<MediaItem[]>(NO_MEDIA);
   const [webDevice, setWebDevice] = useState<Device>(DEFAULT_DEVICE);
   const [phoneDevice, setPhoneDevice] = useState<Device>(DEFAULT_PHONE);
   // On a phone, the preview defaults to that phone itself, drawn at its own width (see thisPhone).
@@ -204,12 +207,12 @@ export function Postcheck() {
 
   // A link to a post becomes a quote wherever it sits, and a quote beats a link card (@postcheck_test
   // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46).
-  const quote = !media ? quoteUrl(entities) ?? null : null;
+  const quote = !media.length ? quoteUrl(entities) ?? null : null;
   const quoteId = quote ? statusId(quote.href) : null;
   // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
-  const cardKey = cardEntity && !cardEntity.isStatus && !media && !cardless(cardEntity.href!) ? cardEntity.href! : null;
+  const cardKey = cardEntity && !cardEntity.isStatus && !media.length && !cardless(cardEntity.href!) ? cardEntity.href! : null;
   const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;
@@ -358,11 +361,16 @@ export function Postcheck() {
         card: card === "loading" ? undefined : card,
         lineSets,
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
-        hasMedia: media !== null,
+        hasMedia: media.length > 0,
+        mediaKinds: media.map((m) => m.kind),
+        mediaLayouts: [webDevice, phoneDevice].flatMap((d) => {
+          const layout = mediaLayout(media, d);
+          return layout ? [{ deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, layout, ios: d.platform === "ios", tall: media.length === 1 && media[0].kind === "photo" && media[0].width / media[0].height < APP_MIN_RATIO }] : [];
+        }),
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, lineSets, phoneClamp, media, phoneDevice.label, phoneDevice.tipLabel, phoneDevice.id, styles.length, draft.text],
+    [post, entities, length, card, lineSets, phoneClamp, media, webDevice, phoneDevice, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
@@ -406,11 +414,13 @@ export function Postcheck() {
     const w = window as unknown as { __postcheck?: object };
     w.__postcheck = {
       ready: Boolean(editor),
-      // **bold** / __italic__ markers become style runs; `photo` attaches a stand-in image.
-      setDraft: (raw: string, opts: { photo?: boolean } = {}) => {
+      // **bold** / __italic__ markers become style runs; `media` attaches stand-ins of the recorded
+      // kinds and sizes (`photo` alone, one 16:9 photo).
+      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number }> } = {}) => {
         const { text, styles } = stripFormatting(raw);
         editor?.commands.setContent(draftToDoc(text, styles));
-        setMedia(opts.photo ? STAND_IN_PHOTO : null);
+        const items = opts.media ?? (opts.photo ? [{ kind: "photo" as const, width: 1600, height: 900 }] : []);
+        setMedia(items.length ? items.map((m) => ({ src: STAND_IN_PHOTO, alt: false, ...m })) : NO_MEDIA);
       },
       getText: () => (editor ? serializeDoc(editor.getJSON() as DocNode).text : draft.text),
     };
@@ -565,15 +575,7 @@ export function Postcheck() {
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex items-center gap-3">
             <FormatBar editor={editor} />
-            <label className="cursor-pointer rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface">
-              {media ? "Replace image" : "Add image"}
-              <input type="file" accept="image/*" className="sr-only" onChange={(e) => readFile(e.target.files?.[0], setMedia)} />
-            </label>
-            {media && (
-              <button type="button" className="text-sm text-brand-warm-secondary hover:underline" onClick={() => setMedia(null)}>
-                Remove image
-              </button>
-            )}
+            <MediaPicker media={media} onChange={setMedia} />
           </span>
           <span className="flex items-center gap-2 tabular-nums" title="Weighted length, the way X counts it">
             <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden>
@@ -756,21 +758,33 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
     if (!node || exporting || !exportAllowed) return;
     setExporting(true);
     setExportError(null);
-    // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
-    // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
-    // the image is what the screen shows; the screen itself looks the same throughout.
-    const restore = [...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
-      const top = el.scrollTop;
-      const cell = el.firstElementChild as HTMLElement | null;
-      if (!top || !cell) return [];
-      const margin = cell.style.marginTop;
-      cell.style.marginTop = `${-top}px`;
-      el.scrollTop = 0;
-      return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
-    });
+    const restore: Array<() => void> = [];
     try {
       await document.fonts.ready;
       const { toPng } = await import("html-to-image");
+      // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
+      // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
+      // the image is what the screen shows; the screen itself looks the same throughout. Read just
+      // before drawing, after the awaits, so a scroll made meanwhile is the one exported.
+      restore.push(...[...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
+        const top = el.scrollTop;
+        const cell = el.firstElementChild as HTMLElement | null;
+        if (!top || !cell) return [];
+        const margin = cell.style.marginTop;
+        cell.style.marginTop = `${-top}px`;
+        el.scrollTop = 0;
+        return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
+      }));
+      // A media carousel swiped sideways: the same, along x.
+      for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"]')) {
+        const left = el.scrollLeft;
+        const first = el.firstElementChild as HTMLElement | null;
+        if (!left || !first) continue;
+        const margin = first.style.marginLeft;
+        first.style.marginLeft = `${-left}px`;
+        el.scrollLeft = 0;
+        restore.push(() => { first.style.marginLeft = margin; el.scrollLeft = left; });
+      }
       const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 20000));
       const dataUrl = await Promise.race([toPng(node, { pixelRatio: device.pixelRatio, cacheBust: false }), timeout]);
       const a = document.createElement("a");
