@@ -235,6 +235,9 @@ test("a profile falls back to vxtwitter when FxTwitter has no user, and only bot
   // One side unreachable: a failed lookup, not "no account".
   assert.deepEqual(await lookupProfile("nobody_here_x", signal, stub(404, "throw").f), { user: null, missing: false });
   assert.equal((await lookupProfile("Postcheck_test", signal, stub("throw", 200).f)).user?.screen_name, "Postcheck_test");
-  // An answer for a different account is no answer.
+  // An answer for a different account is no answer, even one sent with a 404.
   assert.deepEqual(await lookupProfile("Postcheck_test", signal, stub(404, 200, "someone_else").f), { user: null, missing: false });
+  const wrong404: GuardFetch = async (url) =>
+    new Response(JSON.stringify(url.origin === "https://api.fxtwitter.com" ? { code: 404 } : { screen_name: "someone_else" }), { status: 404 });
+  assert.deepEqual(await lookupProfile("Postcheck_test", signal, wrong404), { user: null, missing: false });
 });

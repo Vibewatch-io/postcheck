@@ -3,8 +3,9 @@ import { UA, fetchImageAsDataUrl, guardedFetch, readCapped, type GuardFetch } fr
 
 /**
  * FxTwitter's public API (api.fxtwitter.com): X's own lookups are paid ($0.01 a
- * read since February 2026). The host is fixed here; nothing a visitor typed
- * becomes part of a URL except a status number of 1–20 digits.
+ * read since February 2026). The hosts are fixed here; nothing a visitor typed
+ * becomes part of a URL except a status number of 1–20 digits or a handle of
+ * 1–15 letters, digits and underscores.
  */
 export const FX_API = "https://api.fxtwitter.com";
 
@@ -118,10 +119,13 @@ export async function lookupProfile(
   signal: AbortSignal,
   fetchImpl?: GuardFetch,
 ): Promise<{ user: FxUser; verified: boolean } | { user: null; missing: boolean }> {
-  // An answer for some other account (a stale or confused cache) counts as no answer.
-  const same = (u: FxUser | null) => (u && String(u.screen_name).toLowerCase() === handle.toLowerCase() ? u : null);
-  const ask = (base: string, allow: (u: URL) => boolean, pick: (json: unknown) => FxUser | null) =>
-    askProfile(new URL(`${base}/${handle}`), allow, signal, fetchImpl, (json) => same(pick(json))).catch((): null => null);
+  // An answer for some other account (a stale or confused cache) counts as no answer at all, so it
+  // can never add up to "no account" either.
+  const same = (u: FxUser) => String(u.screen_name).toLowerCase() === handle.toLowerCase();
+  const ask = async (base: string, allow: (u: URL) => boolean, pick: (json: unknown) => FxUser | null) => {
+    const a = await askProfile(new URL(`${base}/${handle}`), allow, signal, fetchImpl, pick).catch((): null => null);
+    return a?.user && !same(a.user) ? null : a;
+  };
   const fx = await ask(FX_API, onFxTwitter, fxUser);
   if (fx?.user) return { user: fx.user, verified: true };
   const vx = await ask(VX_API, onVxTwitter, vxUser);

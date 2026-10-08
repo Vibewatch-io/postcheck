@@ -389,15 +389,21 @@ export function Postcheck() {
       const res = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ u }) });
       const json = (await res.json()) as { profile?: Omit<Identity, "badge"> & { badge: Identity["badge"] | null }; error?: string };
       if (!res.ok || !json.profile) throw new Error(json.error || "Lookup failed. Enter the details by hand.");
-      // No badge in the answer (the fallback API can't tell): keep the one already chosen.
-      const found: Identity = { ...json.profile, badge: json.profile.badge ?? identity.badge };
-      profiles.current.set(u.toLowerCase(), found);
-      setIdentity(found);
+      // No badge in the answer (the fallback API can't tell): keep the one chosen by the time it
+      // arrives, and don't keep the answer, so the next lookup of this handle asks for the badge again.
+      const { badge, ...rest } = json.profile;
+      if (badge !== null) {
+        const found: Identity = { ...rest, badge };
+        profiles.current.set(u.toLowerCase(), found);
+        setIdentity(found);
+      } else {
+        setIdentity((prev) => ({ ...rest, badge: prev.badge }));
+      }
       setLookupState("idle");
     } catch (e) {
       setLookupState(e instanceof Error ? e.message : "Lookup failed. Enter the details by hand.");
     }
-  }, [identity.handle, identity.badge]);
+  }, [identity.handle]);
 
   // Test hook for scripts/verify.mjs, which drives the composer headlessly.
   useEffect(() => {
