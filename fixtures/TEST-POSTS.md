@@ -224,7 +224,9 @@ The review ended by 2026-10-08 (check back) and the name went back to `Postcheck
 
 Test 57 (4 text choices) and 57b (4 image choices) are posted. The author always sees a poll's results
 view; the voter view (choice buttons) only shows to another account, so the iPhone (@marshallmixing)
-capture is the voter view and the web capture (@Postcheck_test) is the results view.
+capture is the voter view and the web capture (@Postcheck_test) is the results view. Exception: 57c's
+web entry is the voter view, read as @marshallmixing (an open image poll's voter view is a carousel, a
+different layout from its results view); recapture it from another account, not @Postcheck_test.
 
 | # | Text and choices | Tests |
 |---|---|---|

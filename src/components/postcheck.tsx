@@ -382,7 +382,8 @@ export function Postcheck() {
         }),
         // An incomplete poll is unpostable whatever the length, so "empty" wins over "dropped".
         poll: poll ? (pollOnPost ? "shown" : filledChoices(poll).length < POLL_MIN_CHOICES ? "empty" : "dropped") : null,
-        pollPictures: pollOnPost ? missingPictures(pollOnPost) : false,
+        // Missing pictures are their own blocker, whatever the length (both fixes show past 280).
+        pollPictures: poll ? filledChoices(poll).length >= POLL_MIN_CHOICES && missingPictures(poll) : false,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),

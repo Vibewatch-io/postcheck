@@ -123,6 +123,9 @@ test("a poll past 280 is flagged as dropped; a shown poll replaces the card tips
   const le = extractEntities(long);
   const dropped = buildAdvice({ text: long, entities: le, length: weightedLength(long, le), card: undefined, lineSets: [], poll: "dropped" });
   assert.ok(dropped.some((a) => a.id === "poll-dropped" && a.severity === "fix"));
+  // Past 280 with a picture missing, both fixes show: one alone would hide the other blocker.
+  const both = buildAdvice({ text: long, entities: le, length: weightedLength(long, le), card: undefined, lineSets: [], poll: "dropped", pollPictures: true }).map((a) => a.id);
+  assert.ok(both.includes("poll-dropped") && both.includes("poll-pictures"));
   const text = "Poll with a link https://github.com/vercel/next.js";
   const entities = extractEntities(text);
   const ids = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [], poll: "shown" }).map((a) => a.id);

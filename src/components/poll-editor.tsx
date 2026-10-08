@@ -7,6 +7,8 @@ import { POLL_CHOICE_MAX, POLL_MAX_CHOICES, POLL_MIN_CHOICES, clampMinutes, type
 const field = "min-w-0 flex-1 rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-base sm:text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal";
 const small = "flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-brand-warm-border text-brand-warm-gray hover:bg-brand-warm-surface";
 const select = "rounded-lg border border-brand-warm-border bg-white px-2 py-1.5 text-base sm:text-sm text-brand-warm-dark";
+/** What X's choice-picture picker accepts (its `accept`, read 2026-10-08). */
+const CHOICE_PICTURE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -27,10 +29,19 @@ export function PollEditor({ poll, onChange, readFile }: { poll: Poll; onChange:
       gen.current += 1;
     };
   }, []);
+  // Each choice's latest pick or clear wins: an older read finishing later is dropped.
+  const picks = useRef<Record<number, number>>({});
   const setImage = (i: number, image: string | null) => onChange((p) => p && { ...p, images: p.images.map((x, j) => (j === i ? image : x)) });
+  const clearImage = (i: number) => {
+    picks.current[i] = (picks.current[i] ?? 0) + 1;
+    setImage(i, null);
+  };
   const pickImage = (i: number, file: File | undefined) => {
+    // X's choice picker takes these four only (an SVG or HEIC would never reach the poll).
+    if (!file || !CHOICE_PICTURE_TYPES.includes(file.type)) return;
     const at = removals.current;
-    readFile(file, (url) => removals.current === at && setImage(i, url));
+    const pick = (picks.current[i] = (picks.current[i] ?? 0) + 1);
+    readFile(file, (url) => removals.current === at && picks.current[i] === pick && setImage(i, url));
   };
   const days = Math.floor(poll.minutes / 1440);
   const hours = Math.floor((poll.minutes % 1440) / 60);
@@ -39,6 +50,7 @@ export function PollEditor({ poll, onChange, readFile }: { poll: Poll; onChange:
   const setChoice = (i: number, label: string) => onChange((p) => p && { ...p, choices: p.choices.map((c, j) => (j === i ? label : c)) });
   const remove = (i: number) => {
     removals.current += 1;
+    picks.current = {};
     onChange((p) => p && { ...p, choices: p.choices.filter((_, j) => j !== i), images: p.images.filter((_, j) => j !== i) });
   };
 
@@ -53,11 +65,11 @@ export function PollEditor({ poll, onChange, readFile }: { poll: Poll; onChange:
             ) : (
               <CameraIcon size={16} />
             )}
-            <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" aria-label={`Picture for choice ${i + 1}`} className="sr-only" onChange={(e) => { pickImage(i, e.target.files?.[0]); e.target.value = ""; }} />
+            <input type="file" accept={CHOICE_PICTURE_TYPES.join(",")} aria-label={`Picture for choice ${i + 1}`} className="sr-only" onChange={(e) => { pickImage(i, e.target.files?.[0]); e.target.value = ""; }} />
           </label>
           <input className={field} value={label} maxLength={POLL_CHOICE_MAX} placeholder={`Choice ${i + 1}`} aria-label={`Choice ${i + 1}`} autoComplete="off" onChange={(e) => setChoice(i, e.target.value)} />
           {poll.images[i] && (
-            <button type="button" className={small} aria-label={`Remove picture from choice ${i + 1}`} title="Remove picture" onClick={() => setImage(i, null)}>
+            <button type="button" className={small} aria-label={`Remove picture from choice ${i + 1}`} title="Remove picture" onClick={() => clearImage(i)}>
               ×
             </button>
           )}

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, MouseEvent } from "react";
+import { useState, type CSSProperties, type MouseEvent, type UIEvent } from "react";
 import type { Device } from "@/lib/devices";
 import { filledChoices, isImagePoll, timeLeft, type Poll } from "@/lib/poll";
 import type { XTheme } from "@/lib/theme";
@@ -38,6 +38,12 @@ const IMAGE_POLL = {
 } as const;
 
 export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; theme: XTheme }) {
+  // Swiped to its last choice, the carousel has nothing more to the right: no Next button then.
+  const [atEnd, setAtEnd] = useState(false);
+  const track = (e: UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1);
+  };
   const choices = filledChoices(poll);
   const images = isImagePoll(poll);
   const ios = device.kind === "phone" && device.platform === "ios";
@@ -61,7 +67,7 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
   );
   // Swiped sideways like X's ScrollSnap list, with no scrollbar; PNG export keeps the scroll position.
   const carousel = (item: number, gap: number, pillTop: number, pillHeight: number, size: number, line: number) => (
-    <div data-poll-carousel="" style={{ display: "flex", gap, overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+    <div data-poll-carousel="" onScroll={track} style={{ display: "flex", gap, overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
       {choices.map((c, i) => (
         <div key={i} data-poll-row="" style={{ width: item, flex: "none", scrollSnapAlign: "start" }}>
           {picture(c.image, item)}
@@ -104,7 +110,7 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
     return (
       <div data-poll="" onClick={stop} style={{ width, position: "relative", paddingTop: 12 }}>
         {carousel(240, 12, 8, 32, 15, 20)}
-        {overflows && (
+        {overflows && !atEnd && (
           <div data-poll-next="" aria-hidden style={{ position: "absolute", right: 12, top: 134, width: 36, height: 36, borderRadius: 9999, backgroundColor: "rgba(15,20,25,0.75)", backdropFilter: "blur(4px)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <NextArrowIcon size={20} />
           </div>

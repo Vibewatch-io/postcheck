@@ -381,7 +381,8 @@ async function pollDiff(label, deviceLast, id, want, typed) {
       if (!near(got.pills[0], want.pill)) problems.push(`choice pill X ${want.pill} / tool ${got.pills[0]}`);
       if (Math.abs(xPitch - want.pitch) > 1) problems.push(`carousel pitch X ${want.pitch} / tool ${xPitch}`);
       if (!near(got.footer?.slice(0, 2), want.footer)) problems.push(`footer at X ${want.footer} / tool ${got.footer?.slice(0, 2)}`);
-      if (!near(got.next, want.next)) problems.push(`Next button X ${want.next} / tool ${got.next}`);
+      // A recorded null means x.com showed no Next button (the choices fit the column).
+      if (want.next === null ? got.next !== null : !near(got.next, want.next)) problems.push(`Next button X ${want.next} / tool ${got.next}`);
     } else if (want.carousel) {
       if (!near(got.images[0]?.slice(2), want.image.slice(2))) problems.push(`picture X ${want.image.slice(2)} / tool ${got.images[0]?.slice(2)}`);
       if (Math.abs((got.images[1]?.[0] ?? -99) - want.nextChoiceX) > 1) problems.push(`next choice at X ${want.nextChoiceX} / tool ${got.images[1]?.[0]}`);

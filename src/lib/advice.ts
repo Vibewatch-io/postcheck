@@ -132,20 +132,22 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       detail: "X lets you attach a poll to a longer post, then posts the text without it. Cut the post to 280 characters to keep the poll. The preview shows the post as X will publish it.",
       marks: [{ el: "more" }],
     });
-  } else if (input.pollPictures) {
-    out.push({
-      id: "poll-pictures",
-      severity: "fix",
-      title: "Every choice needs a picture",
-      detail: "X won't post an image poll until each choice has a picture. Add the rest, or remove them all for a text poll.",
-      marks: [{ el: "attachment" }],
-    });
   } else if (poll === "empty") {
     out.push({
       id: "poll-empty",
       severity: "note",
       title: "A poll needs two choices",
       detail: "X won't post a poll with fewer than two choices filled in. The preview draws it once two are.",
+    });
+  }
+  if (input.pollPictures) {
+    out.push({
+      id: "poll-pictures",
+      severity: "fix",
+      title: "Every choice needs a picture",
+      detail: "X won't post an image poll until each choice has a picture. Add the rest, or remove them all for a text poll.",
+      // Past 280 the poll isn't drawn, so there is nothing to point at.
+      marks: poll === "shown" ? [{ el: "attachment" }] : [],
     });
   }
 
