@@ -70,6 +70,15 @@ const ROWS = (deviceLast, quote = false) => `(() => {
       const k = Math.round((cr[0].top - top) / lh); rows[k] = rows[k] || []; if (k === curK) rows[k][rows[k].length - 1] += node.nodeValue[i]; else { rows[k].push(node.nodeValue[i]); curK = k; } } }
   return { rows: Object.keys(rows).sort((a,b)=>a-b).filter((k) => k < shown).map(k => rows[k].join(' ')), more: !!body.querySelector('[data-more]') };
 })()`;
+/** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small card's thumbnail. */
+const CARD_BOX = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const c = art.querySelector('[data-card]'); if (!c) return null; const b = c.getBoundingClientRect();
+  const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement.getBoundingClientRect();
+  const t = c.querySelector('[data-card-thumb]')?.getBoundingClientRect();
+  return { box: [Math.round(b.left - (body?.left ?? b.left)), Math.round(b.top - (body?.bottom ?? b.top)), Math.round(b.width), Math.round(b.height)], thumb: t ? [Math.round(t.width), Math.round(t.height)] : null };
+})()`;
 /** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
 const QUOTE_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
@@ -243,6 +252,26 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
 }
 
+/** The link card's box against the iPhone capture's, to 1pt (a null in the box is not checked); `want` null: X drew no card. */
+async function cardDiff(label, deviceLast, id, want) {
+  const got = await page.evaluate(CARD_BOX(deviceLast));
+  const near = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => b[i] === null || Math.abs(v - b[i]) <= 1);
+  const problems = [];
+  if (!want) { if (got) problems.push("tool draws a card X doesn't"); }
+  else if (!got) problems.push("no card");
+  else {
+    if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
+    if (want.thumb && !near(got.thumb, want.thumb)) problems.push(`thumbnail X ${want.thumb} / tool ${got.thumb}`);
+  }
+  if (problems.length) {
+    fail++;
+    console.log(`  FAIL ${label} card ${id}\n       ${problems.join("\n       ")}`);
+  } else {
+    pass++;
+    console.log(`  ok   ${label} card ${id}`);
+  }
+}
+
 /**
  * The quote embed against X's: web fixtures record x.com's quoted lines and boxes, app fixtures the
  * iPhone's line count, first words, last line where recorded, and photo size. Boxes match to 1px. Where the app's photo sits
@@ -354,6 +383,8 @@ for (const f of readdirSync("fixtures/app")) {
     if (!(await (p.compose ? compose(p.compose) : load(p.id)))) continue;
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
+    if (p.card?.box) await cardDiff("app ", true, p.id, p.card);
+    else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
     if (p.media) await mediaDiff("app ", true, p.id, p.media, false);
   }
