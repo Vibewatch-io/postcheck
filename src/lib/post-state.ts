@@ -22,6 +22,7 @@ export const NO_POST_STATE: PostState = { pinned: false, paid: false, replies: "
 
 /** X tags up to 10 people, each shown by a display name of up to 50 characters. */
 export const TAG_PEOPLE = 10;
+const NAME_MAX = 50;
 export const TAG_MAX = TAG_PEOPLE * 52;
 
 /**
@@ -29,7 +30,7 @@ export const TAG_MAX = TAG_PEOPLE * 52;
  * more as "A and N others" is assumed, not captured.
  */
 export function tagLine(tagged: string): string {
-  const names = tagged.split(",").map((n) => n.trim()).filter(Boolean).slice(0, TAG_PEOPLE);
+  const names = tagged.split(",").map((n) => n.trim().slice(0, NAME_MAX)).filter(Boolean).slice(0, TAG_PEOPLE);
   if (names.length <= 2) return names.join(" and ");
   return `${names[0]} and ${names.length - 1} others`;
 }

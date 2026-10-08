@@ -254,7 +254,6 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={m.src} alt="" draggable={false} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
-        {!web && m.sensitive && <ItemCover src={m.src} />}
         {carousel && hairline}
         {(badge === "GIF" || badge === "time" || (web && m.alt && m.kind === "photo")) && (
           <div style={{ position: "absolute", left: 8, bottom: 8, display: "flex", gap: 4 }}>
@@ -268,6 +267,8 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
             <MuteIcon size={16} />
           </div>
         )}
+        {/* Over the badges: the cover hides the item, its GIF or mute mark included (assumed). */}
+        {!web && m.sensitive && <ItemCover src={m.src} w={b.w} h={b.h} />}
       </div>
     );
   });
@@ -366,20 +367,24 @@ function PaidRow({ device, theme }: { device: Device; theme: XTheme }) {
 /**
  * The iOS app's cover on one flagged item among several: only that item is covered, in its own box
  * (test 111b, its first 70pt seen as the carousel's peeking item: the title starts 12pt in). The
- * rest of its layout is assumed: the single cover's pieces, centred in the item.
+ * rest of its layout is assumed: the single cover's pieces, centred in the item. A slot too small
+ * for them (a row of two squares is 159pt, a strip 30pt wide) keeps what fits: the explanation and
+ * the pill go first, then the title (assumed; only the 219pt carousel slot was seen).
  */
-function ItemCover({ src }: { src: string }) {
+function ItemCover({ src, w, h }: { src: string; w: number; h: number }) {
+  const full = h >= 215 && w >= 200;
+  const titled = h >= 80 && w >= 150;
   return (
     <div data-item-cover="" style={{ position: "absolute", inset: 0, overflow: "hidden", color: "#FFFFFF", fontSize: 15 }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" style={{ position: "absolute", inset: -72, width: "calc(100% + 144px)", height: "calc(100% + 144px)", maxWidth: "none", objectFit: "cover", filter: "blur(24px)" }} />
       <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "10px 12px", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <EyeSlashIcon size={20} style={{ alignSelf: "center", flexShrink: 0 }} />
-        <div style={{ marginTop: 14, lineHeight: "20px", fontWeight: 700 }}>Content warning: Sensitive content</div>
-        <div style={{ marginTop: 14, lineHeight: "18px" }}>The author flagged this post as showing sensitive content.</div>
-        <div style={{ marginTop: 11, alignSelf: "flex-end", height: 24, minWidth: 80, padding: "0 12px", boxSizing: "border-box", borderRadius: 9999, backgroundColor: "rgba(0, 0, 0, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+        {titled && <div style={{ marginTop: 14, lineHeight: "20px", fontWeight: 700 }}>Content warning: Sensitive content</div>}
+        {full && <div style={{ marginTop: 14, lineHeight: "18px" }}>The author flagged this post as showing sensitive content.</div>}
+        {full && <div style={{ marginTop: 11, alignSelf: "flex-end", height: 24, minWidth: 80, padding: "0 12px", boxSizing: "border-box", borderRadius: 9999, backgroundColor: "rgba(0, 0, 0, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
           Show
-        </div>
+        </div>}
       </div>
     </div>
   );
@@ -422,7 +427,8 @@ function SensitiveCover({ items, device, theme }: { items: MediaItem[]; device: 
       </div>
     );
   }
-  // The media keeps its own box, the blur over it. With several items x.com covers them all as one
+  // The media keeps its own box, the blur over it (of the first item: which image x.com's served blur
+  // comes from is not recorded). With several items x.com covers them all as one
   // (test 111b), and frames a carousel 1px above and below (a 518×352 cover over the 350 row).
   const framed = mediaLayout(items, device)?.border === 0;
   return (
