@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AVATAR_CAP, PHOTO_CAP, lookupQuote, twimgUrl } from "../src/lib/server/fxtwitter";
-import { fetchImageAsDataUrl, guardedFetch } from "../src/lib/server/fetch-guard";
+import { fetchImageAsDataUrl, guardedFetch, type GuardFetch } from "../src/lib/server/fetch-guard";
 import { quoteTime, statusId } from "../src/lib/quote";
 import { extractEntities, quoteUrl } from "../src/lib/entities";
 import { POST } from "../src/app/api/quote/route";
@@ -135,22 +135,17 @@ test("an answer of an unexpected shape is a failed lookup or a missing field, ne
 });
 
 test("a fetch with an allowlist refuses a redirect off the list", async () => {
-  const real = globalThis.fetch;
   const asked: string[] = [];
-  globalThis.fetch = (async (url: URL | string) => {
+  const redirecting: GuardFetch = async (url) => {
     asked.push(String(url));
     return new Response(null, { status: 302, headers: { location: "https://1.1.1.1/elsewhere.png" } });
-  }) as typeof globalThis.fetch;
-  try {
-    // IP literals keep the public-address check off the network.
-    const start = new URL("https://93.184.216.34/a.png");
-    const onList = (u: URL) => u.hostname === "93.184.216.34";
-    assert.equal(await fetchImageAsDataUrl(start, signal, 1024, onList), null);
-    assert.deepEqual(asked, ["https://93.184.216.34/a.png"]);
-    await assert.rejects(guardedFetch(start, "image/*", signal, onList), /host/);
-  } finally {
-    globalThis.fetch = real;
-  }
+  };
+  // IP literals keep the public-address check off the network.
+  const start = new URL("https://93.184.216.34/a.png");
+  const onList = (u: URL) => u.hostname === "93.184.216.34";
+  assert.equal(await fetchImageAsDataUrl(start, signal, 1024, onList, redirecting), null);
+  assert.deepEqual(asked, ["https://93.184.216.34/a.png"]);
+  await assert.rejects(guardedFetch(start, "image/*", signal, onList, redirecting), /host/);
 });
 
 test("the route takes a numeric id in its body and nothing it answers is cached", async () => {

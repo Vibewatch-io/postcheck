@@ -44,11 +44,13 @@ export async function POST(request: Request) {
     }
     const avatarUrl = twimgUrl(avatarSrc(u));
     const avatar = avatarUrl ? await fetchTwimg(avatarUrl, controller.signal, AVATAR_CAP) : null;
-    const profile: Profile = { name: u.name ?? "", handle: u.screen_name, avatar, badge: badgeFor(u.verification) };
+    // Third-party JSON: coerced and clamped like the quote path (fxtwitter.ts toQuote).
+    const profile: Profile = { name: String(u.name ?? "").slice(0, 100), handle: String(u.screen_name).slice(0, 15), avatar, badge: badgeFor(u.verification) };
     return NextResponse.json({ profile }, { headers: NO_STORE });
   } catch {
     return NextResponse.json({ error: "Lookup failed. Enter the details by hand." }, { status: 502, headers: NO_STORE });
   } finally {
     clearTimeout(timer);
+    controller.abort(); // nothing outlives the answer
   }
 }

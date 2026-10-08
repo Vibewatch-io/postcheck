@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { HTML_CAP, NO_STORE, postOnly, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
+import { HTML_CAP, NO_STORE, discard, postOnly, fetchImageAsDataUrl, guardedFetch, readCapped, readLookupField } from "@/lib/server/fetch-guard";
+import { metaLookup } from "@/lib/server/meta";
 import type { CardData } from "@/lib/card";
 
 /**
@@ -17,36 +18,6 @@ const TIMEOUT_MS = 6000;
 /** POST only: a stray GET gets an uncacheable 405 (see postOnly). */
 export const GET = postOnly;
 
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function metaLookup(html: string): Map<string, string> {
-  const out = new Map<string, string>();
-  const head = html.slice(0, HTML_CAP);
-  for (const tag of head.matchAll(/<meta\s+[^>]*>/gi)) {
-    const attrs = new Map<string, string>();
-    for (const a of tag[0].matchAll(/([a-zA-Z:-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/g)) {
-      attrs.set(a[1].toLowerCase(), decodeEntities(a[3] ?? a[4] ?? a[5] ?? ""));
-    }
-    const key = (attrs.get("property") || attrs.get("name") || "").toLowerCase();
-    const content = attrs.get("content");
-    if (key && content && !out.has(key)) out.set(key, content);
-  }
-  const title = head.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  if (title) out.set("html:title", decodeEntities(title[1]));
-  return out;
-}
-
 export async function POST(request: Request) {
   const raw = (await readLookupField(request, "url")) ?? "";
   let target: URL;
@@ -63,6 +34,7 @@ export async function POST(request: Request) {
     const { res, url: finalUrl } = await guardedFetch(target, "text/html,application/xhtml+xml", controller.signal);
     const type = (res.headers.get("content-type") || "").toLowerCase();
     if (!res.ok || !type.includes("html")) {
+      discard(res);
       return NextResponse.json({ card: null }, { headers: NO_STORE });
     }
     const bytes = await readCapped(res, HTML_CAP);
@@ -101,6 +73,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ card: null }, { headers: NO_STORE });
   } finally {
     clearTimeout(timer);
+    controller.abort(); // nothing outlives the answer: an unread body or a pending image fetch is dropped
   }
 }
 

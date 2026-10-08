@@ -27,5 +27,6 @@ export async function POST(request: Request) {
     return NextResponse.json(result, { headers: NO_STORE });
   } finally {
     clearTimeout(timer);
+    controller.abort(); // nothing outlives the answer
   }
 }
