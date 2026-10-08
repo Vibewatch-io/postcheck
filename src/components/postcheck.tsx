@@ -62,12 +62,11 @@ export function Postcheck() {
   const [identity, setIdentity] = useState<Identity>({ name: "", handle: "", avatar: null, badge: "none" });
   const [media, setMedia] = useState<MediaItem[]>(NO_MEDIA);
   const [postState, setPostState] = useState<PostState>(NO_POST_STATE);
-  // The media's own states (sensitive, tag) go with the last item, so nothing hidden stays set or
-  // travels in a share link.
+  // The tag goes with the last item, so nothing hidden stays set or travels in a share link.
   const changeMedia = useCallback(
     (update: (m: MediaItem[]) => MediaItem[]) => {
       setMedia(update);
-      if (!update(media).length) setPostState((s) => (s.sensitive || s.tagged ? { ...s, sensitive: false, tagged: "" } : s));
+      if (!update(media).length) setPostState((s) => (s.tagged ? { ...s, tagged: "" } : s));
     },
     [media],
   );
@@ -429,8 +428,8 @@ export function Postcheck() {
       ready: Boolean(editor),
       // **bold** / __italic__ markers become style runs; `media` attaches stand-ins of the recorded
       // kinds and sizes (`photo` alone, one 16:9 photo); `state` sets the post states (pinned, paid
-      // partnership, reply limit, sensitive, tag).
-      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number }>; state?: Partial<PostState> } = {}) => {
+      // partnership, reply limit, tag); a media entry's `sensitive` flags that item.
+      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number; sensitive?: boolean }>; state?: Partial<PostState> } = {}) => {
         const { text, styles } = stripFormatting(raw);
         editor?.commands.setContent(draftToDoc(text, styles));
         const items = opts.media ?? (opts.photo ? [{ kind: "photo" as const, width: 1600, height: 900 }] : []);
@@ -591,7 +590,7 @@ export function Postcheck() {
           <span className="flex flex-wrap items-center gap-3">
             <FormatBar editor={editor} />
             <MediaPicker media={media} onChange={changeMedia} />
-            <PostOptions state={postState} onChange={setPostState} hasImage={media.length > 0} />
+            <PostOptions state={postState} onChange={setPostState} media={media} onMedia={changeMedia} />
           </span>
           <span className="flex items-center gap-2 tabular-nums" title="Weighted length, the way X counts it">
             <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden>

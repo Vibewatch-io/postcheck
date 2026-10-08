@@ -7,7 +7,7 @@ import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
 import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type StyleRun } from "@/lib/entities";
 import { quoteTime, type QuoteState } from "@/lib/quote";
-import { NO_POST_STATE, type PostState } from "@/lib/post-state";
+import { NO_POST_STATE, tagLine, type PostState } from "@/lib/post-state";
 import { mediaColumn, mediaLayout, videoTime, type MediaItem } from "@/lib/media";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
@@ -52,7 +52,7 @@ interface Props {
   media?: MediaItem[];
   /** Premium bold / italic runs. */
   styles?: StyleRun[];
-  /** Pinned, paid partnership, reply limit, and the photo's sensitive flag and tag. */
+  /** Pinned, paid partnership, reply limit and tag (a media item carries its own sensitive flag). */
   state?: PostState;
   bodyRef?: Ref<HTMLDivElement>;
 }
@@ -254,6 +254,7 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={m.src} alt="" draggable={false} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+        {!web && m.sensitive && <ItemCover src={m.src} />}
         {carousel && hairline}
         {(badge === "GIF" || badge === "time" || (web && m.alt && m.kind === "photo")) && (
           <div style={{ position: "absolute", left: 8, bottom: 8, display: "flex", gap: 4 }}>
@@ -331,7 +332,7 @@ function PinnedRow({ device, theme, avatar }: { device: Device; theme: XTheme; a
   );
 }
 
-/** The tagged person's display name under the photo. */
+/** The tagged people under the media: "Vibewatch", "Vibewatch and Good For Bitcoin". */
 function TagRow({ device, theme, name }: { device: Device; theme: XTheme; name: string }) {
   const look = stateLook(device).tag;
   const lineHeight = look.size === 15 ? 20 : 16;
@@ -363,7 +364,29 @@ function PaidRow({ device, theme }: { device: Device; theme: XTheme }) {
 }
 
 /**
- * A photo flagged sensitive. x.com keeps the photo's box and darkens a blurred copy (X serves the
+ * The iOS app's cover on one flagged item among several: only that item is covered, in its own box
+ * (test 111b, its first 70pt seen as the carousel's peeking item: the title starts 12pt in). The
+ * rest of its layout is assumed: the single cover's pieces, centred in the item.
+ */
+function ItemCover({ src }: { src: string }) {
+  return (
+    <div data-item-cover="" style={{ position: "absolute", inset: 0, overflow: "hidden", color: "#FFFFFF", fontSize: 15 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" style={{ position: "absolute", inset: -72, width: "calc(100% + 144px)", height: "calc(100% + 144px)", maxWidth: "none", objectFit: "cover", filter: "blur(24px)" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "10px 12px", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <EyeSlashIcon size={20} style={{ alignSelf: "center", flexShrink: 0 }} />
+        <div style={{ marginTop: 14, lineHeight: "20px", fontWeight: 700 }}>Content warning: Sensitive content</div>
+        <div style={{ marginTop: 14, lineHeight: "18px" }}>The author flagged this post as showing sensitive content.</div>
+        <div style={{ marginTop: 11, alignSelf: "flex-end", height: 24, minWidth: 80, padding: "0 12px", boxSizing: "border-box", borderRadius: 9999, backgroundColor: "rgba(0, 0, 0, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+          Show
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Media with a flagged item. x.com keeps the media's box and darkens a blurred copy (X serves the
  * blur; a CSS blur stands in for it) by half, with a centred column (max 400px) of icon, title,
  * explanation and a "Show" pill. The iOS app swaps the photo for a 324×163 cover at 393pt whatever
  * its shape, its pieces at fixed offsets from the cover's edges.
@@ -399,9 +422,12 @@ function SensitiveCover({ items, device, theme }: { items: MediaItem[]; device: 
       </div>
     );
   }
-  // The media keeps its own box (one photo measured; several assumed covered as one), the blur over it.
+  // The media keeps its own box, the blur over it. With several items x.com covers them all as one
+  // (test 111b), and frames a carousel 1px above and below (a 518×352 cover over the 350 row).
+  const framed = mediaLayout(items, device)?.border === 0;
   return (
-    <div data-sensitive="" style={{ position: "relative", width: "fit-content" }}>
+    // Clipped to the cover's corners, so a carousel's square-cut edge never shows past them.
+    <div data-sensitive="" style={{ position: "relative", width: "fit-content", padding: framed ? "1px 0" : undefined, borderRadius: 16, overflow: "hidden" }}>
       <MediaBlock items={items} device={device} theme={theme} />
       <div aria-hidden style={{ position: "absolute", inset: 0, borderRadius: 16, overflow: "hidden" }}>{blurred}</div>
       <div style={{ position: "absolute", inset: 0, borderRadius: 16, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "12px 16px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", color: white, fontSize: 15, lineHeight: "20px" }}>
@@ -444,7 +470,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
   // the attachment through it.
   const attached = media?.length ? (
-    state.sensitive ? <SensitiveCover items={media} device={device} theme={theme} /> : <MediaBlock items={media} device={device} theme={theme} />
+    // x.com covers all the media when any item is flagged; the app swaps a lone flagged item for its
+    // fixed cover and covers a flagged item among several in place (MediaBlock).
+    media.some((m) => m.sensitive) && (device.kind !== "phone" || media.length === 1) ? <SensitiveCover items={media} device={device} theme={theme} /> : <MediaBlock items={media} device={device} theme={theme} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
@@ -453,7 +481,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
   // Under the text and attachment: the tag, then the disclosure. Each was captured alone; the order
   // when both show is assumed (QUIRKS.md).
-  const tagged = media?.length && state.tagged.trim() ? state.tagged.trim() : null;
+  const tagged = media?.length ? tagLine(state.tagged) || null : null;
   const below = (
     <>
       {tagged && <TagRow device={device} theme={theme} name={tagged} />}

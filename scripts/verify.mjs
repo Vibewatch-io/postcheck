@@ -154,12 +154,15 @@ function typedText(fx) {
 // X's JSON for a long post carries only the part before Show more, not the words after it. Pad it
 // with one word too long to fit, so the tool has to find X's cut on its own.
 const LONG_POST_TAIL = " " + "x".repeat(60);
+// Media as X recorded it (kind, size, alt text, video length); older fixtures only count photos.
+function mediaOf(fx) {
+  const media = fx.media?.map((m) => ({ kind: m.type === "animated_gif" ? "gif" : m.type, width: m.width, height: m.height, alt: Boolean(m.alt), ...(m.duration_ms !== undefined ? { durationMs: m.duration_ms } : {}) }));
+  return media ? { media } : { photo: fx.photos > 0 };
+}
 async function load(id) {
   const fx = JSON.parse(readFileSync(`fixtures/posts/${id}.json`, "utf8"));
   const text = typedText(fx);
-  // Media as X recorded it (kind, size, alt text, video length); older fixtures only count photos.
-  const media = fx.media?.map((m) => ({ kind: m.type === "animated_gif" ? "gif" : m.type, width: m.width, height: m.height, alt: Boolean(m.alt), ...(m.duration_ms !== undefined ? { durationMs: m.duration_ms } : {}) }));
-  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, media ? { media } : { photo: fx.photos > 0 });
+  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, mediaOf(fx));
 }
 async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
@@ -331,7 +334,8 @@ const STATE_BOXES = (deviceLast) => `(() => {
     if (cover) out[name + '@sensitive'] = box(r, cover.left, cover.top);
   }
   const reply = art.querySelector('[data-reply-icon]');
-  return { height: a.height, boxes: out, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : null };
+  const covered = [...art.querySelectorAll('[data-media-item]')].flatMap((e, i) => (e.querySelector('[data-item-cover]') ? [i] : []));
+  return { height: a.height, boxes: out, covered, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : null };
 })()`;
 const states = JSON.parse(readFileSync("fixtures/post-states.json", "utf8"));
 for (const pane of ["web", "app"]) {
@@ -346,10 +350,12 @@ for (const pane of ["web", "app"]) {
   }
   for (const p of states[pane]) {
     const fx = JSON.parse(readFileSync(`fixtures/posts/${p.id}.json`, "utf8"));
-    const photo = fx.photos > 0;
-    await compose(typedText(fx), { photo });
+    // `sensitive` names the items flagged in the composer (X sets it per item).
+    const base = mediaOf(fx);
+    const items = base.media ?? (base.photo ? [{ kind: "photo", width: 1600, height: 900 }] : []);
+    await compose(typedText(fx), { media: items });
     const plain = await page.evaluate(STATE_BOXES(deviceLast));
-    await compose(typedText(fx), { photo, state: p.state });
+    await compose(typedText(fx), { media: items.map((m, i) => ({ ...m, sensitive: (p.sensitive ?? []).includes(i) })), state: p.state ?? {} });
     const got = await page.evaluate(STATE_BOXES(deviceLast));
     const problems = [plain.error, got.error].filter(Boolean);
     if (problems.length) { fail++; console.log(`  FAIL ${pane === "web" ? "web " : "app "} ${p.test} ${p.id}\n       ${problems.join("\n       ")}`); continue; }
@@ -363,10 +369,11 @@ for (const pane of ["web", "app"]) {
         else if (Math.abs(b[k] - v) > 1) problems.push(`${name} ${k} X ${v} / tool ${Math.round(b[k] * 10) / 10}`);
       }
     }
+    if (p.coveredItems && got.covered.join() !== p.coveredItems.join()) problems.push(`covered items X [${p.coveredItems}] / tool [${got.covered}]`);
     if (p.replyDimmed !== undefined && got.replyOpacity === null) problems.push("no reply icon");
     else if (p.replyDimmed !== undefined && got.replyOpacity < 0.99 !== p.replyDimmed) problems.push(`reply icon ${p.replyDimmed ? "should" : "should not"} be dimmed (opacity ${got.replyOpacity})`);
     if (problems.length) { fail++; console.log(`  FAIL ${pane === "web" ? "web " : "app "} ${p.test} ${p.id}\n       ${problems.join("\n       ")}`); }
-    else { pass++; console.log(`  ok   ${pane === "web" ? "web " : "app "} ${p.test} ${p.id} ${Object.keys(p.state).join(", ")}`); }
+    else { pass++; console.log(`  ok   ${pane === "web" ? "web " : "app "} ${p.test} ${p.id} ${[...Object.keys(p.state ?? {}), ...(p.sensitive ? [`sensitive ${p.sensitive}`] : [])].join(", ")}`); }
   }
 }
 

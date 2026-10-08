@@ -13,6 +13,7 @@ import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/r
 import { useEffect, useId, useRef, useState } from "react";
 import { draftToDoc, serializeDoc, type Draft, type DocNode } from "@/lib/draft";
 import { REPLY_LIMITS, TAG_MAX, hasPostState, type PostState, type ReplyLimit } from "@/lib/post-state";
+import type { MediaItem } from "@/lib/media";
 
 // X's composer styles text in place; typed markdown markers stay literal text.
 const extensions = [
@@ -112,10 +113,14 @@ const REPLY_LABELS: Record<ReplyLimit, string> = {
 };
 
 /**
- * The post states X draws (pinned, paid partnership, reply limit, and a photo's sensitive flag and
- * tag), tucked behind one button so the composer stays plain. A dot on the button says something is set.
+ * The post states X draws (pinned, paid partnership, reply limit, and the media's sensitive flag,
+ * tag and per-photo alt text), tucked behind one button so the composer stays plain. A dot on the
+ * button says something is set.
  */
-export function PostOptions({ state, onChange, hasImage }: { state: PostState; onChange: (s: PostState) => void; hasImage: boolean }) {
+export function PostOptions({ state, onChange, media, onMedia }: { state: PostState; onChange: (s: PostState) => void; media: MediaItem[]; onMedia: (update: (m: MediaItem[]) => MediaItem[]) => void }) {
+  const hasImage = media.length > 0;
+  // x.com badges alt text on photos only (test 58); a GIF or video was never captured with it.
+  const photos = media.flatMap((m, i) => (m.kind === "photo" ? [{ m, i }] : []));
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -138,6 +143,29 @@ export function PostOptions({ state, onChange, hasImage }: { state: PostState; o
     };
   }, [open]);
   const set = (patch: Partial<PostState>) => onChange({ ...state, ...patch });
+  /**
+   * One checkbox per item for a flag X sets per item in its composer (alt text; the content warning),
+   * each next to its thumbnail when there are several.
+   */
+  const perItem = (label: string, flag: "alt" | "sensitive", items: Array<{ m: MediaItem; i: number }>) => (
+    <div className={row}>
+      <span>{label}</span>
+      <span className="flex items-center gap-2">
+        {items.map(({ m, i }, k) => {
+          const name = `${items.length > 1 ? `Item ${k + 1}` : "Media"}: ${label.toLowerCase()}`;
+          return (
+            <label key={i} className="flex cursor-pointer items-center gap-1" title={name}>
+              {items.length > 1 && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={m.src} alt="" className="h-6 w-6 rounded object-cover" />
+              )}
+              <input type="checkbox" className={box} aria-label={name} checked={Boolean(m[flag])} onChange={(e) => onMedia((all) => all.map((x, j) => (j === i ? { ...x, [flag]: e.target.checked } : x)))} />
+            </label>
+          );
+        })}
+      </span>
+    </div>
+  );
   const row = "flex min-h-9 items-center justify-between gap-3 text-sm text-brand-warm-dark";
   const box = "h-4 w-4 accent-brand-teal";
   return (
@@ -160,7 +188,7 @@ export function PostOptions({ state, onChange, hasImage }: { state: PostState; o
           <circle cx="9" cy="12" r="2" />
           <circle cx="17" cy="18" r="2" />
         </svg>
-        {hasPostState(state) && <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-brand-teal" />}
+        {(hasPostState(state) || media.some((m) => m.alt || m.sensitive)) && <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-brand-teal" />}
       </button>
       {open && (
         <div id={id} role="group" aria-label="Post options" className="absolute left-0 top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl sm:top-11 sm:mt-0 border border-brand-warm-border bg-white px-4 py-2 shadow-lg">
@@ -185,26 +213,25 @@ export function PostOptions({ state, onChange, hasImage }: { state: PostState; o
           <div className="my-1 border-t border-brand-warm-border" />
           {hasImage ? (
             <>
-              <label className={row}>
-                Sensitive photo
-                <input type="checkbox" className={box} checked={state.sensitive} onChange={(e) => set({ sensitive: e.target.checked })} />
-              </label>
+              {perItem("Sensitive", "sensitive", media.map((m, i) => ({ m, i })))}
               <label className={row}>
                 Tagged
                 <input
                   value={state.tagged}
                   maxLength={TAG_MAX}
-                  placeholder="Display name"
+                  placeholder="Display names"
+                  title="Display names of the people tagged, separated by commas"
                   autoComplete="off"
                   data-1p-ignore=""
                   data-lpignore="true"
                   onChange={(e) => set({ tagged: e.target.value })}
-                  className="w-36 rounded-lg border border-brand-warm-border px-2 py-1 text-sm outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal"
+                  className="w-40 rounded-lg border border-brand-warm-border px-2 py-1 text-sm outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal"
                 />
               </label>
+              {photos.length > 0 && perItem("Alt text", "alt", photos)}
             </>
           ) : (
-            <p className="py-2 text-xs text-brand-warm-secondary">Add an image to mark it sensitive or tag someone.</p>
+            <p className="py-2 text-xs text-brand-warm-secondary">Add media to mark it sensitive, tag someone or add alt text.</p>
           )}
         </div>
       )}

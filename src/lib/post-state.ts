@@ -1,6 +1,7 @@
 /**
- * Post states X draws around a post's text (QUIRKS.md, "Post chrome"). An edited post isn't one:
- * the timeline shows only the latest text, no marker, on the web and in the iOS app (test 104).
+ * Post states X draws around a post's text (QUIRKS.md, "Post chrome"); a media item's sensitive flag
+ * and alt text live on the item (`MediaItem`). An edited post isn't one: the timeline shows only the
+ * latest text, no marker, on the web and in the iOS app (test 104).
  */
 
 /** "Who can reply", as X's composer names the choices. */
@@ -13,18 +14,27 @@ export interface PostState {
   /** The composer's content disclosure: "Paid partnership" under the post. */
   paid: boolean;
   replies: ReplyLimit;
-  /** The photo flagged sensitive in the composer. Drawn only while a photo is attached. */
-  sensitive: boolean;
-  /** Display name of the person tagged in the photo ("" for none). Drawn only with a photo. */
+  /** Display names of the people tagged, comma-separated ("" for none). Drawn only with media. */
   tagged: string;
 }
 
-export const NO_POST_STATE: PostState = { pinned: false, paid: false, replies: "everyone", sensitive: false, tagged: "" };
+export const NO_POST_STATE: PostState = { pinned: false, paid: false, replies: "everyone", tagged: "" };
 
-/** X's display-name limit; a tag shows the tagged account's display name. */
-export const TAG_MAX = 50;
+/** X tags up to 10 people, each shown by a display name of up to 50 characters. */
+export const TAG_PEOPLE = 10;
+export const TAG_MAX = TAG_PEOPLE * 52;
+
+/**
+ * The line X puts under tagged media: one name as it is, two as "A and B" (test 110b). Three or
+ * more as "A and N others" is assumed, not captured.
+ */
+export function tagLine(tagged: string): string {
+  const names = tagged.split(",").map((n) => n.trim()).filter(Boolean).slice(0, TAG_PEOPLE);
+  if (names.length <= 2) return names.join(" and ");
+  return `${names[0]} and ${names.length - 1} others`;
+}
 
 /** Whether anything differs from a plain post (the composer marks its options button when so). */
 export function hasPostState(s: PostState): boolean {
-  return s.pinned || s.paid || s.replies !== "everyone" || s.sensitive || s.tagged.trim() !== "";
+  return s.pinned || s.paid || s.replies !== "everyone" || s.tagged.trim() !== "";
 }

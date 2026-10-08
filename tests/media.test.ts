@@ -36,12 +36,12 @@ function check(file: string, deviceId: string, tolerance: number) {
 }
 
 test("x.com media boxes: every recorded post to 1px", () => {
-  assert.equal(check("fixtures/web/postcheck_test.json", "web", 1), 19);
+  assert.equal(check("fixtures/web/postcheck_test.json", "web", 1), 21);
 });
 
 // Screen captures read ±1pt at each edge: the same 16:9 photo reads 322×182 (test 50) and 324×183 (test 110).
 test("iPhone media boxes: every recorded post to 2pt", () => {
-  assert.equal(check("fixtures/app/iphone-16.json", "iphone-16", 2), 17);
+  assert.equal(check("fixtures/app/iphone-16.json", "iphone-16", 2), 19);
 });
 
 test("video length reads m:ss", () => {
