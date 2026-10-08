@@ -128,9 +128,10 @@ await page.route(/\/api\/quote$/, (route) => {
   return route.fulfill({ contentType: "application/json", body: JSON.stringify(body) });
 });
 // Card lookups replay /api/unfurl answers recorded in fixtures/unfurl.json, so a site that is slow,
-// down or has changed its tags never moves a run. --record-unfurl asks the live route instead and
-// saves what it answers (read the diff: a timeout records as no card). A card image becomes the grey
-// stand-in. A link with no recording answers as no card and fails the run.
+// down or has changed its tags never moves a run. A recorded null is the route's "none" (the page has
+// no tags). --record-unfurl asks the live route instead and saves a card or a "none"; a failed or
+// refused lookup is left unrecorded and fails the run, so a timeout is never baked in as no card. A
+// card image becomes the grey stand-in. A link with no recording answers as failed and fails the run.
 const UNFURL = "fixtures/unfurl.json";
 const recordUnfurl = args.includes("--record-unfurl");
 const unfurls = recordUnfurl ? {} : JSON.parse(readFileSync(UNFURL, "utf8"));
@@ -138,15 +139,15 @@ const unrecorded = new Set();
 await page.route(/\/api\/unfurl$/, async (route) => {
   const url = route.request().postDataJSON()?.url;
   if (recordUnfurl && !(url in unfurls)) {
-    // A refused lookup (a 400 carries no card field) records as no card, so it survives the write; a
-    // lookup that never answered is left unrecorded and fails this run.
     try {
-      const { card } = await (await route.fetch()).json();
-      unfurls[url] = card ? { ...card, image: card.image ? STAND_IN : null } : null;
+      const { card, reason } = await (await route.fetch()).json();
+      if (card) unfurls[url] = { ...card, image: card.image ? STAND_IN : null };
+      else if (reason === "none") unfurls[url] = null;
     } catch {}
   }
   if (!(url in unfurls)) unrecorded.add(url);
-  return route.fulfill({ contentType: "application/json", body: JSON.stringify({ card: unfurls[url] ?? null }) });
+  const answer = !(url in unfurls) ? { card: null, reason: "failed" } : unfurls[url] ? { card: unfurls[url] } : { card: null, reason: "none" };
+  return route.fulfill({ contentType: "application/json", body: JSON.stringify(answer) });
 });
 // --no-chirp simulates X blocking its CDN: the page must degrade to GT America.
 if (args.includes("--no-chirp")) await page.route(/abs\.twimg\.com/, (r) => r.abort());
@@ -375,6 +376,18 @@ async function mediaDiff(label, deviceLast, id, want, web) {
   else { pass++; console.log(`  ok   ${label} media ${id}`); }
 }
 
+/**
+ * The iOS timeline cell's height against the iPhone's, separator to separator (QUIRKS.md, "Layout: app"):
+ * it moves with every vertical constant at once (name row, body pitch, the gaps around a card, photo or
+ * quote, the action row, the padding). The capture's 1/3pt separator lands on a different screen pixel
+ * each time, so the same cell reads ±0.5 from one capture to the next: matched to 1.5pt.
+ */
+async function cellDiff(label, id, want) {
+  const got = await page.evaluate(() => { const arts = [...document.querySelectorAll("article")]; return arts[arts.length - 1].getBoundingClientRect().height; });
+  if (Math.abs(got - want) <= 1.5) { pass++; console.log(`  ok   ${label} cell ${id}`); }
+  else { fail++; console.log(`  FAIL ${label} cell ${id}\n       height X ${want} / tool ${Math.round(got * 10) / 10}`); }
+}
+
 for (const f of readdirSync("fixtures/web")) {
   const fx = JSON.parse(readFileSync(`fixtures/web/${f}`, "utf8"));
   console.log(`\nweb · ${f}`);
@@ -407,6 +420,7 @@ for (const f of readdirSync("fixtures/app")) {
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
     if (p.media) await mediaDiff("app ", true, p.id, p.media, false);
     if (p.blue) await colourDiff("app ", true, p.id, p.blue);
+    if (p.cell) await cellDiff("app ", p.id, p.cell);
   }
 }
 if (recordUnfurl) {

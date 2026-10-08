@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { LookupAddress } from "node:dns";
-import { assertPublic, checkedLookup } from "../src/lib/server/fetch-guard";
-import { metaLookup } from "../src/lib/server/meta";
+import { assertPublic, checkedLookup, readCapped } from "../src/lib/server/fetch-guard";
+import { cardMeta, metaLookup } from "../src/lib/server/meta";
 import { sameOrigin } from "../src/lib/server/same-origin";
 
 // Pre-launch security pass, 2026-10-08 (Codex + Claude). Each test names the bug class it catches.
@@ -76,4 +76,24 @@ test("fonts: only this origin may load the licensed files, not a sibling subdoma
   assert.equal(sameOrigin(req({ host: "postcheck.vibewatch.io", origin: "http://postcheck.vibewatch.io" })), false);
   assert.equal(sameOrigin(req({ host: "Postcheck.Vibewatch.io:443", origin: "https://postcheck.vibewatch.io" })), true);
   assert.equal(sameOrigin(req({ "x-forwarded-host": "postcheck.vibewatch.io, internal", "x-forwarded-proto": "https", origin: "https://postcheck.vibewatch.io" })), true);
+});
+
+// "none" makes the advice say the page has no tags, so it is only for a page read to its end with no
+// social tag at all; anything the route can't be sure of is "failed".
+test("a page's card tags: none only for a whole page without social tags", () => {
+  assert.equal(cardMeta("<title>Example Domain</title>", true), "none");
+  assert.equal(cardMeta("<title>Example Domain</title>", false), "failed"); // cut off at the cap
+  assert.equal(cardMeta('<meta property="og:image" content="/a.png">', true), "failed"); // tags, no title
+  assert.equal(cardMeta('<title>T</title><meta property="og:title" content="">', true), "failed"); // an empty tag is still a tag
+  assert.equal(cardMeta('<title>T</title><meta property="og:description" content="D">', true), "failed"); // OG, but no card key
+  assert.deepEqual(cardMeta('<meta property="og:image" content="/a.png"><title>T</title>', true), { title: "T", description: "", imageRaw: "/a.png", cardType: "" });
+  const card = cardMeta('<meta name="twitter:card" content="summary_large_image"><meta property="og:title" content="Hi">', false);
+  assert.equal(typeof card === "object" && card.cardType, "summary_large_image"); // tags found before the cut still make a card
+});
+
+// The chunk that crosses the cap keeps its bytes up to the cap: tags in it must not read as zeros.
+test("readCapped keeps the crossing chunk up to the cap", async () => {
+  const enc = new TextEncoder();
+  const body = new ReadableStream<Uint8Array<ArrayBuffer>>({ start(c) { c.enqueue(enc.encode("abc")); c.enqueue(enc.encode("defgh")); c.close(); } });
+  assert.equal(new TextDecoder().decode(await readCapped({ body }, 5)), "abcde");
 });
