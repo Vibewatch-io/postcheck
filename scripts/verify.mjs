@@ -114,8 +114,9 @@ const unrecorded = new Set();
 await page.route(/\/api\/unfurl$/, async (route) => {
   const url = route.request().postDataJSON()?.url;
   if (recordUnfurl && !(url in unfurls)) {
+    // A refused lookup (a 400 carries no card field) records as no card, so it survives the write.
     const { card } = await (await route.fetch()).json();
-    unfurls[url] = card && { ...card, image: card.image ? STAND_IN : null };
+    unfurls[url] = card ? { ...card, image: card.image ? STAND_IN : null } : null;
   }
   if (!(url in unfurls)) unrecorded.add(url);
   return route.fulfill({ contentType: "application/json", body: JSON.stringify({ card: unfurls[url] ?? null }) });
