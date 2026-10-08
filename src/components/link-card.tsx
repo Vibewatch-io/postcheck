@@ -15,7 +15,7 @@ interface Props {
   font: "web" | "app";
   /** x.com itself (timeline or post page), not a phone: only there are the 2026-10-07 card metrics measured. */
   web: boolean;
-  /** The iOS app: its pill, "From" line and small card are measured on iPhone captures (2026-10-08). */
+  /** The iOS timeline cell: its pill, "From" line and small card are measured on iPhone captures (2026-10-08). */
   ios: boolean;
 }
 
@@ -39,7 +39,7 @@ const clamp = (lines: number): React.CSSProperties => ({
  * image's left and bottom, ~18pt high, black at 50%, 13pt text at the body's tracking, ending at
  * least 24pt short of the right edge; "From domain" at 13pt, 12pt in from the card's left; no card
  * fill; the small card a 322×81 box with an 80pt thumbnail, the title above the domain and no
- * description. Android keeps the earlier values, unmeasured.
+ * description. Android and the iOS post screen keep the earlier values, unmeasured.
  */
 export function LinkCard({ card, theme, width, viewport, font: fontKind, web, ios }: Props) {
   const font = { fontFamily: fontStack(fontKind), fontSize: 15, lineHeight: "20px" } as const;
