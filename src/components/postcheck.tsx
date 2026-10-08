@@ -758,31 +758,33 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
     if (!node || exporting || !exportAllowed) return;
     setExporting(true);
     setExportError(null);
-    // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
-    // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
-    // the image is what the screen shows; the screen itself looks the same throughout.
-    const restore = [...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
-      const top = el.scrollTop;
-      const cell = el.firstElementChild as HTMLElement | null;
-      if (!top || !cell) return [];
-      const margin = cell.style.marginTop;
-      cell.style.marginTop = `${-top}px`;
-      el.scrollTop = 0;
-      return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
-    });
-    // A media carousel swiped sideways: the same, along x.
-    for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"]')) {
-      const left = el.scrollLeft;
-      const first = el.firstElementChild as HTMLElement | null;
-      if (!left || !first) continue;
-      const margin = first.style.marginLeft;
-      first.style.marginLeft = `${-left}px`;
-      el.scrollLeft = 0;
-      restore.push(() => { first.style.marginLeft = margin; el.scrollLeft = left; });
-    }
+    const restore: Array<() => void> = [];
     try {
       await document.fonts.ready;
       const { toPng } = await import("html-to-image");
+      // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
+      // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
+      // the image is what the screen shows; the screen itself looks the same throughout. Read just
+      // before drawing, after the awaits, so a scroll made meanwhile is the one exported.
+      restore.push(...[...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
+        const top = el.scrollTop;
+        const cell = el.firstElementChild as HTMLElement | null;
+        if (!top || !cell) return [];
+        const margin = cell.style.marginTop;
+        cell.style.marginTop = `${-top}px`;
+        el.scrollTop = 0;
+        return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
+      }));
+      // A media carousel swiped sideways: the same, along x.
+      for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"]')) {
+        const left = el.scrollLeft;
+        const first = el.firstElementChild as HTMLElement | null;
+        if (!left || !first) continue;
+        const margin = first.style.marginLeft;
+        first.style.marginLeft = `${-left}px`;
+        el.scrollLeft = 0;
+        restore.push(() => { first.style.marginLeft = margin; el.scrollLeft = left; });
+      }
       const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 20000));
       const dataUrl = await Promise.race([toPng(node, { pixelRatio: device.pixelRatio, cacheBust: false }), timeout]);
       const a = document.createElement("a");
