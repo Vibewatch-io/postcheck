@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListedPhone, rowHidesStyles, thisPhone, type Device } from "@/lib/devices";
 import { THEMES, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
-import { cardless, type CardData } from "@/lib/card";
+import { cardless, type CardData, type NoCardReason } from "@/lib/card";
 import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
 import socialCard from "@/app/opengraph-image.png";
 import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
@@ -38,7 +38,8 @@ const PRECACHED_CARDS: Record<string, CardData> = {
   [SITE_URL]: { url: `${SITE_URL}/`, host: SITE_HOST, title: TITLE, description: DESCRIPTION, image: socialCard.src, layout: "large" },
 };
 
-type CardState = CardData | null | "loading";
+/** A looked-up link: its card, why it has none (see NoCardReason), or a lookup still to answer. */
+type CardState = CardData | NoCardReason | "loading";
 
 /** A 1×1 grey image for the verify harness, standing in for media of any recorded size. */
 const STAND_IN_PHOTO = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
@@ -213,8 +214,10 @@ export function Postcheck() {
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
   const cardKey = cardEntity && !cardEntity.isStatus && !media.length && !cardless(cardEntity.href!) ? cardEntity.href! : null;
-  // A recorded null is an answer (the page has no card), not a lookup still to come.
-  const card: CardState = cardKey ? (Object.hasOwn(cards, cardKey) ? cards[cardKey] : "loading") : null;
+  // A recorded "none" or "failed" is an answer, not a lookup still to come. Both draw no card and
+  // leave the link text visible; only the advice tells them apart.
+  const cardState: CardState | null = cardKey ? (Object.hasOwn(cards, cardKey) ? cards[cardKey] : "loading") : null;
+  const card = cardState === "none" || cardState === "failed" ? null : cardState;
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;
   const hiddenUrlStart = attachmentEntity && hasAttachment && isTrailing(post, attachmentEntity) ? attachmentEntity.start : null;
@@ -298,14 +301,15 @@ export function Postcheck() {
       setCards((c) => ({ ...c, [cardKey]: "loading" }));
       try {
         const res = await fetch("/api/unfurl", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: cardKey }), signal: ctrl.signal });
-        // A refused lookup (a 400 carries no card field) is no card, never undefined.
-        const json = res.ok ? ((await res.json()) as { card?: CardData | null }) : null;
+        // A refused lookup (a 400 carries no card field) or any answer but a card or an exact
+        // { card: null, reason: "none" } is a failed lookup: only "none" says the page has no tags.
+        const json = res.ok ? ((await res.json()) as { card?: CardData | null; reason?: NoCardReason }) : null;
         inFlight = false;
-        setCards((c) => ({ ...c, [cardKey]: json?.card ?? null }));
+        setCards((c) => ({ ...c, [cardKey]: json?.card ?? (json?.card === null && json.reason === "none" ? "none" : "failed") }));
       } catch {
         if (ctrl.signal.aborted) return;
         inFlight = false;
-        setCards((c) => ({ ...c, [cardKey]: null }));
+        setCards((c) => ({ ...c, [cardKey]: "failed" }));
       }
     }, cardLinkDone ? 600 : 1500);
     return () => {
@@ -360,9 +364,9 @@ export function Postcheck() {
         text: post,
         entities,
         length,
-        // The route answers null both for a page without tags and for a lookup that failed (a timeout,
-        // a bot wall), so the "no card" advice stays with links the tool never looks up (App Store).
-        card: card === "loading" || (card === null && cardKey !== null) ? undefined : card,
+        // "none" (the page has no tags) is no card for certain, like a link the tool never looks up
+        // (App Store, X articles); a failed lookup gets advice that says only that.
+        card: cardState === "failed" ? "failed" : card === "loading" ? undefined : card,
         lineSets,
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
         hasMedia: media.length > 0,
@@ -374,7 +378,7 @@ export function Postcheck() {
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, cardKey, lineSets, phoneClamp, media, webDevice, phoneDevice, styles.length, draft.text],
+    [post, entities, length, card, cardState, lineSets, phoneClamp, media, webDevice, phoneDevice, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
