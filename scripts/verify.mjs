@@ -45,7 +45,9 @@ const ROWS = (deviceLast, quote = false) => `(() => {
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
   const first = [...art.querySelectorAll('[data-w]')].find((w) => !!w.closest('[data-quote]') === ${quote}); if (!first) return { rows: [], more: false };
   const body = first.parentElement; const top = body.getBoundingClientRect().top; const rows = {};
-  const lh = parseFloat(getComputedStyle(body).lineHeight) || 20;
+  // The stage scales a tall phone down to fit the window (with the font banner showing, the Pixel 10 at ×0.945):
+  // client rects come back scaled, the computed line height doesn't.
+  const lh = (parseFloat(getComputedStyle(body).lineHeight) || 20) * (body.getBoundingClientRect().height / body.offsetHeight || 1);
   const shown = Math.round(body.getBoundingClientRect().height / lh);
   for (const w of body.querySelectorAll('[data-w]')) { const r = w.getClientRects(); if (!r.length || Math.round((r[0].top - top) / lh) >= shown) continue;
     const ks = [...r].map((x) => Math.round((x.top - top) / lh));

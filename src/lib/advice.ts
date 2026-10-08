@@ -136,8 +136,8 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         severity: "note",
         title: "Link to an X post",
         detail: trailing
-          ? `A link to a post becomes a quote post, and because it's last, the URL text disappears.${urls.length > 1 ? " The quote replaces any link card." : ""}`
-          : `A link to a post becomes a quote post. Move it to the end and the URL text disappears too.${urls.length > 1 ? " The quote replaces any link card." : ""}`,
+          ? `A link to a post becomes a quote post, and because it's last, x.com and the iPhone app drop the URL text. The Android app still prints it.${urls.length > 1 ? " The quote replaces any link card." : ""}`
+          : `A link to a post becomes a quote post. Move it to the end and x.com and the iPhone app drop the URL text too. The Android app keeps it either way.${urls.length > 1 ? " The quote replaces any link card." : ""}`,
         marks: [trailing ? { el: "attachment" } : { at: cu.start }],
       });
     } else if (card) {
@@ -266,7 +266,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       id: "premium-styles",
       severity: "note",
       title: "Bold and italic need Premium",
-      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks move wherever the styling shows. In the iPhone app's timeline, X shows the post with no bold or italic at all (a post that folds behind Show more gets it back once that's tapped), so the breaks and the fold there don't change; its post page shows the styling. That looks like an X bug, and the iPhone preview shows it the same way.",
+      detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks move wherever the styling shows. In the iPhone and Android apps' timelines, X shows the post with no bold or italic at all, so the breaks and the fold there don't change (an iPhone post that folds behind Show more gets it back once that's tapped, and its post page shows it). That looks like an X bug, and the phone previews show it the same way.",
     });
   }
 

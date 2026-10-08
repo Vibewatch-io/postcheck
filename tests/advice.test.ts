@@ -72,15 +72,15 @@ test("a link's tail alone on the last row is not a dangling word", () => {
   assert.equal(advice.find((a) => a.id.startsWith("orphan-")), undefined);
 });
 
-// The iOS timeline row drops Premium styling (tests 70, 70b); the tip must say so.
-test("the styling tip says the iPhone timeline shows no bold or italic", () => {
+// Both apps' timeline rows drop Premium styling (tests 70, 70b); the tip must say so.
+test("the styling tip says the app timelines show no bold or italic", () => {
   const text = "Ship it today";
   const entities = extractEntities(text);
   const tip = buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasStyles: true }).find((a) => a.id === "premium-styles");
-  assert.match(tip?.detail ?? "", /iPhone app's timeline, X shows the post with no bold or italic/);
+  assert.match(tip?.detail ?? "", /iPhone and Android apps' timelines, X shows the post with no bold or italic/);
 });
 
-test("only an unexpanded iOS timeline row hides styling", async () => {
+test("only an unexpanded app timeline row hides styling", async () => {
   const { DEVICES, rowHidesStyles } = await import("../src/lib/devices");
   const ios = DEVICES.find((d) => d.platform === "ios" && d.view === "timeline")!;
   const iosPost = DEVICES.find((d) => d.platform === "ios" && d.view === "post")!;
@@ -89,6 +89,6 @@ test("only an unexpanded iOS timeline row hides styling", async () => {
   assert.equal(rowHidesStyles(ios), true);
   assert.equal(rowHidesStyles(ios, true), false);
   assert.equal(rowHidesStyles(iosPost), false);
-  assert.equal(rowHidesStyles(android), false);
+  assert.equal(rowHidesStyles(android), true);
   assert.equal(rowHidesStyles(web), false);
 });
