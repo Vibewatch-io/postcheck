@@ -149,6 +149,7 @@ Long test 08: an emoji starts on character 280 and ends on 281. the quick brown 
 | 57 | Poll with 4 options | Poll layout (drawn since 2026-10-08; `verify` checks it). |
 | 58 | Photo with alt text | ALT badge. |
 | 57b | Poll with 4 options, an image on each choice (tiles 1–4) | Image poll layout (`poll_choice_images` card). The first web attempt never uploaded the choice images; it worked after a page refresh. |
+| 57c | `Test 57c: image poll, open for 7 days` · `One`–`Four`, tiles 5–8, 7 days | The voter view of an open image poll (read from another account). Posted 2026-10-08 (2108319976751002108). With a picture on choice 1 only, Post stayed off; with all four it stalled until the poll length was changed and changed back. |
 | 59b | A photo and a video | Mixed media in one post. |
 | 59c | Photo, GIF, video, photo | Mixed media with badges. |
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { shownPoll, timeLeft, type Poll } from "../src/lib/poll";
+import { missingPictures, shownPoll, timeLeft, type Poll } from "../src/lib/poll";
 
 const poll: Poll = { choices: ["Yes", " ", "No"], images: [null, null, null], minutes: 1440 };
 
@@ -23,4 +23,13 @@ test("time left reads the way each client prints it", () => {
   assert.equal(timeLeft(1440, "app"), "23 hours 59 minutes left");
   assert.equal(timeLeft(1440, "app-short"), "23h left");
   assert.equal(timeLeft(61, "app"), "1 hour left");
+});
+
+// X keeps Post off until every choice of an image poll has a picture (composing test 57c); a blank
+// choice doesn't count, and a text poll never needs one.
+test("an image poll is missing pictures when a filled choice has none", () => {
+  const pic = "data:image/jpeg;base64,AA==";
+  assert.equal(missingPictures({ ...poll, images: [pic, null, null] }), true);
+  assert.equal(missingPictures({ ...poll, images: [pic, null, pic] }), false);
+  assert.equal(missingPictures(poll), false);
 });

@@ -47,8 +47,8 @@ export interface SharedPreview {
  * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. Media travels
  * as `items`, [jpeg, kind, width, height, alt (0/1), video ms]; links made before several items
  * could be attached carry one photo in `media`, which still opens. A poll is
- * optional too (links made before polls still open): its choices and minutes. The composer makes
- * text polls only, so no pictures travel.
+ * optional too (links made before polls still open): its choices, minutes, and for an image poll a
+ * JPEG Share made per choice (or null).
  */
 interface Wire {
   v: 1;
@@ -60,7 +60,7 @@ interface Wire {
   avatar: string | null;
   media: string | null;
   items?: Array<[string, string, number, number, number, number]>;
-  poll?: { c: string[]; m: number };
+  poll?: { c: string[]; m: number; i?: Array<string | null> };
   theme: string;
   phone: string;
   web: string;
@@ -78,7 +78,7 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     avatar: p.identity.avatar,
     media: null,
     items: p.media.map((m) => [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0]),
-    ...(p.poll ? { poll: { c: p.poll.choices, m: p.poll.minutes } } : {}),
+    ...(p.poll ? { poll: { c: p.poll.choices, m: p.poll.minutes, ...(p.poll.images.some(Boolean) ? { i: p.poll.images } : {}) } } : {}),
     theme: p.theme,
     phone: p.phone,
     web: p.web,
@@ -142,11 +142,12 @@ export function parseWire(raw: unknown): SharedPreview | null {
 /** A shared poll, or null when it isn't one the composer could have made (a bad poll is dropped, not the link). */
 export function sharedPoll(v: unknown): Poll | null {
   if (!v || typeof v !== "object") return null;
-  const { c, m } = v as { c?: unknown; m?: unknown };
+  const { c, m, i } = v as { c?: unknown; m?: unknown; i?: unknown };
   if (!Array.isArray(c) || c.length < POLL_MIN_CHOICES || c.length > POLL_MAX_CHOICES) return null;
   if (!c.every((x) => typeof x === "string" && x.length <= POLL_CHOICE_MAX)) return null;
   if (!Number.isInteger(m) || (m as number) < POLL_MIN_MINUTES || (m as number) > POLL_MAX_MINUTES) return null;
-  return { choices: c as string[], minutes: m as number, images: c.map(() => null) };
+  // Each picture passes the same check as any shared image; a bad one leaves its choice without.
+  return { choices: c as string[], minutes: m as number, images: c.map((_, k) => (Array.isArray(i) ? sharedImage(i[k]) : null)) };
 }
 
 /** The shared items, each checked; a bad item is dropped. A v1 link's single image opens as one photo. */

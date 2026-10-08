@@ -15,6 +15,12 @@ const MEDIA_STEPS: Array<[maxEdge: number, quality: number]> = [
   [120, 0.45],
 ];
 const AVATAR_EDGE = 96;
+/** Image-poll pictures, square, smallest last: all of them travel at one size, or none do. */
+const POLL_PICTURE_STEPS: Array<[edge: number, quality: number]> = [
+  [240, 0.62],
+  [160, 0.58],
+  [112, 0.55],
+];
 
 type Status = { kind: "idle" | "working" | "copied" } | { kind: "note"; text: string; url?: string };
 
@@ -105,8 +111,20 @@ async function makeLink(p: SharedPreview): Promise<{ url: string | null; left: s
   if (p.text.length > SHARE_MAX_TEXT) return { url: null, left: [] };
   const avatar = p.identity.avatar ? await shrink(p.identity.avatar, AVATAR_EDGE, 0.8, true).catch(() => null) : null;
   const photoLost = Boolean(p.identity.avatar) && !avatar;
-  const base = { ...p, identity: { ...p.identity, avatar } };
+  let base = { ...p, identity: { ...p.identity, avatar } };
   const at = (fragment: string) => `${location.origin}${location.pathname}${fragment}`;
+  // A poll's pictures shrink together until the link fits; if none fits, the poll travels as text.
+  const poll = p.poll;
+  if (poll && poll.images.some(Boolean)) {
+    for (const [edge, quality] of POLL_PICTURE_STEPS) {
+      const images = await Promise.all(poll.images.map((src) => (src ? shrink(src, edge, quality, true).catch(() => null) : Promise.resolve(null))));
+      if (images.some((src, k) => poll.images[k] && !src)) break;
+      const url = at(await encodeShare({ ...base, poll: { ...poll, images } }));
+      if (url.length <= SHARE_LINK_BUDGET) return { url, left: photoLost ? ["profile photo"] : [] };
+    }
+    base = { ...base, poll: { ...poll, images: poll.images.map(() => null) } };
+  }
+  const pollLost = Boolean(poll?.images.some(Boolean)) ? ["poll pictures"] : [];
   if (p.media.length) {
     for (const [edge, quality] of MEDIA_STEPS) {
       // An item the browser can't redraw is left out on its own; the rest still travel.
@@ -121,8 +139,8 @@ async function makeLink(p: SharedPreview): Promise<{ url: string | null; left: s
   }
   // Last resorts before refusing: no attached media, then no photo either.
   const image = p.media.length ? [p.media.length > 1 ? "attached media" : p.media[0].kind === "photo" ? "image" : p.media[0].kind === "gif" ? "GIF" : "video"] : [];
-  const attempts: Array<[SharedPreview["identity"], string[]]> = [[base.identity, [...image, ...(photoLost ? ["profile photo"] : [])]]];
-  if (avatar) attempts.push([{ ...base.identity, avatar: null }, [...image, "profile photo"]]);
+  const attempts: Array<[SharedPreview["identity"], string[]]> = [[base.identity, [...image, ...pollLost, ...(photoLost ? ["profile photo"] : [])]]];
+  if (avatar) attempts.push([{ ...base.identity, avatar: null }, [...image, ...pollLost, "profile photo"]]);
   for (const [identity, left] of attempts) {
     const url = at(await encodeShare({ ...base, identity, media: [] }));
     if (url.length <= SHARE_LINK_BUDGET) return { url, left };

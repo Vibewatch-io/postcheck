@@ -44,6 +44,12 @@ export function shownPoll(poll: Poll | null, weighted: number): Poll | null {
 /** A poll is an image poll when any choice has a picture (X stores it as a `poll_choice_images` card). */
 export const isImagePoll = (poll: Poll) => poll.images.some(Boolean);
 
+/**
+ * An image poll with a filled choice that has no picture: X's composer keeps Post off until every
+ * choice has one (2026-10-08, composing test 57c; the owner's experience agrees).
+ */
+export const missingPictures = (poll: Poll) => isImagePoll(poll) && filledChoices(poll).some((c) => !c.image);
+
 const unit = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /**

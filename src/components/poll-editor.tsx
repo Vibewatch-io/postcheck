@@ -1,5 +1,7 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
+import { CameraIcon } from "./icons";
 import { POLL_CHOICE_MAX, POLL_MAX_CHOICES, POLL_MIN_CHOICES, clampMinutes, type Poll } from "@/lib/poll";
 
 const field = "min-w-0 flex-1 rounded-lg border border-brand-warm-border bg-white px-3 py-2 text-base sm:text-sm text-brand-warm-dark outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal";
@@ -9,11 +11,13 @@ const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /**
- * The poll under the editor, as X's composer has it: two to four choices of up to 25 characters and
- * how long it runs (5 minutes to 7 days). Image polls are drawn (verify replays test 57b) but not
- * offered here: the web voter view of one has no capture yet.
+ * The poll under the editor, as X's composer has it: two to four choices of up to 25 characters, a
+ * picture beside each one if it's an image poll (X takes JPEG, PNG, GIF or WebP there, and wants one
+ * on every choice), and how long it runs (5 minutes to 7 days).
  */
-export function PollEditor({ poll, onChange }: { poll: Poll; onChange: (p: Poll | null) => void }) {
+export function PollEditor({ poll, onChange, readFile }: { poll: Poll; onChange: Dispatch<SetStateAction<Poll | null>>; readFile: (file: File | undefined, set: (url: string) => void) => void }) {
+  // A picture lands when its read finishes, so it goes through the latest poll, not this render's.
+  const setImage = (i: number, image: string | null) => onChange((p) => p && { ...p, images: p.images.map((x, j) => (j === i ? image : x)) });
   const days = Math.floor(poll.minutes / 1440);
   const hours = Math.floor((poll.minutes % 1440) / 60);
   const minutes = poll.minutes % 60;
@@ -25,7 +29,21 @@ export function PollEditor({ poll, onChange }: { poll: Poll; onChange: (p: Poll 
     <fieldset className="mt-3 space-y-2 rounded-xl border border-brand-warm-border bg-white p-3" aria-label="Poll">
       {poll.choices.map((label, i) => (
         <div key={i} className="flex items-center gap-2">
+          <label className={`${small} relative cursor-pointer overflow-hidden`} title={poll.images[i] ? "Change picture" : "Add picture"}>
+            {poll.images[i] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={poll.images[i]!} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <CameraIcon size={16} />
+            )}
+            <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" aria-label={`Picture for choice ${i + 1}`} className="sr-only" onChange={(e) => { readFile(e.target.files?.[0], (url) => setImage(i, url)); e.target.value = ""; }} />
+          </label>
           <input className={field} value={label} maxLength={POLL_CHOICE_MAX} placeholder={`Choice ${i + 1}`} aria-label={`Choice ${i + 1}`} autoComplete="off" onChange={(e) => setChoice(i, e.target.value)} />
+          {poll.images[i] && (
+            <button type="button" className={small} aria-label={`Remove picture from choice ${i + 1}`} title="Remove picture" onClick={() => setImage(i, null)}>
+              ×
+            </button>
+          )}
           {poll.choices.length > POLL_MIN_CHOICES && (
             <button type="button" className={small} aria-label={`Remove choice ${i + 1}`} title="Remove choice" onClick={() => remove(i)}>
               −

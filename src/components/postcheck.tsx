@@ -19,7 +19,7 @@ import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
-import { POLL_MIN_CHOICES, emptyPoll, filledChoices, shownPoll, type Poll } from "@/lib/poll";
+import { POLL_MIN_CHOICES, emptyPoll, filledChoices, missingPictures, shownPoll, type Poll } from "@/lib/poll";
 import { PollEditor } from "./poll-editor";
 import { APP_MIN_RATIO, mediaLayout, type MediaItem, type MediaKind } from "@/lib/media";
 import { MediaPicker } from "./media-picker";
@@ -378,6 +378,7 @@ export function Postcheck() {
         }),
         // An incomplete poll is unpostable whatever the length, so "empty" wins over "dropped".
         poll: poll ? (pollOnPost ? "shown" : filledChoices(poll).length < POLL_MIN_CHOICES ? "empty" : "dropped") : null,
+        pollPictures: pollOnPost ? missingPictures(pollOnPost) : false,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
@@ -583,7 +584,7 @@ export function Postcheck() {
         </form>
 
         <ComposerField editor={editor} placeholder={SAMPLE} />
-        {poll && <PollEditor poll={poll} onChange={setPoll} />}
+        {poll && <PollEditor poll={poll} onChange={setPoll} readFile={readFile} />}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex items-center gap-3">
@@ -794,8 +795,8 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
         el.scrollTop = 0;
         return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
       }));
-      // A media carousel swiped sideways: the same, along x.
-      for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"]')) {
+      // A media or image-poll carousel swiped sideways: the same, along x.
+      for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"], [data-poll-carousel]')) {
         const left = el.scrollLeft;
         const first = el.firstElementChild as HTMLElement | null;
         if (!left || !first) continue;

@@ -70,6 +70,8 @@ export interface AdviceInput {
    * 280, and X posts it without the poll) or "empty" (fewer than two choices filled in).
    */
   poll?: "shown" | "dropped" | "empty" | null;
+  /** An image poll with a choice that has no picture: X won't post it. */
+  pollPictures?: boolean;
   /** Bold / italic runs are present. */
   hasStyles?: boolean;
   /** The draft exactly as typed, before X's trimming and blank-line collapsing. */
@@ -129,6 +131,14 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       title: "X drops the poll past 280 characters",
       detail: "X lets you attach a poll to a longer post, then posts the text without it. Cut the post to 280 characters to keep the poll. The preview shows the post as X will publish it.",
       marks: [{ el: "more" }],
+    });
+  } else if (input.pollPictures) {
+    out.push({
+      id: "poll-pictures",
+      severity: "fix",
+      title: "Every choice needs a picture",
+      detail: "X won't post an image poll until each choice has a picture. Add the rest, or remove them all for a text poll.",
+      marks: [{ el: "attachment" }],
     });
   } else if (poll === "empty") {
     out.push({

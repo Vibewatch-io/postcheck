@@ -112,6 +112,9 @@ test("text past the shared page's limit compresses small but never opens", async
 test("a shared poll round-trips; a bad one or one beside a photo is dropped", async () => {
   const withPoll: SharedPreview = { ...preview, media: [], poll: { choices: ["Yes", "No", ""], images: [null, null, null], minutes: 90 } };
   assert.deepEqual(await decodeShare(await encodeShare(withPoll)), withPoll);
+  // An image poll's pictures travel as JPEGs Share made; anything else is dropped from its choice.
+  const pictured = parseWire({ v: 1, text: "hi", poll: { c: ["a", "b"], m: 60, i: [jpeg(240, 240), "data:image/png;base64,AA=="] } });
+  assert.deepEqual(pictured?.poll?.images, [jpeg(240, 240), null]);
   const both = parseWire({ v: 1, text: "hi", media: jpeg(10, 10), poll: { c: ["a", "b"], m: 60 } });
   assert.equal(both?.poll, null);
   assert.equal(both?.media.length, 1);

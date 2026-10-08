@@ -83,7 +83,7 @@ const POLL_BOX = (deviceLast) => `(() => {
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement;
   const choices = [...p.querySelectorAll('[data-poll-choice]')];
   return { size: [Math.round(b.width), Math.round(b.height)], gap: body ? Math.round(b.top - body.getBoundingClientRect().bottom) : null,
-    labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('img')].map(rel), footer: rel(p.querySelector('[data-poll-footer]')), footerText: p.querySelector('[data-poll-footer]')?.textContent.trim() ?? '',
+    labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('[data-poll-picture]')].map(rel), next: rel(p.querySelector('[data-poll-next]')), footer: rel(p.querySelector('[data-poll-footer]')), footerText: p.querySelector('[data-poll-footer]')?.textContent.trim() ?? '',
     card: !!art.querySelector('[data-attachment] > :not([data-poll])') };
 })()`;
 
@@ -277,10 +277,12 @@ async function quoteDiff(label, deviceLast, id, want) {
 
 /**
  * The poll against X's. Web fixtures record x.com's poll box and choices, and where measured the
- * gap above it and each row's height and pitch; app fixtures the iPhone's choices, pill size and
- * pitch, or an image poll's picture, next item and pill. A post X stored without its poll
- * (`pollTyped`) must draw none. The footer's time is when the capture was taken, so only its place
- * is checked.
+ * gap above it and each row's height and pitch, or an image poll's carousel (picture, pill, pitch,
+ * footer, Next button); app fixtures the iPhone's choices, pill size and pitch, or an image poll's
+ * picture, next item and pill. A post X stored without its poll (`pollTyped`) must draw none. The
+ * footer's time is when the capture was taken, so only its place and form are checked. An image
+ * poll captured in the author's results view (`view: "results"`, 57b) is a different layout from
+ * the voter view the tool draws: only its choices and picture count are compared.
  */
 async function pollDiff(label, deviceLast, id, want, typed) {
   if (!want && !typed) return;
@@ -292,14 +294,23 @@ async function pollDiff(label, deviceLast, id, want, typed) {
   else {
     if (want.choices && want.choices.join("|") !== got.labels.join("|")) problems.push(`choices X ${want.choices.join(" / ")} / tool ${got.labels.join(" / ")}`);
     if (got.card) problems.push("tool draws a card or quote beside the poll");
-    if (want.size && !near(got.size, want.size)) problems.push(`box X ${want.size} / tool ${got.size}`);
+    const results = want.view === "results" && want.images;
+    if (want.size && !results && !near(got.size, want.size)) problems.push(`box X ${want.size} / tool ${got.size}`);
     if (typeof want.images === "number" && got.images.length !== want.images) problems.push(`pictures X ${want.images} / tool ${got.images.length}`);
-    if (want.gap !== undefined && Math.abs(got.gap - want.gap) > 1) problems.push(`gap above X ${want.gap} / tool ${got.gap}`);
+    if (want.gap !== undefined && !results && Math.abs(got.gap - want.gap) > 1) problems.push(`gap above X ${want.gap} / tool ${got.gap}`);
     const pitch = got.rows.length > 1 ? got.rows[1][1] - got.rows[0][1] : null;
-    if (want.row && (!near([got.rows[0]?.[3], pitch], want.row))) problems.push(`row height, pitch X ${want.row} / tool ${got.rows[0]?.[3]}, ${pitch}`);
+    if (want.row && !results && (!near([got.rows[0]?.[3], pitch], want.row))) problems.push(`row height, pitch X ${want.row} / tool ${got.rows[0]?.[3]}, ${pitch}`);
     if (want.pill && !near(got.pills[0]?.slice(2), want.pill.slice(2))) problems.push(`pill size X ${want.pill.slice(2)} / tool ${got.pills[0]?.slice(2)}`);
     if (want.pitch && !want.carousel && Math.abs(pitch - want.pitch) > 1) problems.push(`pitch X ${want.pitch} / tool ${pitch}`);
-    if (want.carousel) {
+    if (want.carousel && want.picture) {
+      // x.com's voter carousel: boxes relative to the card, the pitch along x.
+      const xPitch = got.images.length > 1 ? got.images[1][0] - got.images[0][0] : null;
+      if (!near(got.images[0], want.picture)) problems.push(`picture X ${want.picture} / tool ${got.images[0]}`);
+      if (!near(got.pills[0], want.pill)) problems.push(`choice pill X ${want.pill} / tool ${got.pills[0]}`);
+      if (Math.abs(xPitch - want.pitch) > 1) problems.push(`carousel pitch X ${want.pitch} / tool ${xPitch}`);
+      if (!near(got.footer?.slice(0, 2), want.footer)) problems.push(`footer at X ${want.footer} / tool ${got.footer?.slice(0, 2)}`);
+      if (!near(got.next, want.next)) problems.push(`Next button X ${want.next} / tool ${got.next}`);
+    } else if (want.carousel) {
       if (!near(got.images[0]?.slice(2), want.image.slice(2))) problems.push(`picture X ${want.image.slice(2)} / tool ${got.images[0]?.slice(2)}`);
       if (Math.abs((got.images[1]?.[0] ?? -99) - want.nextChoiceX) > 1) problems.push(`next choice at X ${want.nextChoiceX} / tool ${got.images[1]?.[0]}`);
       if (!near([got.pills[0]?.[1], got.pills[0]?.[3]], [want.button[1], want.button[3]])) problems.push(`choice pill y, height X ${[want.button[1], want.button[3]]} / tool ${[got.pills[0]?.[1], got.pills[0]?.[3]]}`);

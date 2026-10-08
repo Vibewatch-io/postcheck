@@ -145,3 +145,10 @@ export const MuteIcon = (p: P) => (
     <path d="M3 9h4l5-4v14l-5-4H3V9zm13.3.3l1.4-1.4 2.3 2.3 2.3-2.3 1.4 1.4-2.3 2.3 2.3 2.3-1.4 1.4-2.3-2.3-2.3 2.3-1.4-1.4 2.3-2.3-2.3-2.3z" />
   </svg>
 );
+
+/** x.com's "Next slide" arrow (a media or image-poll carousel), read off the DOM 2026-10-08. */
+export const NextArrowIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12.957 4.54L20.414 12l-7.457 7.46-1.414-1.42L16.586 13H3v-2h13.586l-5.043-5.04 1.414-1.42z" />
+  </svg>
+);
