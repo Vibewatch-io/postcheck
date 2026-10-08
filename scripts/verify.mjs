@@ -208,7 +208,8 @@ async function quoteDiff(label, deviceLast, id, want) {
     if (exp.join("\n") !== rows.join("\n")) {
       const lines = `lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`;
       // The same coin flip as diff(): the first differing line lands within 5px of the quote's text
-      // column. The boxes below stay exact, so a shift that changes the line count still fails.
+      // column. The boxes below stay exact, so a shift that changes the drawn line count still fails;
+      // one that only pushes text past the 5-line clamp leaves the box alone and passes as an edge.
       const bad = exp.findIndex((l, i) => l !== rows[i]);
       const [a, b] = [exp[bad], rows[bad]];
       const fit = a && b ? await lineFit(deviceLast, a.length > b.length ? a : b, true) : null;
