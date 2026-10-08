@@ -770,6 +770,16 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
       el.scrollTop = 0;
       return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
     });
+    // A media carousel swiped sideways: the same, along x.
+    for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"]')) {
+      const left = el.scrollLeft;
+      const first = el.firstElementChild as HTMLElement | null;
+      if (!left || !first) continue;
+      const margin = first.style.marginLeft;
+      first.style.marginLeft = `${-left}px`;
+      el.scrollLeft = 0;
+      restore.push(() => { first.style.marginLeft = margin; el.scrollLeft = left; });
+    }
     try {
       await document.fonts.ready;
       const { toPng } = await import("html-to-image");
