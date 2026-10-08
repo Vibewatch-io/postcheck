@@ -210,7 +210,8 @@ export function Postcheck() {
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
   const cardKey = cardEntity && !cardEntity.isStatus && !media && !cardless(cardEntity.href!) ? cardEntity.href! : null;
-  const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
+  // A recorded null is an answer (the page has no card), not a lookup still to come.
+  const card: CardState = cardKey ? (Object.hasOwn(cards, cardKey) ? cards[cardKey] : "loading") : null;
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;
   const hiddenUrlStart = attachmentEntity && hasAttachment && isTrailing(post, attachmentEntity) ? attachmentEntity.start : null;
