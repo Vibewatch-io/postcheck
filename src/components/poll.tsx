@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties, type MouseEvent, type UIEvent } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import type { Device } from "@/lib/devices";
 import { filledChoices, isImagePoll, timeLeft, type Poll } from "@/lib/poll";
 import type { XTheme } from "@/lib/theme";
@@ -38,12 +38,6 @@ const IMAGE_POLL = {
 } as const;
 
 export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; theme: XTheme }) {
-  // Swiped to its last choice, the carousel has nothing more to the right: no Next button then.
-  const [atEnd, setAtEnd] = useState(false);
-  const track = (e: UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1);
-  };
   const choices = filledChoices(poll);
   const images = isImagePoll(poll);
   const ios = device.kind === "phone" && device.platform === "ios";
@@ -67,7 +61,7 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
   );
   // Swiped sideways like X's ScrollSnap list, with no scrollbar; PNG export keeps the scroll position.
   const carousel = (item: number, gap: number, pillTop: number, pillHeight: number, size: number, line: number) => (
-    <div data-poll-carousel="" onScroll={track} style={{ display: "flex", gap, overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+    <div data-poll-carousel="" style={{ display: "flex", gap, overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
       {choices.map((c, i) => (
         <div key={i} data-poll-row="" style={{ width: item, flex: "none", scrollSnapAlign: "start" }}>
           {picture(c.image, item)}
@@ -105,16 +99,9 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
     </div>
   );
   if (images) {
-    // x.com shows the Next button while choices run past the column (two 240px choices fit in 518).
-    const overflows = choices.length * 252 - 12 > width;
     return (
       <div data-poll="" onClick={stop} style={{ width, position: "relative", paddingTop: 12 }}>
-        {carousel(240, 12, 8, 32, 15, 20)}
-        {overflows && !atEnd && (
-          <div data-poll-next="" aria-hidden style={{ position: "absolute", right: 12, top: 134, width: 36, height: 36, borderRadius: 9999, backgroundColor: "rgba(15,20,25,0.75)", backdropFilter: "blur(4px)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <NextArrowIcon size={20} />
-          </div>
-        )}
+        <WithNextButton count={choices.length}>{carousel(240, 12, 8, 32, 15, 20)}</WithNextButton>
         {footer}
       </div>
     );
@@ -125,6 +112,35 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
         {choices.map((c, i) => <div key={i} data-poll-row="">{pill(c.label, 32, 15, 20)}</div>)}
       </div>
       {footer}
+    </div>
+  );
+}
+
+/**
+ * x.com's "Next slide" button over a carousel, shown while choices run past the column's right edge
+ * (two 240px choices fit in 518, so they get none). It goes once the carousel is swiped to its end.
+ * It measures the carousel when it mounts, when the choice count changes and on every scroll, so a
+ * carousel drawn afresh always starts with the button X shows at its first slide.
+ */
+function WithNextButton({ count, children }: { count: number; children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
+  useLayoutEffect(() => {
+    const el = box.current?.querySelector<HTMLElement>("[data-poll-carousel]");
+    if (!el) return;
+    const update = () => setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    return () => el.removeEventListener("scroll", update);
+  }, [count]);
+  return (
+    <div ref={box}>
+      {children}
+      {more && (
+        <div data-poll-next="" aria-hidden style={{ position: "absolute", right: 12, top: 134, width: 36, height: 36, borderRadius: 9999, backgroundColor: "rgba(15,20,25,0.75)", backdropFilter: "blur(4px)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <NextArrowIcon size={20} />
+        </div>
+      )}
     </div>
   );
 }
