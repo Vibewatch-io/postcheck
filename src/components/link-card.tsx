@@ -102,7 +102,8 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
   const host = <div style={{ color: theme.secondary, ...clamp(1) }}>{card.host}</div>;
   return (
     <div data-card="" style={{ ...frame, display: "flex" }}>
-      <div data-card-thumb="" style={{ width: thumb, height: thumb, flexShrink: 0, borderRight: `1px solid ${theme.cardBorder}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: theme.secondary }}>
+      {/* iOS: the app's hairline border lies over the thumbnail's edge (81 outer for an 80 thumbnail), so the 1px border here takes a row from it. */}
+      <div data-card-thumb="" style={{ width: thumb, height: ios ? thumb - 1 : thumb, flexShrink: 0, borderRight: `1px solid ${theme.cardBorder}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: theme.secondary }}>
         {card.image ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img src={card.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
