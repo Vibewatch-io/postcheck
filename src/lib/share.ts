@@ -1,5 +1,6 @@
 import type { StyleRun } from "./entities";
 import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
+import { MAX_MEDIA, MAX_MEDIA_SIDE, MAX_VIDEO_MS, type MediaItem, type MediaKind } from "./media";
 
 /**
  * Share links. The whole preview (text, styling, identity, shrunk images, device, theme) is
@@ -20,6 +21,7 @@ const MAX_STYLE_RUNS = 2_000;
 /** Shared images are JPEGs Share made itself; anything bigger than these was not. */
 const MAX_IMAGE_BYTES = 200_000;
 const MAX_IMAGE_EDGE = 2_048;
+const KINDS: MediaKind[] = ["photo", "gif", "video"];
 
 const BADGES = ["none", "blue", "gold", "gray"] as const;
 const THEMES = ["light", "dark"] as const;
@@ -30,7 +32,8 @@ export interface SharedPreview {
   text: string;
   styles: StyleRun[];
   identity: { name: string; handle: string; badge: (typeof BADGES)[number]; avatar: string | null };
-  media: string | null;
+  /** Up to 4 items, each a JPEG Share made (a GIF's or video's first frame). */
+  media: MediaItem[];
   theme: (typeof THEMES)[number];
   /** Device ids: a phone for the Mobile view, a web layout for the Web view. */
   phone: string;
@@ -38,7 +41,11 @@ export interface SharedPreview {
   view: "app" | "web";
 }
 
-/** Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. */
+/**
+ * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. Media travels
+ * as `items`, [jpeg, kind, width, height, alt (0/1), video ms]; links made before several items
+ * could be attached carry one photo in `media`, which still opens.
+ */
 interface Wire {
   v: 1;
   text: string;
@@ -48,6 +55,7 @@ interface Wire {
   badge: string;
   avatar: string | null;
   media: string | null;
+  items?: Array<[string, string, number, number, number, number]>;
   theme: string;
   phone: string;
   web: string;
@@ -63,7 +71,8 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     handle: p.identity.handle,
     badge: p.identity.badge,
     avatar: p.identity.avatar,
-    media: p.media,
+    media: null,
+    items: p.media.map((m) => [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0]),
     theme: p.theme,
     phone: p.phone,
     web: p.web,
@@ -113,12 +122,32 @@ export function parseWire(raw: unknown): SharedPreview | null {
     text,
     styles,
     identity: { name, handle, badge, avatar: sharedImage(w.avatar) },
-    media: sharedImage(w.media),
+    media: sharedMedia(w.items, w.media),
     theme,
     phone,
     web,
     view,
   };
+}
+
+/** The shared items, each checked; a bad item is dropped. A v1 link's single image opens as one photo. */
+function sharedMedia(items: unknown, legacy: unknown): MediaItem[] {
+  if (!Array.isArray(items)) {
+    const src = sharedImage(legacy);
+    const size = src ? jpegSize(Uint8Array.from(atob(src.slice(src.indexOf(",") + 1)), (c) => c.charCodeAt(0))) : null;
+    return src && size ? [{ src, kind: "photo", width: size.width, height: size.height, alt: false }] : [];
+  }
+  const out: MediaItem[] = [];
+  for (const it of items.slice(0, MAX_MEDIA)) {
+    if (!Array.isArray(it) || it.length !== 6) continue;
+    const [raw, kind, width, height, alt, ms] = it;
+    const src = sharedImage(raw);
+    const k = KINDS.find((x) => x === kind);
+    const side = (n: unknown): n is number => Number.isInteger(n) && (n as number) > 0 && (n as number) <= MAX_MEDIA_SIDE;
+    if (!src || !k || !side(width) || !side(height) || (alt !== 0 && alt !== 1) || !Number.isInteger(ms) || ms < 0 || ms > MAX_VIDEO_MS) continue;
+    out.push({ src, kind: k, width, height, alt: alt === 1, ...(k === "video" && ms > 0 ? { durationMs: ms } : {}) });
+  }
+  return out;
 }
 
 /**
