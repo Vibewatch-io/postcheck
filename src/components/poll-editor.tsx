@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { CameraIcon } from "./icons";
 import { POLL_CHOICE_MAX, POLL_MAX_CHOICES, POLL_MIN_CHOICES, clampMinutes, type Poll } from "@/lib/poll";
 
@@ -18,8 +18,15 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 export function PollEditor({ poll, onChange, readFile }: { poll: Poll; onChange: Dispatch<SetStateAction<Poll | null>>; readFile: (file: File | undefined, set: (url: string) => void) => void }) {
   // A picture lands when its read finishes, so it goes through the latest poll, not this render's.
   // Removing a choice shifts the ones after it, so a read started before a removal is dropped
-  // rather than landing on whichever choice now has its old place.
+  // rather than landing on whichever choice now has its old place. Removing the poll unmounts this
+  // editor, which drops every read still running, so none lands on a poll added afterwards.
   const removals = useRef(0);
+  useEffect(() => {
+    const gen = removals;
+    return () => {
+      gen.current += 1;
+    };
+  }, []);
   const setImage = (i: number, image: string | null) => onChange((p) => p && { ...p, images: p.images.map((x, j) => (j === i ? image : x)) });
   const pickImage = (i: number, file: File | undefined) => {
     const at = removals.current;
