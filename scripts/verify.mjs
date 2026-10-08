@@ -70,6 +70,18 @@ const ROWS = (deviceLast, quote = false) => `(() => {
       const k = Math.round((cr[0].top - top) / lh); rows[k] = rows[k] || []; if (k === curK) rows[k][rows[k].length - 1] += node.nodeValue[i]; else { rows[k].push(node.nodeValue[i]); curK = k; } } }
   return { rows: Object.keys(rows).sort((a,b)=>a-b).filter((k) => k < shown).map(k => rows[k].join(' ')), more: !!body.querySelector('[data-more]') };
 })()`;
+/** The runs of the post's own text drawn in a colour other than the body's (links, mentions, an email on iOS), in order. */
+const COLOURED = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement; if (!body) return [];
+  const plain = getComputedStyle(body).color; const runs = []; let open = false;
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT); let node;
+  while ((node = walker.nextNode())) { if (node.parentElement.closest('[data-more]')) continue;
+    const c = getComputedStyle(node.parentElement).color !== plain;
+    if (c && open) runs[runs.length - 1] += node.nodeValue; else if (c) runs.push(node.nodeValue); open = c; }
+  return runs;
+})()`;
 /** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small card's thumbnail. */
 const CARD_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
@@ -335,6 +347,12 @@ async function quoteDiff(label, deviceLast, id, want) {
  * still off screen, so a recorded "" there accepts the tool's badge. A fixture `gap` pins what the
  * tool draws instead.
  */
+/** The coloured runs against the capture's (`want`: the strings X drew in link blue, in order). */
+async function colourDiff(label, deviceLast, id, want) {
+  const got = await page.evaluate(COLOURED(deviceLast));
+  if (JSON.stringify(got) === JSON.stringify(want)) { pass++; console.log(`  ok   ${label} colour ${id}`); }
+  else { fail++; console.log(`  FAIL ${label} colour ${id}\n       X:    ${JSON.stringify(want)}\n       tool: ${JSON.stringify(got)}`); }
+}
 async function mediaDiff(label, deviceLast, id, want, web) {
   const got = await page.evaluate(MEDIA_BOX(deviceLast));
   const tol = web ? 1 : 2;
@@ -370,6 +388,7 @@ for (const f of readdirSync("fixtures/web")) {
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
     if (p.media) await mediaDiff("web ", false, p.id, p.media, true);
+    if (p.blue) await colourDiff("web ", false, p.id, p.blue);
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -387,6 +406,7 @@ for (const f of readdirSync("fixtures/app")) {
     else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
     if (p.media) await mediaDiff("app ", true, p.id, p.media, false);
+    if (p.blue) await colourDiff("app ", true, p.id, p.blue);
   }
 }
 if (recordUnfurl) {

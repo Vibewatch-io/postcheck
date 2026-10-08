@@ -63,6 +63,19 @@ const HASHTAG_RE = /(^|[^&\p{L}\p{N}_])#([\p{L}\p{N}_]*\p{L}[\p{L}\p{N}_]*)/gu;
 // inferred (uncaptured); 16+ letters is untested.
 const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,15}(?:[._][A-Za-z]{1,2})?)(?![A-Za-z0-9_$])/g;
 
+// The iOS app colours an email address in link blue ("user@vibewatch.io", @postcheck_test test 32,
+// every iPhone capture); x.com and Android leave it plain, and X's data has no entity for it. The
+// domain needs a dot: "a@Vibewatch_io" (test 65) is assumed plain on iOS, uncaptured.
+const EMAIL_RE = /(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])/g;
+
+/**
+ * Email addresses the iOS app draws in link blue: [start, end) offsets into `text`. Not entities:
+ * they don't link on x.com, cost their own length and never make a card.
+ */
+export function emailRanges(text: string): Array<[number, number]> {
+  return [...text.matchAll(EMAIL_RE)].map((m) => [m.index!, m.index! + m[0].length]);
+}
+
 /** Emoji (incl. ZWJ sequences, skin tones, flags, keycaps). */
 export const EMOJI_RE =
   /(?:\p{Regional_Indicator}\p{Regional_Indicator})|(?:[#*0-9]\uFE0F?\u20E3)|(?:\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu;

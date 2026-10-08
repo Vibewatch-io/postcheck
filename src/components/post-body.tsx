@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import { styleAt, type StyleRun, type Token } from "@/lib/entities";
+import { emailRanges, styleAt, type StyleRun, type Token } from "@/lib/entities";
 import type { XTheme } from "@/lib/theme";
 import { fontStack } from "@/lib/theme";
 
@@ -44,6 +44,27 @@ function styleCss(st: { bold: boolean; italic: boolean }): React.CSSProperties {
   return { ...(st.bold ? { fontWeight: 700 } : {}), ...(st.italic ? { fontStyle: "italic" as const } : {}) };
 }
 
+/** The email addresses inside each word (offsets into the word's text), by token index: the iOS app draws them in link blue. */
+function emailParts(tokens: Token[]): Map<number, Array<[number, number]>> {
+  const out = new Map<number, Array<[number, number]>>();
+  for (let i = 0; i < tokens.length; ) {
+    if (tokens[i].kind !== "word") { i++; continue; }
+    // A style cut splits a word into several tokens; an address can run across them.
+    let j = i;
+    while (j + 1 < tokens.length && tokens[j + 1].kind === "word" && tokens[j + 1].start === tokens[j].end) j++;
+    const run = tokens.slice(i, j + 1) as Array<Extract<Token, { kind: "word" }>>;
+    const base = run[0].start;
+    for (const [s, e] of emailRanges(run.map((t) => t.text).join(""))) {
+      run.forEach((t, k) => {
+        const a = Math.max(base + s, t.start) - t.start, b = Math.min(base + e, t.end) - t.start;
+        if (a < b) out.set(i + k, [...(out.get(i + k) ?? []), [a, b]]);
+      });
+    }
+    i = j + 1;
+  }
+  return out;
+}
+
 export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
   { tokens, showMoreAt, onShowMore, hiddenUrlStart, theme, fontSize, lineHeight, width, font, pane, styles = [], linkColor = theme.link, maxLines },
   ref,
@@ -51,6 +72,7 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
   let paragraph = 0;
   const nodes: React.ReactNode[] = [];
   const end = showMoreAt >= 0 ? showMoreAt : tokens.length;
+  const emails = pane === "app" ? emailParts(tokens) : new Map<number, Array<[number, number]>>();
 
   tokens.slice(0, end).forEach((t, i) => {
     if (t.kind === "newline") {
@@ -74,9 +96,22 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
       );
       return;
     }
+    let text: React.ReactNode = t.text;
+    const parts = emails.get(i);
+    if (parts) {
+      const out: React.ReactNode[] = [];
+      let at = 0;
+      for (const [a, b] of parts) {
+        if (a > at) out.push(t.text.slice(at, a));
+        out.push(<span key={a} style={{ color: linkColor }}>{t.text.slice(a, b)}</span>);
+        at = b;
+      }
+      if (at < t.text.length) out.push(t.text.slice(at));
+      text = out;
+    }
     nodes.push(
       <span key={i} data-w="1" data-p={paragraph} data-e={t.end} style={styleCss(styleAt(styles, t.start))}>
-        {t.text}
+        {text}
       </span>,
     );
   });
