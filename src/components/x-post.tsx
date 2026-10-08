@@ -197,6 +197,8 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
               width={look.width - 26}
               font={device.font}
               pane={device.pane}
+              // The quoted text wraps by the same app's rules (assumed: no Android quote capture has a hyphen or a long link).
+              platform={device.platform}
               linkColor={look.appLinks ? theme.link : theme.text}
               maxLines={5}
             />
