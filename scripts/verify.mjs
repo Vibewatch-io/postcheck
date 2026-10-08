@@ -35,8 +35,11 @@ let finished = false;
 function died(why) {
   if (finished) return;
   finished = true;
-  console.error(`\n${why} while rendering ${current}; nothing after it was checked`);
-  process.exit(2);
+  // The run's own Playwright call rejects next: swallow it, and exit only once stderr and stdout have
+  // drained (a piped stream on macOS writes asynchronously, so an immediate exit can drop this line).
+  process.on("uncaughtException", () => {});
+  process.exitCode = 2;
+  process.stderr.write(`\n${why} while rendering ${current}; nothing after it was checked\n`, () => process.stdout.write("", () => process.exit(2)));
 }
 if (!(await up())) {
   server = spawn("npx", ["next", "start", "-p", String(port)], { stdio: "ignore" });
@@ -114,9 +117,12 @@ const unrecorded = new Set();
 await page.route(/\/api\/unfurl$/, async (route) => {
   const url = route.request().postDataJSON()?.url;
   if (recordUnfurl && !(url in unfurls)) {
-    // A refused lookup (a 400 carries no card field) records as no card, so it survives the write.
-    const { card } = await (await route.fetch()).json();
-    unfurls[url] = card ? { ...card, image: card.image ? STAND_IN : null } : null;
+    // A refused lookup (a 400 carries no card field) records as no card, so it survives the write; a
+    // lookup that never answered is left unrecorded and fails this run.
+    try {
+      const { card } = await (await route.fetch()).json();
+      unfurls[url] = card ? { ...card, image: card.image ? STAND_IN : null } : null;
+    } catch {}
   }
   if (!(url in unfurls)) unrecorded.add(url);
   return route.fulfill({ contentType: "application/json", body: JSON.stringify({ card: unfurls[url] ?? null }) });
@@ -157,16 +163,18 @@ async function lineFit(deviceLast, text) {
     return { width: Math.round(w * 10) / 10, limit: Math.round(body.getBoundingClientRect().width * 10) / 10 };
   }, { deviceLast, text });
 }
-/** Type a draft straight into the composer (**bold** / __italic__ markers become styling). */
+/** Type a draft straight into the composer (**bold** / __italic__ markers become styling). False when a lookup is stuck (already counted as a failure). */
 async function compose(text, opts = {}) {
   await page.evaluate(([t, o]) => window.__postcheck.setDraft(t, o), [text, opts]);
   // Every lookup is replayed, so one still loading after 15 s is the tool stuck, not the network.
-  await page.waitForFunction(() => !document.body.innerText.includes("Fetching preview") && !document.body.innerText.includes("Loading post…"), null, { timeout: 15000 }).catch((e) => {
+  const settled = await page.waitForFunction(() => !document.body.innerText.includes("Fetching preview") && !document.body.innerText.includes("Loading post…"), null, { timeout: 15000 }).then(() => true, (e) => {
     if (!(e instanceof errors.TimeoutError)) throw e;
     fail++;
     console.log(`  FAIL ${current}: a card or quote still shows loading after 15 s`);
+    return false;
   });
   await page.waitForTimeout(600);
+  return settled;
 }
 // A native X Article post ends with a link to itself that X adds and hides; nobody typed it.
 const corpusTags = new Map(Object.values(JSON.parse(readFileSync("fixtures/corpus.json", "utf8")).accounts).flat().map((p) => [p.id, p.tags ?? []]));
@@ -194,7 +202,7 @@ async function load(id) {
   const text = typedText(fx);
   // Media as X recorded it (kind, size, alt text, video length); older fixtures only count photos.
   const media = fx.media?.map((m) => ({ kind: m.type === "animated_gif" ? "gif" : m.type, width: m.width, height: m.height, alt: Boolean(m.alt), ...(m.duration_ms !== undefined ? { durationMs: m.duration_ms } : {}) }));
-  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, media ? { media } : { photo: fx.photos > 0 });
+  return compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, media ? { media } : { photo: fx.photos > 0 });
 }
 async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
@@ -308,7 +316,8 @@ for (const f of readdirSync("fixtures/web")) {
   await page.selectOption('select[aria-label="Web device"]', fx.device || "web");
   for (const p of fx.posts) {
     current = `web ${p.id ?? JSON.stringify(p.compose.slice(0, 40))} (${f})`;
-    if (p.compose) await compose(p.compose); else await load(p.id);
+    // A stuck lookup is its own failure; diffing the half-drawn post would count it twice.
+    if (!(await (p.compose ? compose(p.compose) : load(p.id)))) continue;
     const got = await page.evaluate(ROWS("false"));
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
@@ -322,7 +331,8 @@ for (const f of readdirSync("fixtures/app")) {
   await page.selectOption('select[aria-label="App device"]', fx.device);
   for (const p of fx.posts) {
     current = `app ${p.id ?? JSON.stringify(p.compose.slice(0, 40))} (${f})`;
-    if (p.compose) await compose(p.compose); else await load(p.id);
+    // A stuck lookup is its own failure; diffing the half-drawn post would count it twice.
+    if (!(await (p.compose ? compose(p.compose) : load(p.id)))) continue;
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
