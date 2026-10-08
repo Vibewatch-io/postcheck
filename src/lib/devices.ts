@@ -68,10 +68,12 @@ const phone = (
   // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 60dp to width − 12dp, so
   // column = width − 72; four lines of test 05 match x.com's untracked web Chirp at 15px to within ink side
   // bearings, and the line pitch is 20dp (scripts/android/README.md).
+  // The iOS body runs at a 19.28pt pitch, not 20: seven one-letter lines of test 13 step 19.27–19.29 in
+  // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
   textWidth: platform === "ios" ? width - 77 : width - 72,
   pane: platform === "ios" ? "app" : "web",
   fontSize: 15,
-  lineHeight: 20,
+  lineHeight: platform === "ios" ? 19.28 : 20,
   pixelRatio: 3,
   radius,
   island,
