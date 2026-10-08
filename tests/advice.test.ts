@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildAdvice, type DeviceLines } from "../src/lib/advice";
 import { extractEntities, weightedLength } from "../src/lib/entities";
+import { DEVICES } from "../src/lib/devices";
+import { mediaLayout } from "../src/lib/media";
 
 // Tip marks point the preview at a line. A word that dangles at one width must be marked only on
 // that device's preview, or the dot lands on a line where nothing is wrong.
@@ -91,6 +93,27 @@ test("only an unexpanded iOS timeline row hides styling", async () => {
   assert.equal(rowHidesStyles(iosPost), false);
   assert.equal(rowHidesStyles(android), false);
   assert.equal(rowHidesStyles(web), false);
+});
+
+// The carousel tip points only at the previews where the media runs past the column: four squares
+// do on both; four narrow strips fit whole (in x.com's carousel, in the iPhone's row), and get the
+// note that their x.com sizing comes from one capture instead.
+test("the media carousel tip marks only the previews that scroll sideways", () => {
+  const text = "four photos";
+  const entities = extractEntities(text);
+  const squares = Array.from({ length: 4 }, () => ({ kind: "photo" as const, width: 1200, height: 1200 }));
+  const strips = Array.from({ length: 4 }, () => ({ kind: "photo" as const, width: 87, height: 1200 }));
+  const on = (items: typeof squares) =>
+    ["web", "iphone-16"].map((id) => {
+      const d = DEVICES.find((x) => x.id === id)!;
+      return { deviceId: id, deviceLabel: d.label, layout: mediaLayout(items, d)!, ios: d.platform === "ios", tall: false };
+    });
+  const tip = (items: typeof squares) => buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasMedia: true, mediaLayouts: on(items) }).find((a) => a.id === "media-carousel");
+  assert.deepEqual(tip(squares)?.marks, [{ el: "attachment", devices: ["web", "iphone-16"] }]);
+  assert.equal(tip(strips), undefined);
+  const assumed = buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasMedia: true, mediaLayouts: on(strips) }).find((a) => a.id === "media-assumed");
+  assert.deepEqual(assumed?.marks, [{ el: "attachment", devices: ["web"] }]);
+  assert.match(assumed!.detail, /one capture/);
 });
 
 // @postcheck_test tests 94/94b: X posts a long post without its poll. Test 95: a poll replaces the

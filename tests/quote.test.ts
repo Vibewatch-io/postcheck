@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { AVATAR_CAP, PHOTO_CAP, lookupQuote, twimgUrl } from "../src/lib/server/fxtwitter";
+import { AVATAR_CAP, PHOTO_CAP, lookupProfile, lookupQuote, twimgUrl } from "../src/lib/server/fxtwitter";
 import { fetchImageAsDataUrl, guardedFetch, type GuardFetch } from "../src/lib/server/fetch-guard";
 import { quoteTime, statusId } from "../src/lib/quote";
 import { extractEntities, quoteUrl } from "../src/lib/entities";
@@ -201,4 +201,47 @@ test("quote timestamps: seconds, minutes, hours, then date (web) or days (app)",
   const lastYear = "2025-09-16T12:00:00Z";
   assert.equal(quoteTime(lastYear, now, "web"), `Sep ${local(lastYear).getDate()}, 2025`);
   assert.equal(quoteTime("not a date", now, "web"), "");
+});
+
+test("a profile falls back to vxtwitter when FxTwitter has no user, and only both saying none means no account", async () => {
+  // FxTwitter's user endpoint answered "User not found" for real accounts, in bursts, on 2026-10-08.
+  const stub = (fx: number | "throw", vx: number | "throw", vxName = "Postcheck_test") => {
+    const asked: string[] = [];
+    const f: GuardFetch = async (url) => {
+      asked.push(url.origin);
+      const fromFx = url.origin === "https://api.fxtwitter.com";
+      const code = fromFx ? fx : vx;
+      if (code === "throw") throw new Error("network");
+      const body = code !== 200 ? { code, message: "User not found" } : fromFx
+        ? { code, user: { screen_name: "Postcheck_test", name: "Postcheck", verification: { verified: true, type: "individual" } } }
+        : { screen_name: vxName, name: "Postcheck", profile_image_url: "https://pbs.twimg.com/profile_images/1/a_normal.jpg" };
+      return new Response(JSON.stringify(body), { status: code });
+    };
+    return { f, asked };
+  };
+  const ok = stub(200, 200);
+  const first = await lookupProfile("postcheck_test", signal, ok.f);
+  assert.ok(first.user && "verified" in first && first.verified);
+  assert.deepEqual(ok.asked, ["https://api.fxtwitter.com"]);
+
+  const flaky = stub(404, 200);
+  const fell = await lookupProfile("Postcheck_test", signal, flaky.f);
+  assert.equal(fell.user?.screen_name, "Postcheck_test");
+  assert.ok("verified" in fell && fell.verified === false);
+  assert.equal(fell.user?.avatar_url, "https://pbs.twimg.com/profile_images/1/a_normal.jpg");
+  assert.deepEqual(flaky.asked, ["https://api.fxtwitter.com", "https://api.vxtwitter.com"]);
+
+  assert.deepEqual(await lookupProfile("nobody_here_x", signal, stub(404, 404).f), { user: null, missing: true });
+  // One side unreachable: a failed lookup, not "no account".
+  assert.deepEqual(await lookupProfile("nobody_here_x", signal, stub(404, "throw").f), { user: null, missing: false });
+  assert.equal((await lookupProfile("Postcheck_test", signal, stub("throw", 200).f)).user?.screen_name, "Postcheck_test");
+  // An answer for a different account is no answer, so it doesn't count as "none" either.
+  assert.deepEqual(await lookupProfile("Postcheck_test", signal, stub(404, 200, "someone_else").f), { user: null, missing: false });
+  // A user record inside an error answer is ignored.
+  const errorWithUser: GuardFetch = async () => new Response(JSON.stringify({ code: 500, user: { screen_name: "Postcheck_test" }, screen_name: "Postcheck_test" }), { status: 500 });
+  assert.deepEqual(await lookupProfile("Postcheck_test", signal, errorWithUser), { user: null, missing: false });
+  // A 404 is a 404 whatever record its body carries.
+  const wrong404: GuardFetch = async (url) =>
+    new Response(JSON.stringify(url.origin === "https://api.fxtwitter.com" ? { code: 404 } : { screen_name: "Postcheck_test" }), { status: 404 });
+  assert.deepEqual(await lookupProfile("Postcheck_test", signal, wrong404), { user: null, missing: true });
 });

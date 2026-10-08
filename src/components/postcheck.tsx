@@ -21,6 +21,8 @@ import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
 import { POLL_MIN_CHOICES, emptyPoll, filledChoices, shownPoll, type Poll } from "@/lib/poll";
 import { PollEditor } from "./poll-editor";
+import { APP_MIN_RATIO, mediaLayout, type MediaItem, type MediaKind } from "@/lib/media";
+import { MediaPicker } from "./media-picker";
 
 // The sample says what Postcheck does, and shows it: on the default 402pt iPhone preview "line." wraps
 // alone onto its own line on purpose, and the trailing link shows only its card. 261 of 280.
@@ -40,8 +42,9 @@ const PRECACHED_CARDS: Record<string, CardData> = {
 
 type CardState = CardData | null | "loading";
 
-/** A 1×1 image for the verify harness: a post with a photo never shows a link card. */
+/** A 1×1 grey image for the verify harness, standing in for media of any recorded size. */
 const STAND_IN_PHOTO = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
+const NO_MEDIA: MediaItem[] = [];
 
 /** Fix = something X will do to the post that you'll regret (error); tip = worth changing (warning); note = good to know (info). */
 const SEVERITY_STYLE = {
@@ -58,8 +61,8 @@ export function Postcheck() {
   // The sample is the editor's placeholder; the previews and checks run on it until the user types.
   const editor = useComposer(setDraft);
   const [identity, setIdentity] = useState<Identity>({ name: "", handle: "", avatar: null, badge: "none" });
-  const [media, setMedia] = useState<string | null>(null);
-  // X's composer takes a photo or a poll, never both: each one disables the other's button.
+  const [media, setMedia] = useState<MediaItem[]>(NO_MEDIA);
+  // X's composer takes media or a poll, never both: each one disables the other's button.
   const [poll, setPoll] = useState<Poll | null>(null);
   const [webDevice, setWebDevice] = useState<Device>(DEFAULT_DEVICE);
   const [phoneDevice, setPhoneDevice] = useState<Device>(DEFAULT_PHONE);
@@ -211,14 +214,14 @@ export function Postcheck() {
   // Over 280 X keeps the post and drops its poll (tests 94, 94b), so the preview drops it too.
   const pollOnPost = useMemo(() => shownPoll(poll, length.weighted), [poll, length.weighted]);
   // A link to a post becomes a quote wherever it sits, and a quote beats a link card (@postcheck_test
-  // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46). A photo or
-  // a poll replaces both, and the link stays as text (test 95; the quote case is assumed).
-  const quote = !media && !pollOnPost ? quoteUrl(entities) ?? null : null;
+  // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46). Media or
+  // a poll replaces both, and the link stays as text (test 95; the poll-and-quote case is assumed).
+  const quote = !media.length && !pollOnPost ? quoteUrl(entities) ?? null : null;
   const quoteId = quote ? statusId(quote.href) : null;
   // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
-  const cardKey = cardEntity && !cardEntity.isStatus && !media && !pollOnPost && !cardless(cardEntity.href!) ? cardEntity.href! : null;
+  const cardKey = cardEntity && !cardEntity.isStatus && !media.length && !pollOnPost && !cardless(cardEntity.href!) ? cardEntity.href! : null;
   const card: CardState = cardKey ? (cards[cardKey] ?? "loading") : null;
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;
@@ -367,13 +370,18 @@ export function Postcheck() {
         card: card === "loading" ? undefined : card,
         lineSets,
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
-        hasMedia: media !== null,
+        hasMedia: media.length > 0,
+        mediaKinds: media.map((m) => m.kind),
+        mediaLayouts: [webDevice, phoneDevice].flatMap((d) => {
+          const layout = mediaLayout(media, d);
+          return layout ? [{ deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, layout, ios: d.platform === "ios", tall: media.length === 1 && media[0].kind === "photo" && media[0].width / media[0].height < APP_MIN_RATIO }] : [];
+        }),
         // An incomplete poll is unpostable whatever the length, so "empty" wins over "dropped".
         poll: poll ? (pollOnPost ? "shown" : filledChoices(poll).length < POLL_MIN_CHOICES ? "empty" : "dropped") : null,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, lineSets, phoneClamp, media, poll, pollOnPost, phoneDevice.label, phoneDevice.tipLabel, phoneDevice.id, styles.length, draft.text],
+    [post, entities, length, card, lineSets, phoneClamp, media, poll, pollOnPost, webDevice, phoneDevice, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
@@ -398,10 +406,14 @@ export function Postcheck() {
     setLookupState("loading");
     try {
       const res = await fetch("/api/profile", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ u }) });
-      const json = (await res.json()) as { profile?: Identity; error?: string };
+      const json = (await res.json()) as { profile?: Omit<Identity, "badge"> & { badge: Identity["badge"] | null }; error?: string };
       if (!res.ok || !json.profile) throw new Error(json.error || "Lookup failed. Enter the details by hand.");
-      profiles.current.set(u.toLowerCase(), json.profile);
-      setIdentity(json.profile);
+      // No badge in the answer (the fallback API can't tell): keep the one chosen by the time it
+      // arrives, and don't keep the answer, so the next lookup of this handle asks for the badge again.
+      // An answer that arrives after the handle was changed belongs to the old one: it's dropped.
+      const { badge, ...rest } = json.profile;
+      if (badge !== null) profiles.current.set(u.toLowerCase(), { ...rest, badge });
+      setIdentity((prev) => (prev.handle.trim().toLowerCase() !== u.toLowerCase() ? prev : { ...rest, badge: badge ?? prev.badge }));
       setLookupState("idle");
     } catch (e) {
       setLookupState(e instanceof Error ? e.message : "Lookup failed. Enter the details by hand.");
@@ -413,11 +425,13 @@ export function Postcheck() {
     const w = window as unknown as { __postcheck?: object };
     w.__postcheck = {
       ready: Boolean(editor),
-      // **bold** / __italic__ markers become style runs; `photo` attaches a stand-in image, `poll` a poll.
-      setDraft: (raw: string, opts: { photo?: boolean; poll?: Poll } = {}) => {
+      // **bold** / __italic__ markers become style runs; `media` attaches stand-ins of the recorded
+      // kinds and sizes (`photo` alone, one 16:9 photo); `poll` attaches a poll.
+      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number }>; poll?: Poll } = {}) => {
         const { text, styles } = stripFormatting(raw);
         editor?.commands.setContent(draftToDoc(text, styles));
-        setMedia(opts.photo ? STAND_IN_PHOTO : null);
+        const items = opts.media ?? (opts.photo ? [{ kind: "photo" as const, width: 1600, height: 900 }] : []);
+        setMedia(items.length ? items.map((m) => ({ src: STAND_IN_PHOTO, alt: false, ...m })) : NO_MEDIA);
         setPoll(opts.poll ?? null);
       },
       getText: () => (editor ? serializeDoc(editor.getJSON() as DocNode).text : draft.text),
@@ -574,19 +588,11 @@ export function Postcheck() {
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex items-center gap-3">
             <FormatBar editor={editor} />
-            {/* A slow image read must not attach a photo beside a poll added while it ran: the callback checks the latest state. */}
-            <label className={`rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark ${poll ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:bg-brand-warm-surface"}`} title={poll ? "X takes a photo or a poll, not both" : undefined}>
-              {media ? "Replace image" : "Add image"}
-              <input type="file" accept="image/*" disabled={poll !== null} className="sr-only" onChange={(e) => readFile(e.target.files?.[0], (url) => latest.current.poll === null && setMedia(url))} />
-            </label>
+            {/* A slow media read must not attach media beside a poll added while it ran: the update checks the latest state. */}
+            <MediaPicker media={media} disabled={poll !== null} onChange={(update) => latest.current.poll === null && setMedia(update)} />
             {!poll && (
-              <button type="button" disabled={media !== null} title={media ? "X takes a photo or a poll, not both" : undefined} className="rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent" onClick={() => setPoll(emptyPoll())}>
+              <button type="button" disabled={media.length > 0} title={media.length ? "X takes media or a poll, not both" : undefined} className="rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent" onClick={() => setPoll(emptyPoll())}>
                 Add poll
-              </button>
-            )}
-            {media && (
-              <button type="button" className="text-sm text-brand-warm-secondary hover:underline" onClick={() => setMedia(null)}>
-                Remove image
               </button>
             )}
           </span>
@@ -771,21 +777,33 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
     if (!node || exporting || !exportAllowed) return;
     setExporting(true);
     setExportError(null);
-    // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
-    // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
-    // the image is what the screen shows; the screen itself looks the same throughout.
-    const restore = [...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
-      const top = el.scrollTop;
-      const cell = el.firstElementChild as HTMLElement | null;
-      if (!top || !cell) return [];
-      const margin = cell.style.marginTop;
-      cell.style.marginTop = `${-top}px`;
-      el.scrollTop = 0;
-      return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
-    });
+    const restore: Array<() => void> = [];
     try {
       await document.fonts.ready;
       const { toPng } = await import("html-to-image");
+      // html-to-image clones the DOM, and a clone has no scroll position: a phone scrolled down an
+      // expanded post would export its top. Shift the post up by the scroll instead while it draws, so
+      // the image is what the screen shows; the screen itself looks the same throughout. Read just
+      // before drawing, after the awaits, so a scroll made meanwhile is the one exported.
+      restore.push(...[...node.querySelectorAll<HTMLElement>("[data-screen-scroll]")].flatMap((el) => {
+        const top = el.scrollTop;
+        const cell = el.firstElementChild as HTMLElement | null;
+        if (!top || !cell) return [];
+        const margin = cell.style.marginTop;
+        cell.style.marginTop = `${-top}px`;
+        el.scrollTop = 0;
+        return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
+      }));
+      // A media carousel swiped sideways: the same, along x.
+      for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"]')) {
+        const left = el.scrollLeft;
+        const first = el.firstElementChild as HTMLElement | null;
+        if (!left || !first) continue;
+        const margin = first.style.marginLeft;
+        first.style.marginLeft = `${-left}px`;
+        el.scrollLeft = 0;
+        restore.push(() => { first.style.marginLeft = margin; el.scrollLeft = left; });
+      }
       const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 20000));
       const dataUrl = await Promise.race([toPng(node, { pixelRatio: device.pixelRatio, cacheBust: false }), timeout]);
       const a = document.createElement("a");
