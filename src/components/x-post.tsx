@@ -228,6 +228,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const square = identity.badge === "gold" || identity.badge === "gray";
   const bodyWidth = device.textWidth;
   const viewport = device.kind === "phone" ? device.width : 1200;
+  const ios = device.kind === "phone" && device.platform === "ios";
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrlStart));
 
   // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
@@ -238,7 +239,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
-    <LinkCard card={card} theme={theme} width={bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} />
+    // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31: 322.4–322.8 wide at 393).
+    <LinkCard card={card} theme={theme} width={ios && device.view !== "post" ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} />
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
 

@@ -1,5 +1,5 @@
 {
- "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #; @Postcheck_test batch 6 captured 2026-10-05 (02, 61b, 66–66d, 70–77, 90–97 with 91b/94b, 120–124): voter-view poll pills, 93 read after it closed; 66d shows the ticker tile and no link card; 70's timeline row shows no bold/italic (the post page does); 123 gets a large card here (small on the web); @Postcheck_test batch 7 captured 2026-10-07 (100–104, 107, 70b, 110–117b, 122b, 131), viewed as @marshallmixing: 70b read folded (its styling shows only once expanded); 100's 3/3 read from the Replies tab; 111's box is the content-warning cover",
+ "source": "X iOS app on a 393pt iPhone 15 Pro via iPhone Mirroring, profile timeline cells, captured 2026-09-11. Lines transcribed from captures; the last line of a showMore post is the folded line without the token.; @Postcheck_test tests captured 2026-09-17; @Postcheck_test tests 44 and 50–59c captured 2026-09-23: media boxes [x, y, w, h, badge] in points relative to the first item (media left edge at x=70 of the 393pt screen); in a carousel only the first item and the start of the next are visible, so the next item's width is null; 55's top edge is taken from its 16:9 aspect (dark GIF on black); poll boxes relative to the first choice; @Postcheck_test tests 60–65 (entities) captured 2026-09-30: links match x.com (no link for @zz_no_such_q9, the 16-character handle, a@/hi@); the app breaks #日本語 after the #; @Postcheck_test batch 6 captured 2026-10-05 (02, 61b, 66–66d, 70–77, 90–97 with 91b/94b, 120–124): voter-view poll pills, 93 read after it closed; 66d shows the ticker tile and no link card; 70's timeline row shows no bold/italic (the post page does); 123 gets a large card here (small on the web); @Postcheck_test batch 7 captured 2026-10-07 (100–104, 107, 70b, 110–117b, 122b, 131), viewed as @marshallmixing: 70b read folded (its styling shows only once expanded); 100's 3/3 read from the Replies tab; 111's box is the content-warning cover; link-card boxes measured 2026-10-08 on the captures of tests 07, 20–31 and 47 (scripts/phone t07*, t2*, t30*, t31*, t47* in the main checkout; edges 70.3 and 393.1 in every capture, 322.4–322.8 × 168.4–169.2 large, 81 tall small): card.box [x, y, w, h] in points, x from the text column's left edge, y not recorded (null: the cell's vertical metrics aren't modelled); card.thumb is the small card's thumbnail",
  "device": "iphone-16",
  "posts": [
   {
@@ -396,7 +396,13 @@
     "layout": "large",
     "domain": "vibewatch.io",
     "title": "Vibewatch — Community Intelligence for Web3 Teams",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -410,7 +416,13 @@
     "layout": "large",
     "domain": "vibewatch.io",
     "title": "Vibewatch — Community Intelligence for Web3 Teams",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -423,7 +435,13 @@
     "layout": "large",
     "domain": "github.com",
     "title": "The React Framework for the Web",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -445,7 +463,13 @@
     "layout": "large",
     "domain": "vibewatch.io",
     "title": "Vibewatch — Community Intelligence for Web3 Teams",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -459,7 +483,13 @@
     "layout": "large",
     "domain": "vibewatch.io",
     "title": "Vibewatch — Community Intelligence for Web3 Teams",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -473,7 +503,13 @@
     "layout": "large",
     "domain": "github.com",
     "title": "The React Framework for the Web",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -486,7 +522,17 @@
     "layout": "small",
     "domain": "en.wikipedia.org",
     "title": "X (social network) - Wikipedia",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     81
+    ],
+    "thumb": [
+     80,
+     80
+    ]
    }
   },
   {
@@ -506,7 +552,17 @@
     "layout": "small",
     "domain": "developer.mozilla.org",
     "title": "HTML: HyperText Markup Language | MDN",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     81
+    ],
+    "thumb": [
+     80,
+     80
+    ]
    }
   },
   {
@@ -520,7 +576,13 @@
     "layout": "large",
     "domain": "github.com",
     "title": "The React Framework for the Web",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -533,7 +595,13 @@
     "layout": "large",
     "domain": "github.com",
     "title": "The React Framework for the Web",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -553,7 +621,13 @@
     "layout": "large",
     "domain": "vibewatch.io",
     "title": "Vibewatch — Community Intelligence for Web3 Teams",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    }
   },
   {
@@ -622,7 +696,13 @@
     "layout": "large",
     "domain": "vibewatch.io",
     "title": "Vibewatch — Community Intelligence for Web3 Teams",
-    "hasImage": true
+    "hasImage": true,
+    "box": [
+     0,
+     null,
+     323,
+     169
+    ]
    },
    "quote": null,
    "replyChrome": {
