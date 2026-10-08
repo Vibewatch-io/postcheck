@@ -368,8 +368,8 @@ function PaidRow({ device, theme }: { device: Device; theme: XTheme }) {
  * The iOS app's cover on one flagged item among several: only that item is covered, in its own box
  * (test 111b, its first 70pt seen as the carousel's peeking item: the title starts 12pt in). The
  * rest of its layout is assumed: the single cover's pieces, centred in the item. A slot too small
- * for them (a row of two squares is 159pt, a strip 30pt wide) keeps what fits: the explanation and
- * the pill go first, then the title (assumed; only the 219pt carousel slot was seen).
+ * for them (a row of two squares is 159pt, a strip 30pt wide) keeps what fits: it drops the
+ * explanation and the pill first, then the title (assumed; only the 219pt carousel slot was seen).
  */
 function ItemCover({ src, w, h }: { src: string; w: number; h: number }) {
   const full = h >= 215 && w >= 200;

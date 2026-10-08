@@ -9,4 +9,6 @@ test("the tag line names one or two people as X does and counts the rest", () =>
   assert.equal(tagLine("A, , B,"), "A and B");
   assert.equal(tagLine("A, B, C"), "A and 2 others");
   assert.equal(tagLine(`${"n".repeat(60)}, B`), `${"n".repeat(50)} and B`);
+  // 49 units plus a 2-unit emoji would split the pair at 50: the emoji is dropped whole.
+  assert.equal(tagLine(`${"n".repeat(49)}🐝`), "n".repeat(49));
 });
