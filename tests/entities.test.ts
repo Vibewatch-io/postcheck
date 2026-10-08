@@ -239,4 +239,6 @@ test("the iOS app's blue email runs: a dotted domain only, never a link entity (
   assert.deepEqual(emailRanges("a@Vibewatch_io and hi@Vibewatch_io"), []);
   const end = "(mail first.last+x@mail.example.co.uk).";
   assert.deepEqual(emailRanges(end).map(([s, e]) => end.slice(s, e)), ["first.last+x@mail.example.co.uk"]);
+  // A later domain label must not link on its own and split the address (PR #42 review).
+  assert.deepEqual(extractEntities(end), []);
 });

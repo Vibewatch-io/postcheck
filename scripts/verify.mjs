@@ -338,6 +338,12 @@ async function quoteDiff(label, deviceLast, id, want) {
   }
 }
 
+/** The coloured runs against the capture's (`want`: the strings X drew in link blue, in order). */
+async function colourDiff(label, deviceLast, id, want) {
+  const got = await page.evaluate(COLOURED(deviceLast));
+  if (JSON.stringify(got) === JSON.stringify(want)) { pass++; console.log(`  ok   ${label} colour ${id}`); }
+  else { fail++; console.log(`  FAIL ${label} colour ${id}\n       X:    ${JSON.stringify(want)}\n       tool: ${JSON.stringify(got)}`); }
+}
 /**
  * The media boxes against X's. x.com boxes match to 1px and every item is recorded; iPhone captures
  * read ±1pt at each edge (the same 16:9 photo reads 322×182 in test 50 and 324×183 in test 110), so
@@ -347,12 +353,6 @@ async function quoteDiff(label, deviceLast, id, want) {
  * still off screen, so a recorded "" there accepts the tool's badge. A fixture `gap` pins what the
  * tool draws instead.
  */
-/** The coloured runs against the capture's (`want`: the strings X drew in link blue, in order). */
-async function colourDiff(label, deviceLast, id, want) {
-  const got = await page.evaluate(COLOURED(deviceLast));
-  if (JSON.stringify(got) === JSON.stringify(want)) { pass++; console.log(`  ok   ${label} colour ${id}`); }
-  else { fail++; console.log(`  FAIL ${label} colour ${id}\n       X:    ${JSON.stringify(want)}\n       tool: ${JSON.stringify(got)}`); }
-}
 async function mediaDiff(label, deviceLast, id, want, web) {
   const got = await page.evaluate(MEDIA_BOX(deviceLast));
   const tol = web ? 1 : 2;

@@ -56,7 +56,7 @@
 {"id":"2105319812817936467","lines":["Mentions @Vibewatch_io , @marshallmixing 's and @Vibewatch_io ."],"rowCount":1,"showMore":false,"card":null,"photo":false,"video":false,"quote":false},
 {"id":"2105319842027131225","lines":["A 16-character handle @zzpostchecknone1 does not link"],"rowCount":1,"showMore":false,"card":null,"photo":false,"video":false,"quote":false},
 {"id":"2105319872347644374","lines":["Mention of an account that doesn't exist @zz_no_such_q9"],"rowCount":1,"showMore":false,"card":null,"photo":false,"video":false,"quote":false},
-{"id":"2105319905948316143","lines":["a@Vibewatch_io and hi@Vibewatch_io"],"rowCount":1,"showMore":false,"card":null,"photo":false,"video":false,"quote":false},
+{"id":"2105319905948316143","lines":["a@Vibewatch_io and hi@Vibewatch_io"],"rowCount":1,"showMore":false,"card":null,"photo":false,"video":false,"quote":false,"blue":[]},
 {"id":"2107204293661204490","lines":["Length test B: text plus one link, where every link counts as 23 characters","no matter how long it is. and so on and so on and so on and so on and so on","and so on and so on and so on and so on and so on and so on and so on","and so on and so on and so on and."],"rowCount":4,"showMore":false,"card":"large","photo":false,"video":false,"quote":false},
 {"id":"2107204327194726878","lines":["Long cashtags $ABCDEFGH $ABCDEFGHIJ $ABCDEFGHIJKLMNO","$QWERTYU.A $QWERTY.AB"],"rowCount":2,"showMore":false,"card":null,"photo":false,"video":false,"quote":false,"links":["$ABCDEFGH","$ABCDEFGHIJ","$ABCDEFGHIJKLMNO","$QWERTYU.A","$QWERTY.AB"]},
 {"id":"2107204350473044105","lines":["Bullets as typed:","• dot bullet","- hyphen bullet","1. numbered line","* asterisk line"],"rowCount":6,"showMore":false,"card":null,"photo":false,"video":false,"quote":false},
