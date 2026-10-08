@@ -62,6 +62,8 @@ interface Wire {
 }
 
 export async function encodeShare(p: SharedPreview): Promise<string> {
+  // A photo's own states mean nothing without the photo (a link too long for it drops it).
+  const post = p.media ? p.post : { ...p.post, sensitive: false, tagged: "" };
   const wire: Wire = {
     v: 1,
     text: p.text,
@@ -71,7 +73,7 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     badge: p.identity.badge,
     avatar: p.identity.avatar,
     media: p.media,
-    ...(hasPostState(p.post) ? { post: { pinned: p.post.pinned, paid: p.post.paid, replies: p.post.replies, sensitive: p.post.sensitive, tagged: p.post.tagged.trim() } } : {}),
+    ...(hasPostState(post) ? { post: { pinned: post.pinned, paid: post.paid, replies: post.replies, sensitive: post.sensitive, tagged: post.tagged.trim().slice(0, TAG_MAX) } } : {}),
     theme: p.theme,
     phone: p.phone,
     web: p.web,
@@ -117,12 +119,16 @@ export function parseWire(raw: unknown): SharedPreview | null {
   const phone = typeof w.phone === "string" && PHONE_IDS.has(w.phone) ? w.phone : DEFAULT_PHONE_ID;
   const web = typeof w.web === "string" && WEB_IDS.has(w.web) ? w.web : "web";
   const view = w.view === "web" ? "web" : "app";
+  const media = sharedImage(w.media);
+  // A photo's own states only come with the photo (a link Share made never has one without the other).
+  const parsed = parsePostState(w.post);
+  const post = media ? parsed : { ...parsed, sensitive: false, tagged: "" };
   return {
     text,
     styles,
     identity: { name, handle, badge, avatar: sharedImage(w.avatar) },
-    media: sharedImage(w.media),
-    post: parsePostState(w.post),
+    media,
+    post,
     theme,
     phone,
     web,

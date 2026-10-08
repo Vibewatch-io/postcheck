@@ -163,7 +163,7 @@ export function PostOptions({ state, onChange, hasImage }: { state: PostState; o
         {hasPostState(state) && <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-brand-teal" />}
       </button>
       {open && (
-        <div id={id} role="group" aria-label="Post options" className="absolute left-0 top-full z-30 mt-2 w-72 max-w-full rounded-xl sm:top-11 sm:mt-0 border border-brand-warm-border bg-white px-4 py-2 shadow-lg">
+        <div id={id} role="group" aria-label="Post options" className="absolute left-0 top-full z-30 mt-2 w-80 max-w-full rounded-xl sm:top-11 sm:mt-0 border border-brand-warm-border bg-white px-4 py-2 shadow-lg">
           <label className={row}>
             Pinned
             <input type="checkbox" className={box} checked={state.pinned} onChange={(e) => set({ pinned: e.target.checked })} />
@@ -174,7 +174,7 @@ export function PostOptions({ state, onChange, hasImage }: { state: PostState; o
           </label>
           <label className={row}>
             <span className="whitespace-nowrap">Who can reply</span>
-            <select value={state.replies} onChange={(e) => set({ replies: e.target.value as ReplyLimit })} className="min-w-0 max-w-36 rounded-lg border border-brand-warm-border bg-white px-2 py-1 text-sm">
+            <select value={state.replies} onChange={(e) => set({ replies: e.target.value as ReplyLimit })} className="min-w-0 max-w-48 rounded-lg border border-brand-warm-border bg-white px-2 py-1 text-sm">
               {REPLY_LIMITS.map((r) => (
                 <option key={r} value={r}>
                   {REPLY_LABELS[r]}

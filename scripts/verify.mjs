@@ -257,7 +257,9 @@ const STATE_BOXES = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
   const a = art.getBoundingClientRect();
-  const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]')).parentElement.getBoundingClientRect();
+  const word = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'));
+  if (!word) return { error: 'no post text in the cell' };
+  const body = word.parentElement.getBoundingClientRect();
   const cover = art.querySelector('[data-sensitive]')?.getBoundingClientRect();
   const box = (r, ox, oy) => ({ x: r.left - ox, y: r.top - oy, w: r.width, h: r.height, r: r.right - ox, b: r.bottom - oy, cx: (r.left + r.right) / 2 - ox });
   const out = { body: box(body, body.left, a.top) };
@@ -268,7 +270,7 @@ const STATE_BOXES = (deviceLast) => `(() => {
     if (cover) out[name + '@sensitive'] = box(r, cover.left, cover.top);
   }
   const reply = art.querySelector('[data-reply-icon]');
-  return { height: a.height, boxes: out, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : 1 };
+  return { height: a.height, boxes: out, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : null };
 })()`;
 const states = JSON.parse(readFileSync("fixtures/post-states.json", "utf8"));
 for (const pane of ["web", "app"]) {
@@ -288,15 +290,20 @@ for (const pane of ["web", "app"]) {
     const plain = await page.evaluate(STATE_BOXES(deviceLast));
     await compose(typedText(fx), { photo, state: p.state });
     const got = await page.evaluate(STATE_BOXES(deviceLast));
-    const problems = [];
+    const problems = [plain.error, got.error].filter(Boolean);
+    if (problems.length) { fail++; console.log(`  FAIL ${pane === "web" ? "web " : "app "} ${p.test} ${p.id}\n       ${problems.join("\n       ")}`); continue; }
     if (p.grow !== undefined && Math.abs(got.height - plain.height - p.grow) > 1) problems.push(`adds ${Math.round((got.height - plain.height) * 10) / 10}px to the cell, X ${p.grow}`);
     for (const [name, want] of Object.entries(p.boxes ?? {})) {
       const { in: inside, ...keys } = want;
       const b = got.boxes[inside ? `${name}@${inside}` : name];
       if (!b) { problems.push(`no ${name}`); continue; }
-      for (const [k, v] of Object.entries(keys)) if (Math.abs(b[k] - v) > 1) problems.push(`${name} ${k} X ${v} / tool ${Math.round(b[k] * 10) / 10}`);
+      for (const [k, v] of Object.entries(keys)) {
+        if (!Number.isFinite(b[k])) problems.push(`${name}: no measured ${k}`);
+        else if (Math.abs(b[k] - v) > 1) problems.push(`${name} ${k} X ${v} / tool ${Math.round(b[k] * 10) / 10}`);
+      }
     }
-    if (p.replyDimmed !== undefined && got.replyOpacity < 0.99 !== p.replyDimmed) problems.push(`reply icon ${p.replyDimmed ? "should" : "should not"} be dimmed (opacity ${got.replyOpacity})`);
+    if (p.replyDimmed !== undefined && got.replyOpacity === null) problems.push("no reply icon");
+    else if (p.replyDimmed !== undefined && got.replyOpacity < 0.99 !== p.replyDimmed) problems.push(`reply icon ${p.replyDimmed ? "should" : "should not"} be dimmed (opacity ${got.replyOpacity})`);
     if (problems.length) { fail++; console.log(`  FAIL ${pane === "web" ? "web " : "app "} ${p.test} ${p.id}\n       ${problems.join("\n       ")}`); }
     else { pass++; console.log(`  ok   ${pane === "web" ? "web " : "app "} ${p.test} ${p.id} ${Object.keys(p.state).join(", ")}`); }
   }

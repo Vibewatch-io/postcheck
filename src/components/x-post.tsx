@@ -268,7 +268,7 @@ function TagRow({ device, theme, name }: { device: Device; theme: XTheme; name: 
     <div data-tag="" style={{ height: look.block, boxSizing: "border-box", paddingTop: look.top, color: theme.secondary, fontSize: look.size, lineHeight: `${lineHeight}px`, whiteSpace: "nowrap", overflow: "visible" }}>
       <div style={{ display: "flex", alignItems: "center", height: lineHeight, minWidth: 0 }}>
         {look.icon > 0 && <PersonIcon size={look.icon} style={{ flexShrink: 0, marginRight: 4 }} />}
-        <span data-tag-text="" style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+        <span data-tag-text="" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
       </div>
     </div>
   );
@@ -307,17 +307,21 @@ function SensitiveCover({ src, device, width, maxHeight, theme }: { src: string;
   const white = "#FFFFFF";
   if (device.kind === "phone") {
     const w = device.width - 69;
-    const h = Math.round((w * 163) / 324);
+    // Measured at 393pt only: 324×163. Wider screens keep that shape; a narrower one keeps the
+    // 163pt and grows if its text wraps further, so the pieces never overlap (assumed).
+    const h = Math.max(163, Math.round((w * 163) / 324));
     return (
-      <div data-sensitive="" style={{ position: "relative", width: w, height: h, borderRadius: 12, overflow: "hidden", color: white, fontSize: 15 }}>
+      <div data-sensitive="" style={{ position: "relative", width: w, minHeight: h, boxSizing: "border-box", padding: "14px 0 10px", borderRadius: 12, overflow: "hidden", color: white, fontSize: 15, display: "flex", flexDirection: "column" }}>
         {blurred}
         <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
-        <EyeSlashIcon size={20} style={{ position: "absolute", top: 14, left: (w - 20) / 2 }} />
-        <div style={{ position: "absolute", top: 48, left: 20, right: 20, lineHeight: "20px", fontWeight: 700, whiteSpace: "nowrap" }}>
+        {/* At 393pt: icon 14 from the top, title at 20,48, text at 21,82, pill 11 from the right and 10 from the bottom. */}
+        <EyeSlashIcon size={20} style={{ position: "relative", alignSelf: "center", flexShrink: 0 }} />
+        <div style={{ position: "relative", margin: "14px 20px 0", lineHeight: "20px", fontWeight: 700 }}>
           <span data-cover-title="">Content warning: Sensitive content</span>
         </div>
-        <div style={{ position: "absolute", top: 82, left: 21, right: 21, lineHeight: "18px" }}>The author flagged this post as showing sensitive content.</div>
-        <div data-cover-show="" style={{ position: "absolute", right: 11, bottom: 10, height: 24, minWidth: 80, padding: "0 12px", boxSizing: "border-box", borderRadius: 9999, backgroundColor: "rgba(0, 0, 0, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
+        <div style={{ position: "relative", margin: "14px 21px 0", lineHeight: "18px" }}>The author flagged this post as showing sensitive content.</div>
+        <div style={{ flex: "1 0 11px" }} />
+        <div data-cover-show="" style={{ position: "relative", alignSelf: "flex-end", flexShrink: 0, marginRight: 11, height: 24, minWidth: 80, padding: "0 12px", boxSizing: "border-box", borderRadius: 9999, backgroundColor: "rgba(0, 0, 0, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
           Show
         </div>
       </div>
@@ -390,8 +394,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       {state.paid && <PaidRow device={device} theme={theme} />}
     </>
   );
-  // iOS dims the reply icon for a viewer outside the limit. Only "accounts you follow" and "accounts
-  // you mention" were seen dimmed; the capturing account could reply to the verified-only post.
+  // iOS dims the reply icon for a viewer outside the limit, in the row and on the post screen (test
+  // 101). Only "accounts you follow" and "accounts you mention" were seen dimmed; the capturing
+  // account could reply to the verified-only post.
   const replyDimmed = device.kind === "phone" && (state.replies === "following" || state.replies === "mentioned");
 
   const body = (
@@ -437,7 +442,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
           10:14 AM · {web ? "Sep 10, 2026" : "9/10/26"} · <span style={{ color: theme.text, fontWeight: 700 }}>12.4K</span> Views
         </div>
         <div style={{ marginTop: 12, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}`, padding: "2px 0" }}>
-          <Actions theme={theme} full />
+          <Actions theme={theme} full replyDimmed={replyDimmed} />
         </div>
       </article>
     );

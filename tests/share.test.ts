@@ -60,11 +60,17 @@ test("device ids must match their view's kind", () => {
 
 test("post states are optional, checked field by field, and left out of a plain preview's link", async () => {
   assert.deepEqual(parseWire({ v: 1, text: "hi" })?.post, NO_POST_STATE);
-  const p = parseWire({ v: 1, text: "hi", post: { pinned: "yes", paid: true, replies: "nobody", sensitive: 1, tagged: ` ${"n".repeat(80)} ` } });
+  const p = parseWire({ v: 1, text: "hi", media: jpeg(96, 54), post: { pinned: "yes", paid: true, replies: "nobody", sensitive: 1, tagged: ` ${"n".repeat(80)} ` } });
   assert.deepEqual(p?.post, { pinned: false, paid: true, replies: "everyone", sensitive: false, tagged: "n".repeat(50) });
   const plain = await encodeShare({ ...preview, post: NO_POST_STATE });
   const json = await new Response(new Blob([Buffer.from(plain.slice(SHARE_PREFIX.length), "base64url")]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
   assert.equal("post" in JSON.parse(json), false);
+  // A link that had to drop the photo drops the photo's own states with it.
+  const noPhoto = await decodeShare(await encodeShare({ ...preview, media: null }));
+  assert.deepEqual(noPhoto?.post, { ...preview.post, sensitive: false, tagged: "" });
+  assert.deepEqual(parseWire({ v: 1, text: "hi", post: { pinned: true, sensitive: true, tagged: "x" } })?.post, { ...NO_POST_STATE, pinned: true });
+  const long = await decodeShare(await encodeShare({ ...preview, post: { ...preview.post, tagged: "n".repeat(80) } }));
+  assert.equal(long?.post.tagged, "n".repeat(50));
 });
 
 test("style runs outside the text or with unknown flags are dropped", () => {

@@ -568,7 +568,7 @@ export function Postcheck() {
         <ComposerField editor={editor} placeholder={SAMPLE} />
 
         <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
-          <span className="flex items-center gap-3">
+          <span className="flex flex-wrap items-center gap-3">
             <FormatBar editor={editor} />
             <label className="cursor-pointer rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface">
               {media ? "Replace image" : "Add image"}

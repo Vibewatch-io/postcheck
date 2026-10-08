@@ -309,7 +309,7 @@ Posted 2026-10-06 (batch 7), texts `Test 110: …` to `Test 115: …` as in 51�
 
 Posts 42–45 (native quotes), 52–55 (multiple photos, GIF), 56 (video badge), 57 and group 9 (polls),
 66 (price charts), group 10's thread and repost chrome, group 11's media sizes and
-120–122 (player and app cards) test layouts the tool doesn't render today. The post states (101–105, 110, 111, 131)
+120–122 (player and app cards) test layouts the tool doesn't render today. The post states (101–103, 105 on 104's post, 110, 111, 131; 104's edit has no timeline marker to draw)
 are drawn and checked from `fixtures/post-states.json`. Capture them anyway: they are the spec for building those features, and the
 harness can check line breaks around them before the media itself is drawn.
 
