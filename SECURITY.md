@@ -1,6 +1,6 @@
 # Security
 
-Postcheck has two server routes that fetch on a user's behalf, `/api/unfurl` (Open Graph lookups) and `/api/profile` (FxTwitter lookups), and one that serves licensed fonts, `/fonts/[file]`. The guard they share is `src/lib/server/fetch-guard.ts`: http(s) only, public addresses only, re-checked on every redirect hop, byte caps and timeouts.
+Postcheck has two server routes that fetch on a user's behalf, `/api/unfurl` (Open Graph lookups) and `/api/profile` (FxTwitter lookups, vxtwitter as the fallback), and one that serves licensed fonts, `/fonts/[file]`. The guard they share is `src/lib/server/fetch-guard.ts`: http(s) only, public addresses only, re-checked on every redirect hop, byte caps and timeouts.
 
 ## Reporting
 
