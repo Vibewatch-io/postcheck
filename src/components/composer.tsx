@@ -10,7 +10,9 @@ import Text from "@tiptap/extension-text";
 import { UndoRedo } from "@tiptap/extensions";
 import { Slice } from "@tiptap/pm/model";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
+import { useEffect, useId, useRef, useState } from "react";
 import { draftToDoc, serializeDoc, type Draft, type DocNode } from "@/lib/draft";
+import { REPLY_LIMITS, TAG_MAX, hasPostState, type PostState, type ReplyLimit } from "@/lib/post-state";
 
 // X's composer styles text in place; typed markdown markers stay literal text.
 const extensions = [
@@ -100,3 +102,112 @@ export function FormatBar({ editor }: { editor: Editor | null }) {
   );
 }
 
+
+/** X's composer wording for "Who can reply". */
+const REPLY_LABELS: Record<ReplyLimit, string> = {
+  everyone: "Everyone",
+  following: "Accounts you follow",
+  verified: "Verified accounts",
+  mentioned: "Only accounts you mention",
+};
+
+/**
+ * The post states X draws (pinned, paid partnership, reply limit, and a photo's sensitive flag and
+ * tag), tucked behind one button so the composer stays plain. A dot on the button says something is set.
+ */
+export function PostOptions({ state, onChange, hasImage }: { state: PostState; onChange: (s: PostState) => void; hasImage: boolean }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      button.current?.focus();
+    };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", key);
+    };
+  }, [open]);
+  const set = (patch: Partial<PostState>) => onChange({ ...state, ...patch });
+  const row = "flex min-h-9 items-center justify-between gap-3 text-sm text-brand-warm-dark";
+  const box = "h-4 w-4 accent-brand-teal";
+  return (
+    // From sm up the panel hangs under the button; on a phone it spans the toolbar (the nearest
+    // positioned box) so it never runs past the screen edge.
+    <div ref={root} className="sm:relative">
+      <button
+        ref={button}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        title="Post options"
+        aria-label="Post options"
+        aria-expanded={open}
+        aria-controls={id}
+        className={`${btn} relative flex items-center justify-center ${open ? "border-brand-teal bg-brand-teal/10" : "border-brand-warm-border"}`}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+          <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
+          <circle cx="15" cy="6" r="2" />
+          <circle cx="9" cy="12" r="2" />
+          <circle cx="17" cy="18" r="2" />
+        </svg>
+        {hasPostState(state) && <span aria-hidden className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-brand-teal" />}
+      </button>
+      {open && (
+        <div id={id} role="group" aria-label="Post options" className="absolute left-0 top-full z-30 mt-2 w-72 max-w-full rounded-xl sm:top-11 sm:mt-0 border border-brand-warm-border bg-white px-4 py-2 shadow-lg">
+          <label className={row}>
+            Pinned
+            <input type="checkbox" className={box} checked={state.pinned} onChange={(e) => set({ pinned: e.target.checked })} />
+          </label>
+          <label className={row}>
+            Paid partnership
+            <input type="checkbox" className={box} checked={state.paid} onChange={(e) => set({ paid: e.target.checked })} />
+          </label>
+          <label className={row}>
+            <span className="whitespace-nowrap">Who can reply</span>
+            <select value={state.replies} onChange={(e) => set({ replies: e.target.value as ReplyLimit })} className="min-w-0 max-w-36 rounded-lg border border-brand-warm-border bg-white px-2 py-1 text-sm">
+              {REPLY_LIMITS.map((r) => (
+                <option key={r} value={r}>
+                  {REPLY_LABELS[r]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="my-1 border-t border-brand-warm-border" />
+          {hasImage ? (
+            <>
+              <label className={row}>
+                Sensitive photo
+                <input type="checkbox" className={box} checked={state.sensitive} onChange={(e) => set({ sensitive: e.target.checked })} />
+              </label>
+              <label className={row}>
+                Tagged
+                <input
+                  value={state.tagged}
+                  maxLength={TAG_MAX}
+                  placeholder="Display name"
+                  autoComplete="off"
+                  data-1p-ignore=""
+                  data-lpignore="true"
+                  onChange={(e) => set({ tagged: e.target.value })}
+                  className="w-36 rounded-lg border border-brand-warm-border px-2 py-1 text-sm outline-hidden placeholder:text-brand-warm-muted focus:border-brand-teal"
+                />
+              </label>
+            </>
+          ) : (
+            <p className="py-2 text-xs text-brand-warm-secondary">Add an image to mark it sensitive or tag someone.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,22 @@
+{
+  "source": "Post states (QUIRKS.md, Post chrome) for scripts/verify.mjs. Web: x.com logged in as @Postcheck_test, 1280x900 viewport, 600px column, dark theme, read from the DOM on 2026-10-08 (the @Postcheck_test profile timeline for 110, 111 and 131; @Vibewatch_io's pinned post for the pin row, which matches what QUIRKS recorded for 104 while it was pinned). Boxes are in CSS px: x relative to the post's text column (x.com's x 64), y relative to the top of the cell, `in: sensitive` relative to the cover instead; r = right edge, b = bottom edge, cx = horizontal centre. grow = how much the state adds to the cell. App: iPhone 15 Pro (393pt) captures scripts/phone/b7_*.png in the main checkout (2026-10-07, viewed as @marshallmixing), measured off the pixels; grow there is the shift of the action row against a cell without the state. 102's reply icon is not dimmed because the viewing account could reply to a verified-only post.",
+  "appDevice": "iphone-16",
+  "web": [
+    { "test": "105", "id": "2107674594463367513", "state": { "pinned": true }, "grow": 16, "boxes": { "pinned-icon": { "x": -24, "y": 8, "w": 16, "h": 16 }, "pinned-text": { "x": 0, "y": 8, "h": 16 }, "body": { "y": 50 } } },
+    { "test": "131", "id": "2107675173730308420", "state": { "paid": true }, "grow": 25, "boxes": { "paid-icon": { "x": 0, "y": 62, "w": 16, "h": 16 }, "paid-text": { "x": 19, "y": 63 } } },
+    { "test": "110", "id": "2107675923063734568", "state": { "tagged": "Vibewatch" }, "grow": 20, "boxes": { "tag-text": { "x": 0, "y": 362 } } },
+    { "test": "111", "id": "2107676172104716423", "state": { "sensitive": true }, "grow": 0, "boxes": { "sensitive": { "x": 0, "y": 66, "w": 518, "h": 292 }, "cover-icon": { "cx": 259, "y": 136, "h": 24 }, "cover-title": { "x": 71, "y": 173 }, "cover-text": { "x": 71, "y": 205 }, "cover-show": { "y": 256, "h": 32, "r": 447 } } },
+    { "test": "101", "id": "2107674128757252425", "state": { "replies": "following" }, "grow": 0, "replyDimmed": false },
+    { "test": "102", "id": "2107674333208518700", "state": { "replies": "verified" }, "grow": 0, "replyDimmed": false },
+    { "test": "103", "id": "2107674404880863418", "state": { "replies": "mentioned" }, "grow": 0, "replyDimmed": false }
+  ],
+  "app": [
+    { "test": "105", "id": "2107674594463367513", "state": { "pinned": true }, "grow": 16 },
+    { "test": "131", "id": "2107675173730308420", "state": { "paid": true }, "grow": 22 },
+    { "test": "110", "id": "2107675923063734568", "state": { "tagged": "Vibewatch" }, "grow": 19 },
+    { "test": "111", "id": "2107676172104716423", "state": { "sensitive": true }, "boxes": { "sensitive": { "x": 0, "w": 324, "h": 163 }, "cover-show": { "in": "sensitive", "r": 313, "b": 153, "h": 24 } } },
+    { "test": "101", "id": "2107674128757252425", "state": { "replies": "following" }, "grow": 0, "replyDimmed": true },
+    { "test": "102", "id": "2107674333208518700", "state": { "replies": "verified" }, "grow": 0, "replyDimmed": false },
+    { "test": "103", "id": "2107674404880863418", "state": { "replies": "mentioned" }, "grow": 0, "replyDimmed": true }
+  ]
+}

@@ -250,6 +250,58 @@ for (const f of readdirSync("fixtures/app")) {
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
   }
 }
+// Post states (fixtures/post-states.json): the boxes x.com drew for each state, what each adds to the
+// cell (drawn with and without it), and whether the reply icon is dimmed. Text widths are never
+// compared, so the GT America tier is held to the same boxes.
+const STATE_BOXES = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const a = art.getBoundingClientRect();
+  const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]')).parentElement.getBoundingClientRect();
+  const cover = art.querySelector('[data-sensitive]')?.getBoundingClientRect();
+  const box = (r, ox, oy) => ({ x: r.left - ox, y: r.top - oy, w: r.width, h: r.height, r: r.right - ox, b: r.bottom - oy, cx: (r.left + r.right) / 2 - ox });
+  const out = { body: box(body, body.left, a.top) };
+  for (const e of art.querySelectorAll('[data-pinned-icon], [data-pinned-text], [data-paid-icon], [data-paid-text], [data-tag-text], [data-sensitive], [data-cover-icon], [data-cover-title], [data-cover-text], [data-cover-show]')) {
+    const name = e.getAttributeNames().find((n) => n.startsWith('data-')).slice(5);
+    const r = e.getBoundingClientRect();
+    out[name] = box(r, body.left, a.top);
+    if (cover) out[name + '@sensitive'] = box(r, cover.left, cover.top);
+  }
+  const reply = art.querySelector('[data-reply-icon]');
+  return { height: a.height, boxes: out, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : 1 };
+})()`;
+const states = JSON.parse(readFileSync("fixtures/post-states.json", "utf8"));
+for (const pane of ["web", "app"]) {
+  const deviceLast = pane === "app";
+  console.log(`\npost states · ${pane}`);
+  if (deviceLast) {
+    await page.click('[role="tab"]:has-text("Mobile")');
+    await page.selectOption('select[aria-label="App device"]', states.appDevice);
+  } else {
+    await page.click('[role="tab"]:has-text("Web")');
+    await page.selectOption('select[aria-label="Web device"]', "web");
+  }
+  for (const p of states[pane]) {
+    const fx = JSON.parse(readFileSync(`fixtures/posts/${p.id}.json`, "utf8"));
+    const photo = fx.photos > 0;
+    await compose(typedText(fx), { photo });
+    const plain = await page.evaluate(STATE_BOXES(deviceLast));
+    await compose(typedText(fx), { photo, state: p.state });
+    const got = await page.evaluate(STATE_BOXES(deviceLast));
+    const problems = [];
+    if (p.grow !== undefined && Math.abs(got.height - plain.height - p.grow) > 1) problems.push(`adds ${Math.round((got.height - plain.height) * 10) / 10}px to the cell, X ${p.grow}`);
+    for (const [name, want] of Object.entries(p.boxes ?? {})) {
+      const { in: inside, ...keys } = want;
+      const b = got.boxes[inside ? `${name}@${inside}` : name];
+      if (!b) { problems.push(`no ${name}`); continue; }
+      for (const [k, v] of Object.entries(keys)) if (Math.abs(b[k] - v) > 1) problems.push(`${name} ${k} X ${v} / tool ${Math.round(b[k] * 10) / 10}`);
+    }
+    if (p.replyDimmed !== undefined && got.replyOpacity < 0.99 !== p.replyDimmed) problems.push(`reply icon ${p.replyDimmed ? "should" : "should not"} be dimmed (opacity ${got.replyOpacity})`);
+    if (problems.length) { fail++; console.log(`  FAIL ${pane === "web" ? "web " : "app "} ${p.test} ${p.id}\n       ${problems.join("\n       ")}`); }
+    else { pass++; console.log(`  ok   ${pane === "web" ? "web " : "app "} ${p.test} ${p.id} ${Object.keys(p.state).join(", ")}`); }
+  }
+}
+
 console.log(`\n${pass} passed, ${edge} within font tolerance, ${gap} known gaps, ${fail} failed`);
 await browser.close();
 if (args.includes("--keep")) server = null;

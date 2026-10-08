@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DEFAULT_PHONE_ID } from "../src/lib/devices";
+import { NO_POST_STATE } from "../src/lib/post-state";
 import { SHARE_MAX_TEXT, SHARE_PREFIX, decodeShare, encodeShare, jpegSize, parseWire, sharedImage, withoutFragment, type SharedPreview } from "../src/lib/share";
 
 /** The header of a JPEG (SOI, APP0, SOF0) claiming the given size: all jpegSize and sharedImage read. */
@@ -17,6 +18,7 @@ const preview: SharedPreview = {
   ],
   identity: { name: "Vibewatch", handle: "Vibewatch_io", badge: "gold", avatar: jpeg(96, 96) },
   media: jpeg(720, 405),
+  post: { pinned: true, paid: true, replies: "mentioned", sensitive: true, tagged: "Vibewatch" },
   theme: "dark",
   phone: "iphone-17-pro-max-post",
   web: "web-post",
@@ -54,6 +56,15 @@ test("device ids must match their view's kind", () => {
   const p = parseWire({ v: 1, text: "hi", styles: [], phone: "web", web: "iphone-16", view: "app" });
   assert.equal(p?.phone, DEFAULT_PHONE_ID);
   assert.equal(p?.web, "web");
+});
+
+test("post states are optional, checked field by field, and left out of a plain preview's link", async () => {
+  assert.deepEqual(parseWire({ v: 1, text: "hi" })?.post, NO_POST_STATE);
+  const p = parseWire({ v: 1, text: "hi", post: { pinned: "yes", paid: true, replies: "nobody", sensitive: 1, tagged: ` ${"n".repeat(80)} ` } });
+  assert.deepEqual(p?.post, { pinned: false, paid: true, replies: "everyone", sensitive: false, tagged: "n".repeat(50) });
+  const plain = await encodeShare({ ...preview, post: NO_POST_STATE });
+  const json = await new Response(new Blob([Buffer.from(plain.slice(SHARE_PREFIX.length), "base64url")]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+  assert.equal("post" in JSON.parse(json), false);
 });
 
 test("style runs outside the text or with unknown flags are dropped", () => {

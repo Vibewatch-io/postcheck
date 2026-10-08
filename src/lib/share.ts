@@ -1,5 +1,6 @@
 import type { StyleRun } from "./entities";
 import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
+import { NO_POST_STATE, REPLY_LIMITS, TAG_MAX, hasPostState, type PostState } from "./post-state";
 
 /**
  * Share links. The whole preview (text, styling, identity, shrunk images, device, theme) is
@@ -31,6 +32,8 @@ export interface SharedPreview {
   styles: StyleRun[];
   identity: { name: string; handle: string; badge: (typeof BADGES)[number]; avatar: string | null };
   media: string | null;
+  /** Pinned, paid partnership, reply limit, sensitive photo, tag. */
+  post: PostState;
   theme: (typeof THEMES)[number];
   /** Device ids: a phone for the Mobile view, a web layout for the Web view. */
   phone: string;
@@ -38,7 +41,10 @@ export interface SharedPreview {
   view: "app" | "web";
 }
 
-/** Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. */
+/**
+ * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. `post` (the
+ * post states) is optional and left out when nothing is set, so a plain preview's link is unchanged.
+ */
 interface Wire {
   v: 1;
   text: string;
@@ -48,6 +54,7 @@ interface Wire {
   badge: string;
   avatar: string | null;
   media: string | null;
+  post?: { pinned?: boolean; paid?: boolean; replies?: string; sensitive?: boolean; tagged?: string };
   theme: string;
   phone: string;
   web: string;
@@ -64,6 +71,7 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     badge: p.identity.badge,
     avatar: p.identity.avatar,
     media: p.media,
+    ...(hasPostState(p.post) ? { post: { pinned: p.post.pinned, paid: p.post.paid, replies: p.post.replies, sensitive: p.post.sensitive, tagged: p.post.tagged.trim() } } : {}),
     theme: p.theme,
     phone: p.phone,
     web: p.web,
@@ -114,10 +122,24 @@ export function parseWire(raw: unknown): SharedPreview | null {
     styles,
     identity: { name, handle, badge, avatar: sharedImage(w.avatar) },
     media: sharedImage(w.media),
+    post: parsePostState(w.post),
     theme,
     phone,
     web,
     view,
+  };
+}
+
+/** The optional post states, field by field: a bad field falls back to its default. */
+function parsePostState(raw: unknown): PostState {
+  if (!raw || typeof raw !== "object") return NO_POST_STATE;
+  const p = raw as Record<string, unknown>;
+  return {
+    pinned: p.pinned === true,
+    paid: p.paid === true,
+    replies: REPLY_LIMITS.find((r) => r === p.replies) ?? "everyone",
+    sensitive: p.sensitive === true,
+    tagged: typeof p.tagged === "string" ? p.tagged.trim().slice(0, TAG_MAX) : "",
   };
 }
 
