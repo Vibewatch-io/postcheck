@@ -303,12 +303,18 @@ export function Postcheck() {
         const res = await fetch("/api/unfurl", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: cardKey }), signal: ctrl.signal });
         // A refused lookup (a 400 carries no card field) or any answer but a card or an exact
         // { card: null, reason: "none" } is a failed lookup: only "none" says the page has no tags.
-        const json = res.ok ? ((await res.json()) as { card?: CardData | null; reason?: NoCardReason }) : null;
+        const json = res.ok ? ((await res.json()) as { card?: unknown; reason?: unknown } | null) : null;
+        const found = json?.card;
+        const state: CardState =
+          found && typeof found === "object" && typeof (found as CardData).title === "string" ? (found as CardData) : found === null && json?.reason === "none" ? "none" : "failed";
         inFlight = false;
-        setCards((c) => ({ ...c, [cardKey]: json?.card ?? (json?.card === null && json.reason === "none" ? "none" : "failed") }));
+        // A failed lookup is forgotten, as for quotes, so the next time the link is needed it is asked again.
+        if (state === "failed") asked.delete(cardKey);
+        setCards((c) => ({ ...c, [cardKey]: state }));
       } catch {
         if (ctrl.signal.aborted) return;
         inFlight = false;
+        asked.delete(cardKey);
         setCards((c) => ({ ...c, [cardKey]: "failed" }));
       }
     }, cardLinkDone ? 600 : 1500);
@@ -316,7 +322,7 @@ export function Postcheck() {
       clearTimeout(timer);
       // A fetch cut off mid-flight (typing after the link changes the wait) is forgotten here, before
       // the next run checks for it, so that run fetches the card again instead of leaving it loading.
-      // A finished lookup stays cached for the visit.
+      // A card or a "none" stays cached for the visit.
       if (inFlight) asked.delete(cardKey);
       ctrl.abort();
     };
