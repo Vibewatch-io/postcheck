@@ -208,11 +208,16 @@ async function quoteDiff(label, deviceLast, id, want) {
     if (exp.join("\n") !== rows.join("\n")) {
       const lines = `lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`;
       // The same coin flip as diff(): the first differing line lands within 5px of the quote's text
-      // column. The boxes below stay exact, so a shift that changes the drawn line count still fails;
-      // one that only pushes text past the 5-line clamp leaves the box alone and passes as an edge.
+      // column, and only where the lines wrap moved. The quoted text must match character for
+      // character (whitespace aside, so a break inside a hyphenated word, CJK or a link still counts),
+      // so a dropped or changed word fails even when the 5-line clamp (x-post.tsx maxLines) keeps the
+      // box the same. When both sides fill the clamp, the shift may push the tail out of view.
       const bad = exp.findIndex((l, i) => l !== rows[i]);
       const [a, b] = [exp[bad], rows[bad]];
-      const fit = a && b ? await lineFit(deviceLast, a.length > b.length ? a : b, true) : null;
+      const [ea, ra] = [exp.join(""), rows.join("")].map((t) => t.replace(/\s+/g, ""));
+      const clamped = exp.length === 5 && rows.length === 5;
+      const wrapOnly = a && b && (a.startsWith(b) || b.startsWith(a)) && (ea === ra || (clamped && (ea.startsWith(ra) || ra.startsWith(ea))));
+      const fit = wrapOnly ? await lineFit(deviceLast, a.length > b.length ? a : b, true) : null;
       if (fit && Math.abs(fit.width - fit.limit) <= 5) edgeNote = [`${fit.width}px vs ${fit.limit}px text`, lines];
       else problems.push(lines);
     }
