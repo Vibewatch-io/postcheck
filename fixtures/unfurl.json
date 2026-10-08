@@ -1,0 +1,171 @@
+{
+  "https://aibtc.com/bounties/mtt3jab204ba31f85ab0": {
+    "url": "https://aibtc.com/bounties/mtt3jab204ba31f85ab0",
+    "host": "aibtc.com",
+    "title": "AIBTC",
+    "description": "The Agent Network on Bitcoin",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://aibtc.com/bounties/mtt3jjrgcf0aa8fb225c": {
+    "url": "https://aibtc.com/bounties/mtt3jjrgcf0aa8fb225c",
+    "host": "aibtc.com",
+    "title": "AIBTC",
+    "description": "The Agent Network on Bitcoin",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://buzz.xyz": {
+    "url": "https://buzz.xyz/",
+    "host": "buzz.xyz",
+    "title": "Buzz — Your people, your agents, your project — all in one place.",
+    "description": "Come test the early stages with us.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://developer.mozilla.org/en-US/docs/Web/HTML": {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/HTML",
+    "host": "developer.mozilla.org",
+    "title": "HTML: HyperText Markup Language | MDN",
+    "description": "HTML (HyperText Markup Language) is the most basic building block of the Web. It defines the meaning and structure of web content. Other technologies besides HTML are generally used to describe a web page's appearance/presentation (CSS) or functionality/behavior (JavaScript).",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "small"
+  },
+  "https://en.wikipedia.org/wiki/Twitter": {
+    "url": "https://en.wikipedia.org/wiki/Twitter",
+    "host": "en.wikipedia.org",
+    "title": "X (social network) - Wikipedia",
+    "description": "",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "small"
+  },
+  "https://example.com": null,
+  "https://github.com/vercel/next.js": {
+    "url": "https://github.com/vercel/next.js",
+    "host": "github.com",
+    "title": "GitHub - vercel/next.js: The React Framework",
+    "description": "The React Framework. Contribute to vercel/next.js development by creating an account on GitHub.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://github.com/vercel/next.js/blob/canary/packages/next/src/server/lib/router-utils/resolve-routes.ts?plain=1#L10": {
+    "url": "https://github.com/vercel/next.js/blob/canary/packages/next/src/server/lib/router-utils/resolve-routes.ts?plain=1#L10",
+    "host": "github.com",
+    "title": "next.js/packages/next/src/server/lib/router-utils/resolve-routes.ts at canary · vercel/next.js",
+    "description": "The React Framework. Contribute to vercel/next.js development by creating an account on GitHub.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC": {
+    "url": "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
+    "host": "open.spotify.com",
+    "title": "Never Gonna Give You Up",
+    "description": "Rick Astley · Whenever You Need Somebody · Song · 1987",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "small"
+  },
+  "https://stacks.vibewatch.io/?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260901-stacks-vibe-index": {
+    "url": "https://stacks.vibewatch.io/?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260901-stacks-vibe-index",
+    "host": "stacks.vibewatch.io",
+    "title": "Stacks Vibe Index — Vibewatch",
+    "description": "The full picture of Stacks community sentiment, updated all day. Vibewatch scores each project in its own context from over a dozen sources, including the Discords and Telegrams where its community actually talks.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://vibewatch.io": {
+    "url": "https://vibewatch.io/",
+    "host": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
+    "description": "All your platforms, one weekly report. Vibewatch watches Discord, Telegram, X, and more — with token and market context — and learns from your feedback. Starting at $19/mo.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://vibewatch.io/blog/community-forum-monitoring?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260828-community-forum-monitoring": {
+    "url": "https://vibewatch.io/blog/community-forum-monitoring?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260828-community-forum-monitoring",
+    "host": "vibewatch.io",
+    "title": "How to Monitor Sentiment on Your Community Forum (2026 Guide)",
+    "description": "Discord and Telegram measure the vibe of the hour. Your Discourse forum carries the considered take. A practical framework for forum sentiment monitoring, and how Vibewatch automates it.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://vibewatch.io/blog/discord-reputation-monitoring?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260904-discord-reputation-monitoring": {
+    "url": "https://vibewatch.io/blog/discord-reputation-monitoring?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260904-discord-reputation-monitoring",
+    "host": "vibewatch.io",
+    "title": "How to Monitor Your Brand's Reputation on Discord (2026 Guide)",
+    "description": "Discord isn't indexed or searchable, so a normal social-listening tool can't see mentions of your project there. What monitoring actually requires, and how to set it up.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://vibewatch.io/changelog/2026-09-11?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260910-changelog-2026-09-11": {
+    "url": "https://vibewatch.io/changelog/2026-09-11?utm_source=x&utm_medium=social-page&utm_campaign=evergreen&utm_content=p-20260910-changelog-2026-09-11",
+    "host": "vibewatch.io",
+    "title": "This week at Vibewatch — Sep 4–Sep 10",
+    "description": "Top voices on the Stacks Vibe Index, weekly reports on stored daily market closes, an x402 registry listing for the paid index, and eight fixes.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://www.youtube.com/watch?v=jNQXAC9IVRw": {
+    "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+    "host": "youtube.com",
+    "title": "Me at the zoo",
+    "description": "Microplastics are accumulating in human brains at an alarming ratehttps://www.youtube.com/watch?v=0PT5c1z3LL8“Nanoplastics and Human Health” with Matthew J C...",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://x.com/i/broadcasts/1AGRnZgZYMaGl": {
+    "url": "https://x.com/i/broadcasts/1AGRnZgZYMaGl",
+    "host": "x.com",
+    "title": "Good For Bitcoin",
+    "description": "Keep your BTC on the L1",
+    "image": null,
+    "layout": "small"
+  },
+  "https://x.com/i/broadcasts/1kKzDPoVNEDJv": {
+    "url": "https://x.com/i/broadcasts/1kKzDPoVNEDJv",
+    "host": "x.com",
+    "title": "Good For Bitcoin",
+    "description": "Getting rugged at Lightning speed",
+    "image": null,
+    "layout": "small"
+  },
+  "https://x.com/Vibewatch_io": {
+    "url": "https://x.com/Vibewatch_io",
+    "host": "x.com",
+    "title": "Vibewatch (@Vibewatch_io) on X",
+    "description": "Community intelligence for web3 teams. Sentiment across Discord, Telegram, X + 10 more — from inside the servers where your community talks. From $19/mo.",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://xn--mnchen-3ya.de": {
+    "url": "https://www.muenchen.de/",
+    "host": "muenchen.de",
+    "title": "muenchen.de – Das offizielle Stadtportal",
+    "description": "Das offizielle Portal der Landeshauptstadt München: Informationen, Bürger-Services, Veranstaltungen und Sehenswürdigkeiten",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://youtu.be/1DWcEVs0Z8c": {
+    "url": "https://www.youtube.com/watch?v=1DWcEVs0Z8c&feature=youtu.be",
+    "host": "youtube.com",
+    "title": "Take Your Lightning Node Offline: AI-Found Bugs, Quantum-Proof BTC Mined, Coinbase Mortgages Live",
+    "description": "Critical vulnerabilities in Core Lightning have node operators going offline while a two-week embargo holds, and they were surfaced by AI-generated bug repor...",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://youtu.be/aZl5IsNKXQ4": {
+    "url": "https://www.youtube.com/watch?v=aZl5IsNKXQ4&feature=youtu.be",
+    "host": "youtube.com",
+    "title": "The Treasury Just Pumped Bitcoin: 7% Surge, Bullish IPOs With 24,300 BTC, MetaPlanet Comes to the US",
+    "description": "The Treasury yield hit 5.34%, its highest since 2007, and the Treasury answered by doubling its long-end bond buybacks. Bitcoin surged 7% in a day, its bigge...",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  },
+  "https://youtu.be/SQSD218TIU0": {
+    "url": "https://www.youtube.com/watch?v=SQSD218TIU0&feature=youtu.be",
+    "host": "youtube.com",
+    "title": "Hackers Minted 4,000 BTC on Liquid: Blockstream Won't Pay, Trezor Leak Grows, Genesis Bond Sold Out",
+    "description": "A dormant bug in Liquid's confidential transactions let an attacker mint roughly 4,000 BTC nobody could see, then bridge it out. They returned 3,400, kept 60...",
+    "image": "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==",
+    "layout": "large"
+  }
+}

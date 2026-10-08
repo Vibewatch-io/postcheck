@@ -68,13 +68,15 @@ const phone = (
   // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 60dp to width − 12dp, so
   // column = width − 72; four lines of test 05 match x.com's untracked web Chirp at 15px to within ink side
   // bearings, with a 20dp pitch below 400 dp (scripts/android/README.md; the wide-screen size is below).
+  // The iOS body runs at a 19.28pt pitch, not 20: seven one-letter lines of test 13 step 19.27–19.29 in
+  // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
   textWidth: platform === "ios" ? width - 77 : width - 72,
   pane: platform === "ios" ? "app" : "web",
   // Android sets the body at 16/21.33 on a wide screen: the same lines measure 6.4% wider at 411.4 dp than at
   // 360 and 392 dp, and the pitch is 56px at 2.625 px/dp (@postcheck_test tests 01–08 on a Pixel 3). The
   // switch lies between 392 and 411.4 dp; 400 (Android's sw400dp resource bucket) is inferred.
   fontSize: platform === "android" && width >= 400 ? 16 : 15,
-  lineHeight: platform === "android" && width >= 400 ? 64 / 3 : 20,
+  lineHeight: platform === "ios" ? 19.28 : width >= 400 ? 64 / 3 : 20,
   pixelRatio: 3,
   radius,
   island,

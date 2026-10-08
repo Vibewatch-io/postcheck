@@ -75,9 +75,10 @@ export function DefaultAvatar({ size, className, style }: { size: number | strin
   );
 }
 
-function Actions({ theme, full }: { theme: XTheme; full: boolean }) {
+/** The action row; `height` is the row the icons are centred in (36 on x.com, 20 in the iOS timeline cell). */
+function Actions({ theme, full, height = 36 }: { theme: XTheme; full: boolean; height?: number }) {
   const item = (icon: ReactNode, grow: boolean) => (
-    <div style={{ flex: grow ? "1 1 0" : "0 0 auto", minWidth: 0, display: "flex", alignItems: "center", height: 36, color: theme.icon }}>{icon}</div>
+    <div style={{ flex: grow ? "1 1 0" : "0 0 auto", minWidth: 0, display: "flex", alignItems: "center", height, color: theme.icon }}>{icon}</div>
   );
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: full ? "space-between" : undefined, width: "100%" }}>
@@ -85,7 +86,7 @@ function Actions({ theme, full }: { theme: XTheme; full: boolean }) {
       {item(<RepostIcon size={20} />, !full)}
       {item(<LikeIcon size={20} />, !full)}
       {item(<ViewsIcon size={20} />, !full)}
-      <div style={{ display: "flex", gap: 16, color: theme.icon, alignItems: "center", height: 36 }}>
+      <div style={{ display: "flex", gap: 16, color: theme.icon, alignItems: "center", height }}>
         <BookmarkIcon size={20} />
         <ShareIcon size={20} />
       </div>
@@ -290,6 +291,27 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
 }
 
 /**
+ * The iOS timeline cell's vertical metrics (QUIRKS.md, "Layout: app"), fitted ink against ink: iPhone
+ * 15 Pro captures of 25 posts against this tool's own render of the same posts, so the font's place in
+ * its line box cancels out (`cell` heights in fixtures/app/iphone-16.json, checked by verify). What
+ * the app draws, from the separator above: the name's ink 12.9 (0.9 under the avatar's top), the
+ * check, Grok mark and "···" centred at 18.5, the first body line's ink 32.9 at a 19.28 pitch
+ * (devices.ts), a card, photo or quote embed 24.3 under the last line's ink top, the action icons
+ * centred 16.75 under it (31.9 under a last text line's ink top), the next separator 22.2 under them. Chrome floors the body line box's half-leading (0.64 at 19.28) and snaps baselines
+ * to whole pixels, hence `bodyTop` and `gap` trade a pixel. Each constant moves one landmark:
+ * - nameTop: the name row, 3.6 above where 12px of padding puts it;
+ * - grokTop: the Grok mark, whose ink sits low in its box;
+ * - bodyTop, gap: the body under the name row, and a card, photo or quote embed under the body;
+ * - actionsTop, textActionsTop: the action row (20 tall, icons centred) under an attachment or under text;
+ * - bottom: the cell's padding under the action row;
+ * - smallCardLift: the small card, whose hairline the app draws outside its box: 1 higher puts both
+ *   hairlines where the app's are (18 captures) and its thumbnail level with a photo's top.
+ * A cell with no text puts its attachment `bodyTop` under the name row: assumed, no capture.
+ * The web cell, Android and the iOS post screen keep the x.com values.
+ */
+const IOS_CELL = { nameTop: -3.6, grokTop: -2, bodyTop: 1.3, gap: 7.7, actionsTop: 6.7, textActionsTop: 5.6, bottom: 11.2, smallCardLift: 1 };
+
+/**
  * One post cell, laid out with the values read off x.com: 12px/16px cell
  * padding, 40px avatar, 8px gap, 15px/20px Chirp, name row → 2px → body →
  * 12px → card → action row. The post page ("focal") variant runs the body at
@@ -320,6 +342,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} />
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
+  // LinkCard draws the small layout for any card without a large image.
+  const smallCard = ios && !media?.length && !quote && card && card !== "loading" && !(card.layout === "large" && card.image);
 
   const body = (
     <PostBody
@@ -394,7 +418,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         cursor: toggle ? "pointer" : undefined,
         // App cell measured on an iPhone 15 Pro capture: 12px inset, 44px avatar, 8px gap, 12px right.
         // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
-        padding: isPhone ? (android ? "12px" : "12px 13px 12px 12px") : "12px 16px",
+        padding: isPhone ? (android ? "12px" : `12px 13px ${IOS_CELL.bottom}px 12px`) : "12px 16px",
         backgroundColor: theme.bg,
         width: device.width,
         boxSizing: "border-box",
@@ -407,11 +431,11 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       <div style={{ display: "flex", gap: 8 }}>
         <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20, marginTop: ios ? IOS_CELL.nameTop : undefined }}>
             <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} handleFirst={device.pane === "app"} />
             {device.pane === "app" && (
               // iPhone captures (test 80, 2026-10-07): the Grok mark at x 343–357 on a 393pt screen, so the name row stops near 334.
-              <div style={{ color: theme.icon, width: 16, height: 20, display: "flex", alignItems: "center", justifyContent: "center", marginLeft: "auto", marginRight: -10, flexShrink: 0 }}>
+              <div style={{ color: theme.icon, width: 16, height: 20, display: "flex", alignItems: "center", justifyContent: "center", marginLeft: "auto", marginRight: -10, marginTop: ios ? IOS_CELL.grokTop : undefined, flexShrink: 0 }}>
                 <GrokIcon size={16} />
               </div>
             )}
@@ -419,12 +443,12 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
               <MoreIcon size={16} />
             </div>
           </div>
-          <div style={{ marginTop: 2, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ marginTop: ios ? IOS_CELL.bodyTop : 2, display: "flex", flexDirection: "column", gap: ios ? IOS_CELL.gap - (smallCard ? IOS_CELL.smallCardLift : 0) : 12 }}>
             {hasBody && body}
             {attachment}
           </div>
-          <div style={{ marginTop: 4, marginLeft: -8 }}>
-            <Actions theme={theme} full={false} />
+          <div style={{ marginTop: ios ? (attached ? IOS_CELL.actionsTop : IOS_CELL.textActionsTop) : 4, marginLeft: -8 }}>
+            <Actions theme={theme} full={false} height={ios ? 20 : 36} />
           </div>
         </div>
       </div>
