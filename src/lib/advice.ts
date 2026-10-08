@@ -7,6 +7,7 @@ import {
   type LengthInfo,
 } from "./entities";
 import { cardless, type CardData } from "./card";
+import { APP_MAX_HEIGHT, APP_MIN_RATIO, WEB_MAX_HEIGHT, overflows, type MediaKind, type MediaLayout } from "./media";
 
 export type Severity = "fix" | "tip" | "note";
 
@@ -60,6 +61,10 @@ export interface AdviceInput {
   appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId?: string } | null;
   /** An image is attached: X shows it instead of any link card. */
   hasMedia?: boolean;
+  /** What is attached, in order. */
+  mediaKinds?: MediaKind[];
+  /** How the media is laid out on each preview shown (the selected web layout and phone). */
+  mediaLayouts?: Array<{ deviceId: string; deviceLabel: string; layout: MediaLayout; ios: boolean; tall: boolean }>;
   /** Bold / italic runs are present. */
   hasStyles?: boolean;
   /** The draft exactly as typed, before X's trimming and blank-line collapsing. */
@@ -123,11 +128,13 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       });
     }
     if (hasMedia) {
+      const kinds = input.mediaKinds ?? ["photo"];
+      const noun = kinds.length > 1 ? "Media" : kinds[0] === "gif" ? "GIF" : kinds[0] === "video" ? "Video" : "Photo";
       out.push({
         id: "media-beats-card",
         severity: "note",
-        title: "Photo attached, so no card",
-        detail: `With an image on the post X shows the image and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
+        title: `${noun} attached, so no card`,
+        detail: `With media on the post X shows the media and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
         marks: [{ at: cu.start }],
       });
     } else if (cu.isStatus) {
@@ -267,6 +274,44 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "note",
       title: "Bold and italic need Premium",
       detail: "Text styling only posts from a Premium account. The styled words cost no extra characters, but bold glyphs are wider, so line breaks move wherever the styling shows. In the iPhone and Android apps' timelines, X shows the post with no bold or italic at all, so the breaks and the fold there don't change (an iPhone post that folds behind Show more gets it back once that's tapped, and its post page shows it). That looks like an X bug, and the phone previews show it the same way.",
+    });
+  }
+
+  const layouts = input.mediaLayouts ?? [];
+  // Only a carousel that runs past its column needs a swipe: four narrow strips fit in it whole.
+  const sideways = layouts.filter((l) => l.layout.mode === "carousel" && overflows(l.layout));
+  if (sideways.length) {
+    const n = sideways[0].layout.boxes.length;
+    const on = sideways.map((l) => l.deviceLabel).join(" and ");
+    const cut = sideways.some((l) => l.layout.cropped) ? ", cutting wide ones at the sides" : "";
+    out.push({
+      id: "media-carousel",
+      severity: "note",
+      title: "Readers swipe to see the rest",
+      detail: `On ${on}, X puts these ${n} items in a sideways carousel at one height${cut}. The next item peeks in from the edge; the rest take a swipe.`,
+      marks: [{ el: "attachment", devices: sideways.map((l) => l.deviceId) }],
+    });
+  }
+  const guessed = layouts.filter((l) => l.layout.assumed);
+  if (guessed.length) {
+    out.push({
+      id: "media-assumed",
+      severity: "note",
+      title: "Very narrow images: sizes partly assumed",
+      detail: guessed.some((l) => l.layout.assumed === "narrow-carousel")
+        ? "How X sizes a row of four very narrow images comes from one capture (45 by 643 pixels each on x.com), so the preview copies it. Other counts and shapes may come out differently."
+        : "No capture shows a very narrow image among wider ones in X's carousel, so the preview's 45px width for it is a guess.",
+      marks: [{ el: "attachment", devices: guessed.map((l) => l.deviceId) }],
+    });
+  }
+  const cropped = layouts.filter((l) => l.ios && l.tall && l.layout.mode === "single");
+  if (cropped.length) {
+    out.push({
+      id: "media-tall-crop",
+      severity: "note",
+      title: "Tall photo cropped on iPhone",
+      detail: `The iPhone timeline shows a photo this tall cropped to ${Math.round(APP_MIN_RATIO * APP_MAX_HEIGHT)} by ${APP_MAX_HEIGHT} points, so its top and bottom don't show there. x.com shows more of it, up to ${WEB_MAX_HEIGHT}px high.`,
+      marks: [{ el: "attachment", devices: cropped.map((l) => l.deviceId) }],
     });
   }
 

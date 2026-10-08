@@ -7,9 +7,10 @@ import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
 import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type StyleRun } from "@/lib/entities";
 import { quoteTime, type QuoteState } from "@/lib/quote";
+import { mediaColumn, mediaLayout, videoTime, type MediaItem } from "@/lib/media";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
-import { BookmarkIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
+import { BookmarkIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, MuteIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
 
 export interface Identity {
   name: string;
@@ -46,8 +47,8 @@ interface Props {
   card: CardData | "loading" | null;
   /** The post link that becomes the quote embed, and what the lookup found. */
   quote: { entity: Entity; state: QuoteState | null } | null;
-  /** Attached image (data URL). A post with media never shows a link card. */
-  media?: string | null;
+  /** Attached photos, GIFs and videos, up to 4. A post with media never shows a link card or a quote. */
+  media?: MediaItem[];
   /** Premium bold / italic runs. */
   styles?: StyleRun[];
   bodyRef?: Ref<HTMLDivElement>;
@@ -216,6 +217,76 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
   );
 }
 
+/** Small dark label on a photo, GIF or video. Placement and styling are assumed; only ALT's 23×15 is measured. */
+const badgeStyle: CSSProperties = { display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, backgroundColor: "rgba(0,0,0,0.77)", color: "#fff", fontWeight: 700 };
+
+/**
+ * Attached media, laid out by `mediaLayout()` (QUIRKS.md, "Web media" and "App media"): one item,
+ * a row sharing one height, or a sideways ScrollSnap carousel with the next item peeking in.
+ * x.com frames a single item or a row in the card border; the app's frame is drawn on the image
+ * (assumed), and so is each carousel item's. Corner radius 16 on x.com (the card's) and 12 on the
+ * app (the quote embed's fit): assumed, not measured on media. Badges: x.com shows "GIF", a video's
+ * length and a 23×15 "ALT"; the iOS timeline shows a "GIF" pill and a mute mark on a video, and no
+ * ALT. A video is drawn as its first frame.
+ */
+function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Device; theme: XTheme }) {
+  const layout = mediaLayout(items, device);
+  if (!layout) return null;
+  const { web } = mediaColumn(device);
+  const radius = web ? 16 : 12;
+  const carousel = layout.mode === "carousel";
+  const height = Math.max(...layout.boxes.map((b) => b.h));
+  const hairline = <div aria-hidden style={{ position: "absolute", inset: 0, border: `1px solid ${theme.cardBorder}`, borderRadius: radius, pointerEvents: "none" }} />;
+  const cells = layout.boxes.map((b, i) => {
+    const m = items[i];
+    const prev = layout.boxes[i - 1];
+    const badge = m.kind === "gif" ? "GIF" : m.kind === "video" ? (web ? (m.durationMs !== undefined ? "time" : "") : "mute") : "";
+    return (
+      <div
+        key={i}
+        data-media-item=""
+        data-badge={badge}
+        data-kind={m.kind}
+        style={{ position: "relative", flex: "none", width: b.w, height: b.h, marginLeft: prev ? b.x - prev.x - prev.w : 0, overflow: "hidden", borderRadius: carousel ? radius : undefined, scrollSnapAlign: carousel ? "start" : undefined }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={m.src} alt="" draggable={false} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+        {carousel && hairline}
+        {(badge === "GIF" || badge === "time" || (web && m.alt && m.kind === "photo")) && (
+          <div style={{ position: "absolute", left: 8, bottom: 8, display: "flex", gap: 4 }}>
+            {badge === "GIF" && <span style={{ ...badgeStyle, height: 20, padding: "0 4px", fontSize: 13, lineHeight: "16px" }}>GIF</span>}
+            {badge === "time" && <span style={{ ...badgeStyle, height: 20, padding: "0 4px", fontSize: 13, lineHeight: "16px", fontWeight: 400 }}>{videoTime(m.durationMs ?? 0)}</span>}
+            {web && m.alt && m.kind === "photo" && <span data-media-alt="" style={{ ...badgeStyle, width: 23, height: 15, fontSize: 11, lineHeight: "15px" }}>ALT</span>}
+          </div>
+        )}
+        {badge === "mute" && (
+          <div style={{ position: "absolute", right: 8, bottom: 8, width: 24, height: 24, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.6)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <MuteIcon size={16} />
+          </div>
+        )}
+      </div>
+    );
+  });
+  if (carousel) {
+    // Clipped to the column and scrolled sideways, with no scrollbar showing.
+    return (
+      <div data-media="carousel" role="region" aria-label="Post media" style={{ width: layout.column, height, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+        {cells}
+      </div>
+    );
+  }
+  const width = layout.boxes[layout.boxes.length - 1].x + layout.boxes[layout.boxes.length - 1].w;
+  return (
+    <div
+      data-media={layout.mode}
+      style={{ position: "relative", display: "flex", width: width + 2 * layout.border, boxSizing: "border-box", border: layout.border ? `1px solid ${theme.cardBorder}` : undefined, borderRadius: radius, overflow: "hidden" }}
+    >
+      {cells}
+      {!layout.border && hairline}
+    </div>
+  );
+}
+
 /**
  * One post cell, laid out with the values read off x.com: 12px/16px cell
  * padding, 40px avatar, 8px gap, 15px/20px Chirp, name row → 2px → body →
@@ -232,17 +303,19 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   // "Postcheck_test…", @postcheck_test tests 40–44); iOS and x.com drop it. A trailing card link it hides like them.
   const hiddenUrl = device.platform === "android" && quote ? null : hiddenUrlStart;
   const viewport = device.kind === "phone" ? device.width : 1200;
+  // The iOS timeline cell, where the app's card is measured; the iOS post screen has no capture.
+  const ios = device.kind === "phone" && device.platform === "ios" && device.view !== "post";
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrl));
 
   // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
   // the attachment through it.
-  const attached = media ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={media} alt="" style={{ width: bodyWidth, display: "block", borderRadius: 16, border: `1px solid ${theme.cardBorder}`, boxSizing: "border-box", maxHeight: bodyWidth * 1.25, objectFit: "cover" }} />
+  const attached = media?.length ? (
+    <MediaBlock items={media} device={device} theme={theme} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
-    <LinkCard card={card} theme={theme} width={bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} />
+    // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31 and 47: 322.4–322.8 wide at 393).
+    <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} />
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
 

@@ -59,6 +59,15 @@ const ROWS = (deviceLast, quote = false) => `(() => {
       const k = Math.round((cr[0].top - top) / lh); rows[k] = rows[k] || []; if (k === curK) rows[k][rows[k].length - 1] += node.nodeValue[i]; else { rows[k].push(node.nodeValue[i]); curK = k; } } }
   return { rows: Object.keys(rows).sort((a,b)=>a-b).filter((k) => k < shown).map(k => rows[k].join(' ')), more: !!body.querySelector('[data-more]') };
 })()`;
+/** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small card's thumbnail. */
+const CARD_BOX = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const c = art.querySelector('[data-card]'); if (!c) return null; const b = c.getBoundingClientRect();
+  const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement.getBoundingClientRect();
+  const t = c.querySelector('[data-card-thumb]')?.getBoundingClientRect();
+  return { box: [Math.round(b.left - (body?.left ?? b.left)), Math.round(b.top - (body?.bottom ?? b.top)), Math.round(b.width), Math.round(b.height)], thumb: t ? [Math.round(t.width), Math.round(t.height)] : null };
+})()`;
 /** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
 const QUOTE_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
@@ -67,6 +76,13 @@ const QUOTE_BOX = (deviceLast) => `(() => {
   const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
   const text = [...q.querySelectorAll('[data-w]')][0]?.parentElement;
   return { box: [Math.round(b.width), Math.round(b.height)], avatar: rel(q.querySelector('img, svg')), text: rel(text), photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
+})()`;
+/** The attached media's item boxes [x, y, w, h] relative to the first item, each item's badge, and the ALT badges. */
+const MEDIA_BOX = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const items = [...art.querySelectorAll('[data-media-item]')]; if (!items.length) return null; const o = items[0].getBoundingClientRect();
+  return { items: items.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left - o.left), Math.round(r.top - o.top), Math.round(r.width), Math.round(r.height), e.dataset.badge, e.dataset.kind]; }), alt: art.querySelectorAll('[data-media-alt]').length };
 })()`;
 
 const browser = await chromium.launch();
@@ -106,12 +122,12 @@ if (args.includes("--no-chirp")) { if (tier !== "gt") { console.error(`expected 
 else if (tier !== "chirp" || Math.abs(widths.web - 320.3) > 1 || Math.abs(widths.app - 313.0) > 1) { console.error("font metrics drifted; x.com may have shipped a new Chirp build. Re-measure and update globals.css."); process.exit(3); }
 
 let pass = 0, fail = 0, edge = 0, gap = 0;
-/** Width of a line of text in the pane's body font, and the body width, for edge-case classification. */
-async function lineFit(deviceLast, text) {
-  return page.evaluate(({ deviceLast, text }) => {
+/** Width of a line of text in the pane's body font (the quote embed's with `quote`), and that body's width, for edge-case classification. */
+async function lineFit(deviceLast, text, quote = false) {
+  return page.evaluate(({ deviceLast, text, quote }) => {
     const arts = [...document.querySelectorAll("article")];
     const art = deviceLast ? arts[arts.length - 1] : arts[0];
-    const body = [...art.querySelectorAll("[data-w]")].find((w) => !w.closest("[data-quote]")).parentElement;
+    const body = [...art.querySelectorAll("[data-w]")].find((w) => !w.closest("[data-quote]") !== quote).parentElement;
     const cs = getComputedStyle(body);
     const s = document.createElement("span");
     s.style.cssText = `position:absolute;white-space:pre;font-family:${cs.fontFamily};font-size:${cs.fontSize}`;
@@ -120,7 +136,7 @@ async function lineFit(deviceLast, text) {
     const w = s.getBoundingClientRect().width;
     s.remove();
     return { width: Math.round(w * 10) / 10, limit: Math.round(body.getBoundingClientRect().width * 10) / 10 };
-  }, { deviceLast, text });
+  }, { deviceLast, text, quote });
 }
 /** Type a draft straight into the composer (**bold** / __italic__ markers become styling). */
 async function compose(text, opts = {}) {
@@ -152,7 +168,9 @@ const LONG_POST_TAIL = " " + "x".repeat(60);
 async function load(id) {
   const fx = JSON.parse(readFileSync(`fixtures/posts/${id}.json`, "utf8"));
   const text = typedText(fx);
-  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, { photo: fx.photos > 0 });
+  // Media as X recorded it (kind, size, alt text, video length); older fixtures only count photos.
+  const media = fx.media?.map((m) => ({ kind: m.type === "animated_gif" ? "gif" : m.type, width: m.width, height: m.height, alt: Boolean(m.alt), ...(m.duration_ms !== undefined ? { durationMs: m.duration_ms } : {}) }));
+  await compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, media ? { media } : { photo: fx.photos > 0 });
 }
 async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
@@ -193,6 +211,26 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
 }
 
+/** The link card's box against the iPhone capture's, to 1pt (a null in the box is not checked); `want` null: X drew no card. */
+async function cardDiff(label, deviceLast, id, want) {
+  const got = await page.evaluate(CARD_BOX(deviceLast));
+  const near = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => b[i] === null || Math.abs(v - b[i]) <= 1);
+  const problems = [];
+  if (!want) { if (got) problems.push("tool draws a card X doesn't"); }
+  else if (!got) problems.push("no card");
+  else {
+    if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
+    if (want.thumb && !near(got.thumb, want.thumb)) problems.push(`thumbnail X ${want.thumb} / tool ${got.thumb}`);
+  }
+  if (problems.length) {
+    fail++;
+    console.log(`  FAIL ${label} card ${id}\n       ${problems.join("\n       ")}`);
+  } else {
+    pass++;
+    console.log(`  ok   ${label} card ${id}`);
+  }
+}
+
 /**
  * The quote embed against X's: web fixtures record x.com's quoted lines and boxes, app fixtures the
  * iPhone's line count, first words, last line where recorded, and photo size. Boxes match to 1px. Where the app's photo sits
@@ -203,10 +241,26 @@ async function quoteDiff(label, deviceLast, id, want) {
   const rows = (await page.evaluate(ROWS(String(deviceLast), true))).rows.map(norm);
   const near = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => b[i] === null || Math.abs(v - b[i]) <= 1);
   const problems = [];
+  let edgeNote = null;
   if (!got) problems.push("no quote embed");
   else if (Array.isArray(want.lines)) {
     const exp = want.lines.map(norm);
-    if (exp.join("\n") !== rows.join("\n")) problems.push(`lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`);
+    if (exp.join("\n") !== rows.join("\n")) {
+      const lines = `lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`;
+      // The same coin flip as diff(): the first differing line lands within 5px of the quote's text
+      // column, and only where the lines wrap moved. The quoted text must match character for
+      // character (whitespace aside, so a break inside a hyphenated word, CJK or a link still counts),
+      // so a dropped or changed word fails even when the 5-line clamp (x-post.tsx maxLines) keeps the
+      // box the same. When both sides fill the clamp, the shift may push the tail out of view.
+      const bad = exp.findIndex((l, i) => l !== rows[i]);
+      const [a, b] = [exp[bad], rows[bad]];
+      const [ea, ra] = [exp.join(""), rows.join("")].map((t) => t.replace(/\s+/g, ""));
+      const clamped = exp.length === 5 && rows.length === 5;
+      const wrapOnly = a && b && (a.startsWith(b) || b.startsWith(a)) && (ea === ra || (clamped && (ea.startsWith(ra) || ra.startsWith(ea))));
+      const fit = wrapOnly ? await lineFit(deviceLast, a.length > b.length ? a : b, true) : null;
+      if (fit && Math.abs(fit.width - fit.limit) <= 5) edgeNote = [`${fit.width}px vs ${fit.limit}px text`, lines];
+      else problems.push(lines);
+    }
     if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
     if (want.avatar && !near(got.avatar, want.avatar)) problems.push(`avatar X ${want.avatar} / tool ${got.avatar}`);
     if (want.text && !near(got.text, want.text)) problems.push(`text box X ${want.text} / tool ${got.text}`);
@@ -222,10 +276,44 @@ async function quoteDiff(label, deviceLast, id, want) {
   if (problems.length) {
     fail++;
     console.log(`  FAIL ${label} quote ${id}\n       ${problems.join("\n       ")}`);
+  } else if (edgeNote) {
+    edge++;
+    console.log(`  edge ${label} quote ${id}  (${edgeNote[0]})\n       ${edgeNote[1]}`);
   } else {
     pass++;
     console.log(`  ok   ${label} quote ${id}`);
   }
+}
+
+/**
+ * The media boxes against X's. x.com boxes match to 1px and every item is recorded; iPhone captures
+ * read ±1pt at each edge (the same 16:9 photo reads 322×182 in test 50 and 324×183 in test 110), so
+ * they match to 2pt, and only the items on screen are recorded (a carousel's next item has no
+ * width). Badges match, except where the capture couldn't see one: x.com's video countdown vanishes
+ * once autoplay starts, and the app's mute mark sits at the bottom right of a carousel item that is
+ * still off screen, so a recorded "" there accepts the tool's badge. A fixture `gap` pins what the
+ * tool draws instead.
+ */
+async function mediaDiff(label, deviceLast, id, want, web) {
+  const got = await page.evaluate(MEDIA_BOX(deviceLast));
+  const tol = web ? 1 : 2;
+  // Only a video's badge can be missing from a capture: its countdown (x.com) or its off-screen mute mark (iPhone).
+  const same = (exp, items, exact = web) => Array.isArray(exp) && Array.isArray(items) && (exact ? items.length === exp.length : items.length >= exp.length) &&
+    exp.every((e, i) => e.slice(0, 4).every((v, k) => v === null || Math.abs(v - items[i][k]) <= tol) &&
+      (e[4] === items[i][4] || (e[4] === "" && items[i][5] === "video" && (items[i][4] === "time" || (e[2] === null && items[i][4] === "mute")))));
+  const show = (items) => (items ?? []).map((b) => `[${b.slice(0, 5).join(",")}]`).join(" ");
+  if (want.gap) {
+    // A gap pins every box the tool draws, so nothing new can appear under it unnoticed.
+    if (!Array.isArray(want.gapTool)) { fail++; console.log(`  FAIL ${label} media ${id}  (marked gap has no gapTool pin)`); }
+    else if (same(want.gapTool, got?.items, true)) { gap++; console.log(`  gap  ${label} media ${id}  (${want.gap})`); }
+    else { fail++; console.log(`  FAIL ${label} media ${id}  (marked gap, but the tool no longer draws its pinned gapTool boxes)\n         pinned: ${show(want.gapTool)}\n         tool:   ${show(got?.items)}`); }
+    return;
+  }
+  const problems = [];
+  if (!same(want.items, got?.items)) problems.push(`items\n         X:    ${show(want.items)}\n         tool: ${show(got?.items)}`);
+  if ((want.alt ?? 0) !== (got?.alt ?? 0)) problems.push(`ALT badges X ${want.alt} / tool ${got?.alt ?? 0}`);
+  if (problems.length) { fail++; console.log(`  FAIL ${label} media ${id}\n       ${problems.join("\n       ")}`); }
+  else { pass++; console.log(`  ok   ${label} media ${id}`); }
 }
 
 for (const f of readdirSync("fixtures/web")) {
@@ -238,6 +326,7 @@ for (const f of readdirSync("fixtures/web")) {
     const got = await page.evaluate(ROWS("false"));
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
+    if (p.media) await mediaDiff("web ", false, p.id, p.media, true);
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -249,7 +338,10 @@ for (const f of readdirSync("fixtures/app")) {
     if (p.compose) await compose(p.compose); else await load(p.id);
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
+    if (p.card?.box) await cardDiff("app ", true, p.id, p.card);
+    else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
+    if (p.media) await mediaDiff("app ", true, p.id, p.media, false);
   }
 }
 console.log(`\n${pass} passed, ${edge} within font tolerance, ${gap} known gaps, ${fail} failed`);
