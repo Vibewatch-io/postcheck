@@ -209,12 +209,15 @@ function typedText(fx) {
 // X's JSON for a long post carries only the part before Show more, not the words after it. Pad it
 // with one word too long to fit, so the tool has to find X's cut on its own.
 const LONG_POST_TAIL = " " + "x".repeat(60);
+// Media as X recorded it (kind, size, alt text, video length); older fixtures only count photos.
+function mediaOf(fx) {
+  const media = fx.media?.map((m) => ({ kind: m.type === "animated_gif" ? "gif" : m.type, width: m.width, height: m.height, alt: Boolean(m.alt), ...(m.duration_ms !== undefined ? { durationMs: m.duration_ms } : {}) }));
+  return media ? { media } : { photo: fx.photos > 0 };
+}
 async function load(id) {
   const fx = JSON.parse(readFileSync(`fixtures/posts/${id}.json`, "utf8"));
   const text = typedText(fx);
-  // Media as X recorded it (kind, size, alt text, video length); older fixtures only count photos.
-  const media = fx.media?.map((m) => ({ kind: m.type === "animated_gif" ? "gif" : m.type, width: m.width, height: m.height, alt: Boolean(m.alt), ...(m.duration_ms !== undefined ? { durationMs: m.duration_ms } : {}) }));
-  return compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, media ? { media } : { photo: fx.photos > 0 });
+  return compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, mediaOf(fx));
 }
 async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
@@ -405,6 +408,70 @@ for (const f of readdirSync("fixtures/app")) {
     if (p.cell) await cellDiff("app ", p.id, p.cell);
   }
 }
+// Post states (fixtures/post-states.json): the boxes x.com drew for each state, what each adds to the
+// cell (drawn with and without it), and whether the reply icon is dimmed. Text widths are never
+// compared, so the GT America tier is held to the same boxes.
+const STATE_BOXES = (deviceLast) => `(() => {
+  const arts = [...document.querySelectorAll('article')];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const a = art.getBoundingClientRect();
+  const word = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'));
+  if (!word) return { error: 'no post text in the cell' };
+  const body = word.parentElement.getBoundingClientRect();
+  const cover = art.querySelector('[data-sensitive]')?.getBoundingClientRect();
+  const box = (r, ox, oy) => ({ x: r.left - ox, y: r.top - oy, w: r.width, h: r.height, r: r.right - ox, b: r.bottom - oy, cx: (r.left + r.right) / 2 - ox });
+  const out = { body: box(body, body.left, a.top) };
+  for (const e of art.querySelectorAll('[data-pinned-icon], [data-pinned-text], [data-paid-icon], [data-paid-text], [data-tag-text], [data-sensitive], [data-cover-icon], [data-cover-title], [data-cover-text], [data-cover-show]')) {
+    const name = e.getAttributeNames().find((n) => n.startsWith('data-')).slice(5);
+    const r = e.getBoundingClientRect();
+    out[name] = box(r, body.left, a.top);
+    if (cover) out[name + '@sensitive'] = box(r, cover.left, cover.top);
+  }
+  const reply = art.querySelector('[data-reply-icon]');
+  const covered = [...art.querySelectorAll('[data-media-item]')].flatMap((e, i) => (e.querySelector('[data-item-cover]') ? [i] : []));
+  return { height: a.height, boxes: out, covered, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : null };
+})()`;
+const states = JSON.parse(readFileSync("fixtures/post-states.json", "utf8"));
+for (const pane of ["web", "app"]) {
+  const deviceLast = pane === "app";
+  console.log(`\npost states · ${pane}`);
+  if (deviceLast) {
+    await page.click('[role="tab"]:has-text("Mobile")');
+    await page.selectOption('select[aria-label="App device"]', states.appDevice);
+  } else {
+    await page.click('[role="tab"]:has-text("Web")');
+    await page.selectOption('select[aria-label="Web device"]', "web");
+  }
+  for (const p of states[pane]) {
+    current = `${pane} state ${p.test} ${p.id}`;
+    const fx = JSON.parse(readFileSync(`fixtures/posts/${p.id}.json`, "utf8"));
+    // `sensitive` names the items flagged in the composer (X sets it per item).
+    const base = mediaOf(fx);
+    const items = base.media ?? (base.photo ? [{ kind: "photo", width: 1600, height: 900 }] : []);
+    await compose(typedText(fx), { media: items });
+    const plain = await page.evaluate(STATE_BOXES(deviceLast));
+    await compose(typedText(fx), { media: items.map((m, i) => ({ ...m, sensitive: (p.sensitive ?? []).includes(i) })), state: p.state ?? {} });
+    const got = await page.evaluate(STATE_BOXES(deviceLast));
+    const problems = [plain.error, got.error].filter(Boolean);
+    if (problems.length) { fail++; console.log(`  FAIL ${pane === "web" ? "web " : "app "} ${p.test} ${p.id}\n       ${problems.join("\n       ")}`); continue; }
+    if (p.grow !== undefined && Math.abs(got.height - plain.height - p.grow) > 1) problems.push(`adds ${Math.round((got.height - plain.height) * 10) / 10}px to the cell, X ${p.grow}`);
+    for (const [name, want] of Object.entries(p.boxes ?? {})) {
+      const { in: inside, ...keys } = want;
+      const b = got.boxes[inside ? `${name}@${inside}` : name];
+      if (!b) { problems.push(`no ${name}`); continue; }
+      for (const [k, v] of Object.entries(keys)) {
+        if (!Number.isFinite(b[k])) problems.push(`${name}: no measured ${k}`);
+        else if (Math.abs(b[k] - v) > 1) problems.push(`${name} ${k} X ${v} / tool ${Math.round(b[k] * 10) / 10}`);
+      }
+    }
+    if (p.coveredItems && got.covered.join() !== p.coveredItems.join()) problems.push(`covered items X [${p.coveredItems}] / tool [${got.covered}]`);
+    if (p.replyDimmed !== undefined && got.replyOpacity === null) problems.push("no reply icon");
+    else if (p.replyDimmed !== undefined && got.replyOpacity < 0.99 !== p.replyDimmed) problems.push(`reply icon ${p.replyDimmed ? "should" : "should not"} be dimmed (opacity ${got.replyOpacity})`);
+    if (problems.length) { fail++; console.log(`  FAIL ${pane === "web" ? "web " : "app "} ${p.test} ${p.id}\n       ${problems.join("\n       ")}`); }
+    else { pass++; console.log(`  ok   ${pane === "web" ? "web " : "app "} ${p.test} ${p.id} ${[...Object.keys(p.state ?? {}), ...(p.sensitive ? [`sensitive ${p.sensitive}`] : [])].join(", ")}`); }
+  }
+}
+
 if (recordUnfurl) {
   writeFileSync(UNFURL, JSON.stringify(Object.fromEntries(Object.entries(unfurls).sort(([a], [b]) => a.localeCompare(b))), null, 2) + "\n");
   console.log(`\nrecorded ${Object.keys(unfurls).length} card lookups in ${UNFURL}`);

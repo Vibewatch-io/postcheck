@@ -1,0 +1,49 @@
+{
+  "id_str": "2108321093534789794",
+  "text": "Test 111b: two photos, only the second flagged sensitive https://t.co/mKHpIRsaZQ",
+  "display_text_range": [
+    0,
+    56
+  ],
+  "note_tweet": false,
+  "entities": {
+    "media": [
+      {
+        "display_url": "pic.x.com/mKHpIRsaZQ",
+        "expanded_url": "https://x.com/Postcheck_test/status/2108321093534789794/photo/1",
+        "indices": [
+          57,
+          80
+        ],
+        "url": "https://t.co/mKHpIRsaZQ"
+      },
+      {
+        "display_url": "pic.x.com/mKHpIRsaZQ",
+        "expanded_url": "https://x.com/Postcheck_test/status/2108321093534789794/photo/1",
+        "indices": [
+          57,
+          80
+        ],
+        "url": "https://t.co/mKHpIRsaZQ"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 2,
+  "media": [
+    {
+      "type": "photo",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "type": "photo",
+      "width": 1600,
+      "height": 900
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

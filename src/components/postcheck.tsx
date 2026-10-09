@@ -10,7 +10,8 @@ import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/si
 import socialCard from "@/app/opengraph-image.png";
 import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
 import { draftToDoc, serializeDoc, trimDraft, type Draft, type DocNode } from "@/lib/draft";
-import { ComposerField, FormatBar, useComposer } from "./composer";
+import { ComposerField, FormatBar, PostOptions, useComposer } from "./composer";
+import { NO_POST_STATE, type PostState } from "@/lib/post-state";
 import { buildAdvice, type Advice, type DeviceLines, type Severity } from "@/lib/advice";
 import { DefaultAvatar, XPost, type Badge, type Identity } from "./x-post";
 import { PHONE_BEZEL, PhoneFrame } from "./phone-frame";
@@ -61,6 +62,15 @@ export function Postcheck() {
   const editor = useComposer(setDraft);
   const [identity, setIdentity] = useState<Identity>({ name: "", handle: "", avatar: null, badge: "none" });
   const [media, setMedia] = useState<MediaItem[]>(NO_MEDIA);
+  const [postState, setPostState] = useState<PostState>(NO_POST_STATE);
+  // The tag goes with the last item, so nothing hidden stays set or travels in a share link.
+  const changeMedia = useCallback(
+    (update: (m: MediaItem[]) => MediaItem[]) => {
+      setMedia(update);
+      if (!update(media).length) setPostState((s) => (s.tagged ? { ...s, tagged: "" } : s));
+    },
+    [media],
+  );
   const [webDevice, setWebDevice] = useState<Device>(DEFAULT_DEVICE);
   const [phoneDevice, setPhoneDevice] = useState<Device>(DEFAULT_PHONE);
   // On a phone, the preview defaults to that phone itself, drawn at its own width (see thisPhone).
@@ -116,9 +126,9 @@ export function Postcheck() {
   const [opening, setOpening] = useState(false);
   // What the page showed before a share took over, so going Back (or to a damaged link) returns to
   // it. `latest` mirrors the current state for the hashchange listener, which is bound once.
-  const latest = useRef({ draft, identity, media, phoneDevice, webDevice, themeId, themeChosen, view });
+  const latest = useRef({ draft, identity, media, postState, phoneDevice, webDevice, themeId, themeChosen, view });
   useLayoutEffect(() => {
-    latest.current = { draft, identity, media, phoneDevice, webDevice, themeId, themeChosen, view };
+    latest.current = { draft, identity, media, postState, phoneDevice, webDevice, themeId, themeChosen, view };
   });
   const beforeShare = useRef<typeof latest.current | null>(null);
   useLayoutEffect(() => {
@@ -132,6 +142,7 @@ export function Postcheck() {
       setDraft(b.draft);
       setIdentity(b.identity);
       setMedia(b.media);
+      setPostState(b.postState);
       setPhoneDevice(b.phoneDevice);
       setWebDevice(b.webDevice);
       setThemeChosen(b.themeChosen);
@@ -156,6 +167,7 @@ export function Postcheck() {
           setDraft({ text: p.text, styles: p.styles });
           setIdentity(p.identity);
           setMedia(p.media);
+          setPostState(p.post);
           setPhoneChosen(true);
           setPhoneDevice(DEVICES.find((d) => d.id === p.phone) ?? DEFAULT_PHONE);
           setWebDevice(DEVICES.find((d) => d.id === p.web) ?? DEFAULT_DEVICE);
@@ -429,12 +441,14 @@ export function Postcheck() {
     w.__postcheck = {
       ready: Boolean(editor),
       // **bold** / __italic__ markers become style runs; `media` attaches stand-ins of the recorded
-      // kinds and sizes (`photo` alone, one 16:9 photo).
-      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number }> } = {}) => {
+      // kinds and sizes (`photo` alone, one 16:9 photo); `state` sets the post states (pinned, paid
+      // partnership, reply limit, tag); a media entry's `sensitive` flags that item.
+      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number; sensitive?: boolean }>; state?: Partial<PostState> } = {}) => {
         const { text, styles } = stripFormatting(raw);
         editor?.commands.setContent(draftToDoc(text, styles));
         const items = opts.media ?? (opts.photo ? [{ kind: "photo" as const, width: 1600, height: 900 }] : []);
         setMedia(items.length ? items.map((m) => ({ src: STAND_IN_PHOTO, alt: false, ...m })) : NO_MEDIA);
+        setPostState({ ...NO_POST_STATE, ...opts.state });
       },
       getText: () => (editor ? serializeDoc(editor.getJSON() as DocNode).text : draft.text),
     };
@@ -472,8 +486,8 @@ export function Postcheck() {
   const typed = draft.text.trim() !== "";
   const sharePreview = useCallback(
     // A link made on someone's own phone names the listed phone nearest to it.
-    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
-    [typed, post, styles, identity, media, themeId, phoneDevice, webDevice.id, view],
+    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, post: postState, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
+    [typed, post, styles, identity, media, postState, themeId, phoneDevice, webDevice.id, view],
   );
   const actions = shared ? (
     <button type="button" onClick={editCopy} className="h-8 flex-none whitespace-nowrap rounded-lg bg-brand-warm-dark px-3 text-[13px] font-medium text-white hover:bg-brand-warm-dark/90">
@@ -586,10 +600,11 @@ export function Postcheck() {
 
         <ComposerField editor={editor} placeholder={SAMPLE} />
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
-          <span className="flex items-center gap-3">
+        <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
+          <span className="flex flex-wrap items-center gap-3">
             <FormatBar editor={editor} />
-            <MediaPicker media={media} onChange={setMedia} />
+            <MediaPicker media={media} onChange={changeMedia} />
+            <PostOptions state={postState} onChange={setPostState} media={media} onMedia={changeMedia} />
           </span>
           <span className="flex items-center gap-2 tabular-nums" title="Weighted length, the way X counts it">
             <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden>
@@ -633,11 +648,11 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} toggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} toggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} state={postState} />
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} />;
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} state={postState} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>

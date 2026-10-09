@@ -20,6 +20,11 @@ export interface MediaItem {
   alt: boolean;
   /** Videos: length in milliseconds (x.com shows it as m:ss). */
   durationMs?: number;
+  /**
+   * Flagged sensitive in the composer, which sets it per item. x.com then covers all the post's
+   * media; the iOS app covers only this item (tests 111, 111b).
+   */
+  sensitive?: boolean;
 }
 
 /** The composer's limit: "Please choose up to 4 photos, videos, or GIFs." */
@@ -68,6 +73,13 @@ const WEB_MIN_WIDTH = 51;
 const WEB_GAP = 6;
 /** The carousel's height (squares 350×350, tests 53, 54, 59b, 59c). */
 const WEB_CAROUSEL_HEIGHT = 350;
+/**
+ * Two photos share one row when their common height would be at least this; otherwise they go into
+ * the carousel. Rows were seen at 255 (test 52) and 218 (115); two 16:9 photos, whose row would be
+ * 143, sit in the 412×350 carousel (111b). Inferred: the app's 120pt scaled to the web column
+ * (516 / 322), which falls between.
+ */
+const WEB_ROW_MIN_HEIGHT = 192;
 /**
  * A carousel item is never wider than this shape: 16:9 photos, GIFs and videos all show 412×350
  * (tests 59b, 59c). The iOS carousel crops 16:9 at the same ratio (259×220, test 59b).
@@ -143,9 +155,11 @@ export function mediaLayout(items: Shape[], device: Device): MediaLayout | null 
       const w = h < cap || r >= 1 ? inner : Math.max(WEB_MIN_WIDTH, cap * r);
       return { mode: "single", column, border: 1, boxes: [{ x: 0, y: 0, w: Math.round(w), h: Math.round(h) }], assumed: null, cropped: false };
     }
-    // Two photos fill the row at one height (255 + 255; 388 + 122 at 218). Capped like one item: assumed.
-    if (list.length === 2 && photosOnly) {
-      const h = Math.min((inner - WEB_GAP) / sum, WEB_MAX_HEIGHT);
+    // Two photos fill the row at one height (255 + 255; 388 + 122 at 218), when it is tall enough.
+    // Capped like one item: assumed.
+    const rowHeight = Math.min((inner - WEB_GAP) / sum, WEB_MAX_HEIGHT);
+    if (list.length === 2 && photosOnly && rowHeight >= WEB_ROW_MIN_HEIGHT) {
+      const h = rowHeight;
       return { mode: "row", column, border: 1, boxes: lay(list, h, WEB_GAP, (m) => h * ratio(m)), assumed: null, cropped: false };
     }
     if (list.length === 4 && list.every((m) => ratio(m) < WEB_NARROW_RATIO)) {
