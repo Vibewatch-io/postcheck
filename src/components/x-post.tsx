@@ -221,8 +221,8 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
             />
           </div>
         )}
-        {/* A quoted poll isn't drawn (tests 96, 54). */}
-        {q.poll && (
+        {/* A quoted poll isn't drawn (tests 96, 54); the Android app doesn't add "Show this poll" either (96 at 360 and 411.4 dp). */}
+        {q.poll && device.platform !== "android" && (
           <div data-quote-poll="" style={{ marginTop: 4, color: theme.link }}>
             Show this poll
           </div>
@@ -524,7 +524,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     // fixed cover and covers a flagged item among several in place (MediaBlock).
     media.some((m) => m.sensitive) && (device.kind !== "phone" || media.length === 1) ? <SensitiveCover items={media} device={device} theme={theme} /> : <MediaBlock items={media} device={device} theme={theme} />
   ) : poll ? (
-    <PollCard poll={poll} device={device} theme={theme} />
+    <PollCard poll={poll} device={device} theme={theme} afterText={hasBody} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (

@@ -80,3 +80,6 @@ Recorded in QUIRKS.md (Android rows) with `fixtures/app/galaxy-s25.json` and `fi
   after a "/"; the Show more token wraps like two words, so "Show" can end a line with "more" on the next (tests 05, 94, 116).
 - **Links.** A trailing link to a post stays as text above the quote (x.com and the iPhone hide it).
 - **Styling.** The timeline row shows no Premium bold or italic (tests 70, 70b), like the iPhone's.
+- **Polls** (author's results view only: the phone is signed in as @Postcheck_test). The poll sits 6 dp in from
+  each side of the text column; text choices on a 40 dp pitch, image choices as a vertical list of 40 dp pictures;
+  footer "0 vote • …" at 13 dp; a quoted poll has no "Show this poll" line (tests 57–97, 2026-10-09).
