@@ -181,7 +181,8 @@ if (args.includes("--no-chirp")) {
   chirpPage = await browser.newPage();
   await chirpPage.goto(base);
   await chirpPage.waitForFunction(() => window.__postcheck?.ready && !!document.documentElement.dataset.font, null, { timeout: 20000 });
-  if ((await chirpPage.evaluate(() => document.documentElement.dataset.font)) !== "chirp") { console.error("--no-chirp needs X's CDN on a second page to measure lines in Chirp; it did not load"); process.exit(3); }
+  await chirpPage.evaluate(() => Promise.allSettled(["TwitterChirpWeb", "TwitterChirp"].flatMap((f) => [document.fonts.load(`15px ${f}`), document.fonts.load(`700 15px ${f}`)])));
+  if ((await chirpPage.evaluate(() => document.documentElement.dataset.font)) !== "chirp" || !(await chirpPage.evaluate(() => document.fonts.check("15px TwitterChirpWeb") && document.fonts.check("15px TwitterChirp")))) { console.error("--no-chirp needs X's CDN on a second page to measure lines in Chirp; it did not load"); process.exit(3); }
 }
 /**
  * Width of a line of text in the pane's body font (the quote embed's with `quote`), and that body's
