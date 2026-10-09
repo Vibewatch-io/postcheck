@@ -43,7 +43,9 @@ body:
     id: settings
     attributes:
       label: Postcheck settings
-      description: Filled in for you when you come from the "Tell us" link under the preview. Otherwise, the phone or web view and the theme you had picked.
+      description: Filled in for you when you come from the "Tell us" link under the preview. Otherwise, the phone or web view, the theme, and whether a font notice showed above the preview (line breaks depend on the font).
+    validations:
+      required: true
   - type: textarea
     id: what
     attributes:

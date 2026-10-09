@@ -134,7 +134,7 @@ The renderer is ordinary code you can lift into your own project. The pieces tha
 - `src/lib/devices.ts` and `src/lib/media.ts`: each surface's column, type size, line pitch and media layout, with the evidence behind each value (or "inferred", "assumed") in a comment.
 - `src/components/x-post.tsx`: a React component that draws one post (its tokens, identity, card, quote, media, poll, device and theme). It needs `src/lib`, the components it imports, the font, tracking, `.nb-hyphen` and `.x-avatar-square` rules in `src/app/globals.css` and the `data-font` stamp from `src/components/font-tier.tsx`, not the app around it. Where a post folds depends on its rendered lines: `src/components/line-probe.tsx` measures them and `renderFor()` in `src/components/postcheck.tsx` applies the cut.
 - [QUIRKS.md](QUIRKS.md): every rule in prose with its evidence, useful whatever you write in.
-- `fixtures/` and `npm run verify`: 155 real posts as X stores them, most with the lines x.com, an iPhone and an Android phone drew for them. That's a ready-made test corpus for any renderer.
+- `fixtures/` and `npm run verify`: 151 real posts (`fixtures/corpus.json`) with X's own data for each, most with the lines x.com, an iPhone and an Android phone drew for them. That's a ready-made test corpus for any renderer.
 
 It isn't published as a package: copy what you need and keep the copyright and licence notice (LICENSE). X's icons, the fonts and the fixture posts aren't ours to license; [NOTICE](NOTICE) has the details. When X changes something, an issue here gets it fixed for everyone building on this.
 
