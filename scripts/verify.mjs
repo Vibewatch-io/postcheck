@@ -184,15 +184,29 @@ if (args.includes("--no-chirp")) { if (tier !== "gt") { console.error(`expected 
 else if (tier !== "chirp" || Math.abs(widths.web - 320.3) > 1 || Math.abs(widths.app - 313.0) > 1) { console.error("font metrics drifted; x.com may have shipped a new Chirp build. Re-measure and update globals.css."); process.exit(3); }
 
 // On the GT America tier, a second page with X's CDN allowed measures lines in Chirp, the font X laid
-// them out in (see lineFit).
+// them out in (see lineFit). Both Chirp builds must measure the reference line as the main check expects;
+// without them (X's CDN really down) the run goes on with the GT America widths alone.
 let ref = null;
 if (args.includes("--no-chirp")) {
   ref = await browser.newPage();
   ref.on("crash", () => died("the Chirp reference page crashed"));
-  await ref.goto(base);
-  await ref.waitForFunction(() => !!document.documentElement.dataset.font, null, { timeout: 15000 });
-  if ((await ref.evaluate(() => document.documentElement.dataset.font)) !== "chirp") { console.error("the Chirp reference page could not load X's fonts"); process.exit(3); }
-  await ref.evaluate(() => Promise.allSettled([document.fonts.load("15px TwitterChirpWeb"), document.fonts.load("15px TwitterChirp")]));
+  // A CDN that stalls rather than refuses never settles the page's font tier: give the whole setup 30 s.
+  const setup = (async () => {
+    await ref.goto(base);
+    await ref.waitForFunction(() => !!document.documentElement.dataset.font, null, { timeout: 15000 });
+    return ref.evaluate(async (REF) => {
+      const loads = await Promise.allSettled([document.fonts.load("15px TwitterChirpWeb"), document.fonts.load("15px TwitterChirp")]);
+      const m = (family) => { const s = document.createElement("span"); s.style.cssText = `position:absolute;white-space:pre;font-family:${family};font-size:15px`; s.textContent = REF; document.body.appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return Math.round(w * 10) / 10; };
+      return { tier: document.documentElement.dataset.font, loaded: loads.every((l) => l.status === "fulfilled" && l.value.length > 0), web: m("TwitterChirpWeb"), app: m("TwitterChirp") };
+    }, REF);
+  })();
+  const refFonts = await Promise.race([setup, new Promise((r) => setTimeout(() => r({ error: "timed out after 30 s" }), 30000))]).catch((e) => ({ error: String(e.message).split("\n")[0] }));
+  setup.catch(() => {});
+  if (refFonts.error || refFonts.tier !== "chirp" || !refFonts.loaded || Math.abs(refFonts.web - 320.3) > 1 || Math.abs(refFonts.app - 313.0) > 1) {
+    console.log(`no Chirp reference (${refFonts.error ?? `tier ${refFonts.tier}; web Chirp ${refFonts.web}px, app Chirp ${refFonts.app}px`}): edges judged on GT America widths only`);
+    await ref.close();
+    ref = null;
+  }
 }
 
 let pass = 0, fail = 0, edge = 0, gap = 0;
@@ -318,10 +332,11 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   }
   // A line that differs by one word right at the body edge is a font-metrics coin flip, not a rule error.
   // Only where the wrap moved: one line runs on into the next and the text is the same (whitespace aside,
-  // so a break inside a word still counts; a folded or cut post may end at a different character).
+  // so a break inside a word still counts; a post both sides fold or cut may end at a different character).
+  // Show more must agree: a fold one side draws and the other doesn't is never a font tolerance.
   let edgeNote = null;
   const [ej, aj] = [exp.join(""), act.join("")].map((t) => t.replace(/\s+/g, ""));
-  const sameText = ej === aj || ((expMore || gotMore) && (ej.startsWith(aj) || aj.startsWith(ej)));
+  const sameText = expMore === gotMore && (ej === aj || (expMore && (ej.startsWith(aj) || aj.startsWith(ej))));
   const longer = exp[bad]?.length > act[bad]?.length ? exp[bad] : act[bad];
   const shorter = longer === exp[bad] ? act[bad] : exp[bad];
   if (bad !== null && exp[bad] && act[bad] && sameText && longer.startsWith(shorter)) {
