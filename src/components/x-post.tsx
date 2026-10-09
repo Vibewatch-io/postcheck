@@ -213,8 +213,8 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
             />
           </div>
         )}
-        {/* A quoted poll isn't drawn (tests 96, 54). */}
-        {q.poll && (
+        {/* A quoted poll isn't drawn (tests 96, 54); the Android app doesn't add "Show this poll" either (96 at 360 and 411.4 dp). */}
+        {q.poll && device.platform !== "android" && (
           <div data-quote-poll="" style={{ marginTop: 4, color: theme.link }}>
             Show this poll
           </div>

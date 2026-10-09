@@ -106,7 +106,13 @@ const POLL_BOX = (deviceLast) => `(() => {
   const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement;
   const choices = [...p.querySelectorAll('[data-poll-choice]')];
-  return { size: [Math.round(b.width), Math.round(b.height)], gap: body ? Math.round(b.top - body.getBoundingClientRect().bottom) : null,
+  // Phone captures are read against the body's last baseline: a 0% result bar is invisible, so a label's centre and the footer's baseline are what shows.
+  const baseline = (el) => { const m = document.createElement('span'); m.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'; el.appendChild(m); const y = m.getBoundingClientRect().top; m.remove(); return y; };
+  const foot = p.querySelector('[data-poll-footer]'); const bb = body?.getBoundingClientRect(); const bl = body ? baseline(body) : null;
+  const c0 = choices[0]?.getBoundingClientRect(); const pic0 = p.querySelector('[data-poll-picture]')?.getBoundingClientRect();
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const fromBaseline = bl === null ? null : { inset: [r2(b.left - bb.left), r2(bb.right - b.right)], labelCentre: c0 ? r2((c0.top + c0.bottom) / 2 - bl) : null, picTop: pic0 ? r2(pic0.top - bl) : null, footerBaseline: foot ? r2(baseline(foot) - bl) : null };
+  return { fromBaseline, size: [Math.round(b.width), Math.round(b.height)], gap: body ? Math.round(b.top - body.getBoundingClientRect().bottom) : null,
     labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('[data-poll-picture]')].map(rel), next: rel(p.querySelector('[data-poll-next]')), footer: rel(p.querySelector('[data-poll-footer]')), footerText: p.querySelector('[data-poll-footer]')?.textContent.trim() ?? '',
     card: !!art.querySelector('[data-attachment] > :not([data-poll])') };
 })()`;
@@ -360,9 +366,14 @@ async function quoteDiff(label, deviceLast, id, want) {
  * picture, next item and pill. A post X stored without its poll (`pollTyped`) must draw none. The
  * footer's time is when the capture was taken, so only its place and form are checked. An image
  * poll captured in the author's results view (`view: "results"`, 57b) is a different layout from
- * the voter view the tool draws: only its choices and picture count are compared.
+ * the voter view the tool draws: only its choices and picture count are compared. Android was captured
+ * only in the results view: its text polls' box (`inset` from each side of the text column), the first
+ * label's centre and the footer's baseline below the body's last baseline (`labelCentre`,
+ * `footerBaseline`) and the label pitch hold the tool's voter view to the same rows (QUIRKS.md: the web's
+ * two views share one box; Android's is inferred to). An iPhone capture can record `picTop` and
+ * `footerBaseline` the same way, and `choicesSeen` when only the first choices are on screen.
  */
-async function pollDiff(label, deviceLast, id, want, typed) {
+async function pollDiff(label, deviceLast, id, want, typed, platform) {
   if (!want && !typed) return;
   const got = await page.evaluate(POLL_BOX(deviceLast));
   const near = (a, b, tol = 1) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) <= tol);
@@ -371,6 +382,7 @@ async function pollDiff(label, deviceLast, id, want, typed) {
   else if (!got) problems.push("no poll");
   else {
     if (want.choices && want.choices.join("|") !== got.labels.join("|")) problems.push(`choices X ${want.choices.join(" / ")} / tool ${got.labels.join(" / ")}`);
+    if (want.choicesSeen && want.choicesSeen.join("|") !== got.labels.slice(0, want.choicesSeen.length).join("|")) problems.push(`first choices X ${want.choicesSeen.join(" / ")} / tool ${got.labels.join(" / ")}`);
     if (got.card) problems.push("tool draws a card or quote beside the poll");
     const results = want.view === "results" && want.images;
     if (want.size && !results && !near(got.size, want.size)) problems.push(`box X ${want.size} / tool ${got.size}`);
@@ -392,12 +404,20 @@ async function pollDiff(label, deviceLast, id, want, typed) {
     } else if (want.carousel) {
       if (!near(got.images[0]?.slice(2), want.image.slice(2))) problems.push(`picture X ${want.image.slice(2)} / tool ${got.images[0]?.slice(2)}`);
       if (Math.abs((got.images[1]?.[0] ?? -99) - want.nextChoiceX) > 1) problems.push(`next choice at X ${want.nextChoiceX} / tool ${got.images[1]?.[0]}`);
-      if (!near([got.pills[0]?.[1], got.pills[0]?.[3]], [want.button[1], want.button[3]])) problems.push(`choice pill y, height X ${[want.button[1], want.button[3]]} / tool ${[got.pills[0]?.[1], got.pills[0]?.[3]]}`);
+      // The pill's y is read from its picture's top, as the capture records it.
+      const pillY = got.pills[0] && got.images[0] ? got.pills[0][1] - got.images[0][1] : null;
+      if (!near([pillY, got.pills[0]?.[3]], [want.button[1], want.button[3]])) problems.push(`choice pill y, height X ${[want.button[1], want.button[3]]} / tool ${[pillY, got.pills[0]?.[3]]}`);
+    }
+    const fb = got.fromBaseline;
+    if (want.inset && !near(fb?.inset, want.inset)) problems.push(`inset X ${want.inset} / tool ${fb?.inset}`);
+    for (const k of ["labelCentre", "picTop", "footerBaseline"]) {
+      if (want[k] !== undefined && !results && !(Math.abs((fb?.[k] ?? -999) - want[k]) <= 1)) problems.push(`${k} below the text's baseline X ${want[k]} / tool ${fb?.[k]}`);
     }
     const last = got.rows[got.rows.length - 1];
     if (!got.footer || !last || got.footer[1] < last[1] + last[3]) problems.push("footer missing or above the choices");
     // The tool draws a just-posted poll; a capture's time left (or "Final results") is when it was taken, so only the form is checked.
-    if (!/^0 votes · \S.* left$/.test(got.footerText)) problems.push(`footer "${got.footerText}"`);
+    // Android prints "0 vote •" (tests 57–97 on a Pixel 3); x.com and the iPhone "0 votes ·".
+    if (!(platform === "android" ? /^0 vote • \S.* left$/ : /^0 votes · \S.* left$/).test(got.footerText)) problems.push(`footer "${got.footerText}"`);
   }
   if (problems.length) {
     fail++;
@@ -439,6 +459,13 @@ async function mediaDiff(label, deviceLast, id, want, web) {
   else { pass++; console.log(`  ok   ${label} media ${id}`); }
 }
 
+/** Whether a quote embed of a poll carries the "Show this poll" line (x.com and the iPhone do, the Android app doesn't). */
+async function quotePollLine(label, id, want) {
+  const got = await page.evaluate(() => { const arts = [...document.querySelectorAll("article")]; return !!arts[arts.length - 1].querySelector("[data-quote-poll]"); });
+  if (got === want) { pass++; console.log(`  ok   ${label} quote poll line ${id}`); }
+  else { fail++; console.log(`  FAIL ${label} quote poll line ${id}\n       "Show this poll" X ${want} / tool ${got}`); }
+}
+
 /**
  * The iOS timeline cell's height against the iPhone's, separator to separator (QUIRKS.md, "Layout: app"):
  * it moves with every vertical constant at once (name row, body pitch, the gaps around a card, photo or
@@ -464,7 +491,7 @@ for (const f of readdirSync("fixtures/web")) {
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
     if (p.media) await mediaDiff("web ", false, p.id, p.media, true);
-    await pollDiff("web ", false, p.id, p.poll, p.pollTyped);
+    await pollDiff("web ", false, p.id, p.poll, p.pollTyped, "web");
   }
 }
 for (const f of readdirSync("fixtures/app")) {
@@ -482,7 +509,8 @@ for (const f of readdirSync("fixtures/app")) {
     else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);
     if (p.media) await mediaDiff("app ", true, p.id, p.media, false);
-    await pollDiff("app ", true, p.id, p.poll, p.pollTyped);
+    await pollDiff("app ", true, p.id, p.poll, p.pollTyped, fx.platform);
+    if (p.quotePollLine !== undefined) await quotePollLine("app ", p.id, p.quotePollLine);
     if (p.cell) await cellDiff("app ", p.id, p.cell);
   }
 }

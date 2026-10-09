@@ -56,8 +56,9 @@ const unit = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
  * The time left under a poll just after posting (its length less a minute), the way each client
  * prints it. x.com gives the largest unit, rounded down ("23 hours left" for a day: test 57 on the
  * web; "6 days left" on a live 7-day poll). The iOS app gives two units for a text poll ("22 hours
- * 10 minutes left", test 57) and a short form for an image poll ("23h left", test 57b). The app's
- * day forms and every singular are inferred.
+ * 10 minutes left", test 57) and a short form for an image poll ("23h left", test 57b; "6d left",
+ * 57c). The Android app prints two units, days too ("6 days 7 hours left", 57c on a Pixel 3). The
+ * iOS text poll's day form and every singular are inferred.
  */
 export function timeLeft(minutes: number, style: "web" | "app" | "app-short"): string {
   const left = Math.max(0, minutes - 1);
