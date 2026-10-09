@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode, Ref } from "react";
-import type { Device } from "@/lib/devices";
+import { postScreenTracking, type Device } from "@/lib/devices";
 import type { XTheme } from "@/lib/theme";
 import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
@@ -343,7 +343,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   if (device.kind === "focal" || device.view === "post") {
     const web = device.kind === "focal";
     return (
-      <article style={{ padding: "12px 16px", backgroundColor: theme.bg, width: device.width, boxSizing: "border-box", borderLeft: web ? `1px solid ${theme.border}` : undefined, borderRight: web ? `1px solid ${theme.border}` : undefined, ...font }}>
+      <article style={{ padding: "12px 16px", backgroundColor: theme.bg, width: device.width, boxSizing: "border-box", borderLeft: web ? `1px solid ${theme.border}` : undefined, borderRight: web ? `1px solid ${theme.border}` : undefined, ...font, ...postScreenTracking(device) }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Avatar src={identity.avatar} size={40} square={square} />
           <div style={{ flex: 1, minWidth: 0 }}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { rowHidesStyles, type Device } from "@/lib/devices";
+import { postScreenTracking, rowHidesStyles, type Device } from "@/lib/devices";
 import type { StyleRun, Token } from "@/lib/entities";
 import { THEMES, fontStack } from "@/lib/theme";
 import type { DeviceLines, LineInfo } from "@/lib/advice";
@@ -123,6 +123,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, devices, onMeasur
           ref={(el) => {
             refs.current[i] = el;
           }}
+          style={postScreenTracking(d)}
         >
           {/* The app never appends the web's 280-cut "Show more": a long post under 10 lines shows whole
               there, so counting the token would push a full last line onto a 10th row (test 94). */}

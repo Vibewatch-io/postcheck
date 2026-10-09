@@ -38,10 +38,12 @@
 
 /* Tracking per loaded font, calibrated against x.com (web pane) and the iOS
    app's body ink on iPhone captures (app pane; QUIRKS.md, "Layout: app"). GT
-   America is fitted to Chirp at those values. Stamped by font-tier.tsx. */
-:root { --ls-web: 0px; --ls-app: -0.18px; }
-html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.057px; }
-html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; }
+   America is fitted to Chirp at those values. --ls-app-post keeps the iOS post
+   screen at the older calibration its one capture was fitted with (devices.ts
+   postScreenTracking). Stamped by font-tier.tsx. */
+:root { --ls-web: 0px; --ls-app: -0.18px; --ls-app-post: -0.32px; }
+html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.057px; --ls-app-post: -0.196px; }
+html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; --ls-app-post: 0px; }
 
 /* On a phone the preview becomes that phone once the page knows its width (useThisPhone); until then
    it stays hidden, so the server-rendered listed phone never flashes first. */

@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 export type ViewKind = "web" | "focal" | "phone";
 
 export interface Device {
@@ -96,6 +98,15 @@ const phonePost = (d: Device): Device => ({
   maxLines: undefined,
   view: "post",
 });
+
+/**
+ * The iOS post screen keeps the tracking its one capture was fitted with (−0.32px): the −0.18px of
+ * the app pane comes from timeline captures, and no post-screen capture has been read the same way
+ * (QUIRKS.md). Spread into the style of the element that holds that device's text.
+ */
+export function postScreenTracking(d: Device): CSSProperties | undefined {
+  return d.pane === "app" && d.view === "post" ? ({ "--ls-app": "var(--ls-app-post)" } as CSSProperties) : undefined;
+}
 
 /**
  * The iOS app's timeline row draws a Premium-styled post with no bold or italic at all, short or
