@@ -1,5 +1,5 @@
 {
- "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 420 so the app lays out at 411.4x776 dp, the width a real 1080 px Pixel 10 reports (scripts/android/README.md); @Postcheck_test search-result cells captured 2026-10-08. At this width the app sets the body at 16/21.33 (devices.ts). Lines: each body's characters from the app's own text node (uiautomator), split where macOS Vision OCR of the screenshot puts the row breaks; the last line of a showMore post is the line before the token. By eye: 31 and 74 (their text node was empty), 72 and 77 (scripts the OCR can't read). 73 (Thai) not found by search. 03 read after tapping Show original. 47b and 47c are the reply cells, not the lookalike link quotes the same search lists. Search cells, not the profile timeline (test 12 identical in both on 2026-10-05). Polls had closed (results view). Polls (57, 57b, 57c, 90–97) recaptured 2026-10-09 for their geometry, in the author's results view (57c was still open); 57c's voter view read the same day as @marshallmixing, added to the phone's X app, and 57d (an open text poll, posted that day) in both views, dark and light: each entry's `poll` says what was read; 96's quote shows no \"Show this poll\" line (`quotePollLine`). Screenshots and dumps in .captures/android-pixel3/polls/.",
+ "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 420 so the app lays out at 411.4x776 dp, the width a real 1080 px Pixel 10 reports (scripts/android/README.md); @Postcheck_test search-result cells captured 2026-10-08. At this width the app sets the body at 16/21.33 (devices.ts). Lines: each body's characters from the app's own text node (uiautomator), split where macOS Vision OCR of the screenshot puts the row breaks; the last line of a showMore post is the line before the token. By eye: 31 and 74 (their text node was empty), 72 and 77 (scripts the OCR can't read). 73 (Thai) not found by search. 03 read after tapping Show original. 47b and 47c are the reply cells, not the lookalike link quotes the same search lists. Search cells, not the profile timeline (test 12 identical in both on 2026-10-05). Polls had closed (results view). Polls (57, 57b, 57c, 90–97) recaptured 2026-10-09 for their geometry, in the author's results view (57c was still open); 57c's voter view read the same day as @marshallmixing, added to the phone's X app, and 57d (an open text poll, posted that day) in both views, dark and light: each entry's `poll` says what was read; 96's quote shows no \"Show this poll\" line (`quotePollLine`). Screenshots and dumps in .captures/android-pixel3/polls/. Link cards (tests 07, 20–31, 121; 2026-10-08 screenshots): `card.box` from the border pixels, 8dp under the last line's text box, so 7 under its line box (6.9 at 411.4); a large card's height is not recorded; a small card is 100dp high with a 99.3dp thumbnail (`thumb`) between hairlines.",
  "device": "pixel-10",
  "platform": "android",
  "posts": [
@@ -211,14 +211,36 @@
     "jumps over a lazy dog the quick brown fox",
     "jumps over a"
    ],
-   "showMore": true
+   "showMore": true,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100651092556333450",
    "lines": [
     "Large card, link at the end"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100651232109142223",
@@ -226,14 +248,41 @@
     "Large card, link github.com/vercel/next.js in",
     "the middle of the sentence"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100651368239513946",
    "lines": [
     "Small card"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "small",
+    "domain": "developer.mozilla.org",
+    "title": "HTML: HyperText Markup Language | MDN",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     100
+    ],
+    "thumb": [
+     99,
+     99
+    ]
+   }
   },
   {
    "id": "2100651502826410031",
@@ -247,7 +296,23 @@
    "lines": [
     "OG image but no twitter:card"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "small",
+    "domain": "en.wikipedia.org",
+    "title": "X (social network) - Wikipedia",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     100
+    ],
+    "thumb": [
+     99,
+     99
+    ]
+   }
   },
   {
    "id": "2100651772096422319",
@@ -255,7 +320,18 @@
     "Two cards github.com/vercel/next.js and",
     "vibewatch.io"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100651909187240216",
@@ -263,7 +339,18 @@
     "Two cards, reversed vibewatch.io and",
     "github.com/vercel/next.js"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100652042847211844",
@@ -271,7 +358,18 @@
     "Card then no card vibewatch.io and",
     "example.com"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100652180256837990",
@@ -286,7 +384,18 @@
    "lines": [
     "Long link"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "github.com",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100652452194459838",
@@ -294,7 +403,18 @@
     "Bare domain vibewatch.io and example.ai and",
     "file.zip"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100652600748327317",
@@ -302,7 +422,18 @@
     "Punctuation (vibewatch.io). And vibewatch.io,",
     "then \"example.com\""
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "large",
+    "domain": "vibewatch.io",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     null
+    ]
+   }
   },
   {
    "id": "2100652733972074764",
@@ -942,7 +1073,23 @@
    "lines": [
     "Audio card"
    ],
-   "showMore": false
+   "showMore": false,
+   "card": {
+    "layout": "small",
+    "domain": "open.spotify.com",
+    "title": "Never Gonna Give You Up",
+    "hasImage": true,
+    "box": [
+     0,
+     7,
+     339,
+     100
+    ],
+    "thumb": [
+     99,
+     99
+    ]
+   }
   },
   {
    "id": "2107204699669795237",
