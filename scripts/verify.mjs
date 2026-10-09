@@ -110,21 +110,26 @@ const MEDIA_BOX = (deviceLast) => `(() => {
   return { items: items.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left - o.left), Math.round(r.top - o.top), Math.round(r.width), Math.round(r.height), e.dataset.badge, e.dataset.kind]; }), alt: art.querySelectorAll('[data-media-alt]').length };
 })()`;
 
-/** The poll under the post: its box, where it starts under the text, each choice (pill, label, picture) and the footer, relative to the poll. */
+/**
+ * The poll under the post: its box, where it starts under the text, each choice (pill, label, picture) and
+ * the footer, relative to the poll, in the device's own pixels: the stage scales a tall phone down to fit
+ * the window (the Pixel 10 to ×0.945 with the font banner showing), so client rects are divided by it.
+ */
 const POLL_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
   const p = art.querySelector('[data-poll]'); if (!p) return null; const b = p.getBoundingClientRect();
-  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
+  const k = art.getBoundingClientRect().width / art.offsetWidth || 1;
+  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [r.left - b.left, r.top - b.top, r.width, r.height].map((v) => Math.round(v / k)); };
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement;
   const choices = [...p.querySelectorAll('[data-poll-choice]')];
   // Phone captures are read against the body's last baseline: a 0% result bar is invisible, so a label's centre and the footer's baseline are what shows.
   const baseline = (el) => { const m = document.createElement('span'); m.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'; el.appendChild(m); const y = m.getBoundingClientRect().top; m.remove(); return y; };
   const foot = p.querySelector('[data-poll-footer]'); const bb = body?.getBoundingClientRect(); const bl = body ? baseline(body) : null;
   const c0 = choices[0]?.getBoundingClientRect(); const pic0 = p.querySelector('[data-poll-picture]')?.getBoundingClientRect();
-  const r2 = (v) => Math.round(v * 100) / 100;
+  const r2 = (v) => Math.round((v / k) * 100) / 100;
   const fromBaseline = bl === null ? null : { inset: [r2(b.left - bb.left), r2(bb.right - b.right)], labelCentre: c0 ? r2((c0.top + c0.bottom) / 2 - bl) : null, picTop: pic0 ? r2(pic0.top - bl) : null, footerBaseline: foot ? r2(baseline(foot) - bl) : null };
-  return { fromBaseline, size: [Math.round(b.width), Math.round(b.height)], gap: body ? Math.round(b.top - body.getBoundingClientRect().bottom) : null,
+  return { fromBaseline, size: [Math.round(b.width / k), Math.round(b.height / k)], gap: body ? Math.round((b.top - body.getBoundingClientRect().bottom) / k) : null,
     labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('[data-poll-picture]')].map(rel), next: rel(p.querySelector('[data-poll-next]')), footer: rel(p.querySelector('[data-poll-footer]')), footerText: p.querySelector('[data-poll-footer]')?.textContent.trim() ?? '',
     card: !!art.querySelector('[data-attachment] > :not([data-poll])') };
 })()`;
@@ -497,8 +502,9 @@ async function pollDiff(label, deviceLast, id, want, typed, platform) {
     }
     const fb = got.fromBaseline;
     if (want.inset && !near(fb?.inset, want.inset)) problems.push(`inset X ${want.inset} / tool ${fb?.inset}`);
+    // Read against Chirp's baseline: GT America sits its baseline elsewhere in the same line box, so the GT tier skips these.
     for (const k of ["labelCentre", "picTop", "footerBaseline"]) {
-      if (want[k] !== undefined && !results && !(Math.abs((fb?.[k] ?? -999) - want[k]) <= 1)) problems.push(`${k} below the text's baseline X ${want[k]} / tool ${fb?.[k]}`);
+      if (want[k] !== undefined && !results && tier === "chirp" && !(Math.abs((fb?.[k] ?? -999) - want[k]) <= 1)) problems.push(`${k} below the text's baseline X ${want[k]} / tool ${fb?.[k]}`);
     }
     const last = got.rows[got.rows.length - 1];
     if (!got.footer || !last || got.footer[1] < last[1] + last[3]) problems.push("footer missing or above the choices");
