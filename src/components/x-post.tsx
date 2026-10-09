@@ -570,7 +570,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     const web = device.kind === "focal";
     // The iOS post screen: avatar and body at 12, the body's column ending 7 short (devices.ts phonePost).
     return (
-      <article style={{ padding: web ? "12px 16px" : `12px ${device.width - 12 - device.textWidth}px 12px 12px`, backgroundColor: theme.bg, width: device.width, boxSizing: "border-box", borderLeft: web ? `1px solid ${theme.border}` : undefined, borderRight: web ? `1px solid ${theme.border}` : undefined, ...font, ...postScreenTracking(device) }}>
+      <article style={{ padding: web ? "12px 16px" : `12px ${device.width - 12 - device.textWidth}px 12px 12px`, backgroundColor: theme.bg, width: device.width, boxSizing: "border-box", borderLeft: web ? `1px solid ${theme.border}` : undefined, borderRight: web ? `1px solid ${theme.border}` : undefined, ...font }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Avatar src={identity.avatar} size={web ? 40 : 44} square={square} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -586,7 +586,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         </div>
         {/* iOS: the body's first ink 73pt under the avatar's top on all 13 post-screen captures (QUIRKS.md). */}
         <div style={{ marginTop: web ? 12 : 25, display: "flex", flexDirection: "column", gap: 12 }}>
-          {hasBody && body}
+          {/* Only the 17px body takes the post screen's tracking; a quote or card inside keeps its own. */}
+          {hasBody && <div style={postScreenTracking(device)}>{body}</div>}
           {attachment}
         </div>
         {below}
