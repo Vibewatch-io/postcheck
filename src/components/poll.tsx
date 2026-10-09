@@ -31,7 +31,7 @@ import { NextArrowIcon } from "./icons";
  * column, its top 11.7dp under the text's last baseline, in both the author's results view and an image
  * poll's voter view (57c from @marshallmixing). A text choice row is on a 40dp pitch with the label (the
  * body's size) centred in it (results view; the voter view's rows are inferred from it, as x.com's two
- * views share one box), 36dp assumed for the pill as an image poll's is 36; the footer ("0 vote • 6 days
+ * views share one box), 36dp assumed for the pill (the image poll's pill); the footer ("0 vote • 6 days
  * 7 hours left", 13dp, 13.7 at 411.4) has its baseline 22.3dp under the last row or pill. The text
  * pill's look is assumed (drawn as x.com's, fully rounded; the image poll's pill has radius 8).
  * The iOS post screen draws the poll across its text column (assumed). A click on a choice does nothing: on X it votes, so it must
@@ -49,12 +49,12 @@ const IMAGE_POLL = {
  * Android's poll box, from the author's results view (tests 57–97 on a Pixel 3, 2026-10-09): `inset` from
  * each side of the text column; `top` moves the poll from the cell's 12dp gap to 11.7dp under the text's
  * last baseline; `pitch` per text choice, 40dp at 360 and 106px (40.38dp) at 411.4, where the body is
- * 16/21.33; the pill is assumed 4 short of it, as on the web and the iPhone; `footerTop` puts the
+ * 16/21.33; the text pill is assumed 4 short of it (36dp, the image poll's pill); `footerTop` puts the
  * footer's baseline 22.3dp under the last row (23.6 at 411.4; under the pills in an image poll's voter
- * view too). `picture`:
- * an image poll's voter view (57c read as @marshallmixing) is a carousel of squares 0.7 of the box wide
- * (193dp at 360, 228.6 at 411.4), radius 8, 4dp apart, each with a 36dp pill 8dp under it, radius 8,
- * outlined in blue with the label bold blue at the body's size; no Next button.
+ * view too). `picture`: an image poll's voter view (57c read as @marshallmixing, dark theme) is a
+ * carousel of squares 0.7 of the box wide (193dp at 360, 228.6 at 411.4), radius 8, 4dp apart, each
+ * with a 36dp pill 8dp under it, radius 8, outlined in blue with the label bold blue at the body's size;
+ * no Next button. The light theme's colours and the pill's side padding are x.com's (assumed).
  */
 const ANDROID = { inset: 6, top: -5.33, pitch: 40, widePitch: 40.38, footerTop: 10, wideFooterTop: 11, picture: 0.7 } as const;
 

@@ -495,7 +495,8 @@ async function pollDiff(label, deviceLast, id, want, typed, platform) {
       if (want.pillGap !== undefined && !(pic && pl && Math.abs(pl[1] - pic[1] - pic[3] - want.pillGap) <= 1)) problems.push(`pill under its picture X ${want.pillGap} / tool ${pic && pl && pl[1] - pic[1] - pic[3]}`);
       if (want.pillHeight !== undefined && !(pl && Math.abs(pl[3] - want.pillHeight) <= 1)) problems.push(`pill height X ${want.pillHeight} / tool ${pl?.[3]}`);
       const pillBottom = pic && pl && got.fromBaseline?.picTop != null ? got.fromBaseline.picTop + pl[1] + pl[3] - pic[1] : null;
-      if (want.footerBelowPill !== undefined && !(pillBottom !== null && Math.abs(got.fromBaseline.footerBaseline - pillBottom - want.footerBelowPill) <= 1)) problems.push(`footer baseline under the pill X ${want.footerBelowPill} / tool ${pillBottom !== null && Math.round((got.fromBaseline.footerBaseline - pillBottom) * 100) / 100}`);
+      // The footer's own baseline moves with GT America's metrics too: Chirp tier only, like the checks below.
+      if (want.footerBelowPill !== undefined && tier === "chirp" && !(pillBottom !== null && Math.abs(got.fromBaseline.footerBaseline - pillBottom - want.footerBelowPill) <= 1)) problems.push(`footer baseline under the pill X ${want.footerBelowPill} / tool ${pillBottom !== null && Math.round((got.fromBaseline.footerBaseline - pillBottom) * 100) / 100}`);
       // The pill's y is read from its picture's top, as the capture records it.
       const pillY = got.pills[0] && got.images[0] ? got.pills[0][1] - got.images[0][1] : null;
       if (want.button && !near([pillY, got.pills[0]?.[3]], [want.button[1], want.button[3]])) problems.push(`choice pill y, height X ${[want.button[1], want.button[3]]} / tool ${[pillY, got.pills[0]?.[3]]}`);
