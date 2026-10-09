@@ -84,14 +84,20 @@ const COLOURED = (deviceLast) => `(() => {
     if (c && open) runs[runs.length - 1] += node.nodeValue; else if (c) runs.push(node.nodeValue); open = c; }
   return runs;
 })()`;
-/** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small card's thumbnail. */
+/**
+ * The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small
+ * card's thumbnail, in the device's own pixels (a phone the stage scales down, the Pixel 10 under the font banner,
+ * returns scaled client rects).
+ */
 const CARD_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const k = art.getBoundingClientRect().width / art.offsetWidth || 1;
   const c = art.querySelector('[data-card]'); if (!c) return null; const b = c.getBoundingClientRect();
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement.getBoundingClientRect();
   const t = c.querySelector('[data-card-thumb]')?.getBoundingClientRect();
-  return { box: [Math.round(b.left - (body?.left ?? b.left)), Math.round(b.top - (body?.bottom ?? b.top)), Math.round(b.width), Math.round(b.height)], thumb: t ? [Math.round(t.width), Math.round(t.height)] : null };
+  const r = (v) => Math.round(v / k);
+  return { box: [r(b.left - (body?.left ?? b.left)), r(b.top - (body?.bottom ?? b.top)), r(b.width), r(b.height)], thumb: t ? [r(t.width), r(t.height)] : null };
 })()`;
 /** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
 const QUOTE_BOX = (deviceLast) => `(() => {

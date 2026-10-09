@@ -515,6 +515,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const viewport = device.kind === "phone" ? device.width : 1200;
   // The iOS timeline cell, where the app's card is measured; on the iOS post screen only its column is (width − 19).
   const ios = device.kind === "phone" && device.platform === "ios" && device.view !== "post";
+  const android = device.kind === "phone" && device.platform === "android";
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrl));
 
   // The wrapper has no box of its own (display: contents), so layout is untouched; verify finds
@@ -529,7 +530,10 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
     // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31 and 47: 322.4–322.8 wide at 393).
-    <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={device.kind === "phone" && device.platform === "android"} />
+    // Android: either card's top 8dp under the last line's text box (Chirp's 1.2em), not 12 under its line box (tests 20–31).
+    <div style={android && hasBody ? { marginTop: 8 - (device.lineHeight - 1.2 * device.fontSize) / 2 - 12 } : undefined}>
+      <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={android ? { fontSize: device.fontSize, lineHeight: device.lineHeight } : null} />
+    </div>
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
   // Under the text and attachment: the tag, then the disclosure. Each was captured alone; the order
@@ -602,7 +606,6 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   }
 
   const isPhone = device.kind === "phone";
-  const android = device.platform === "android";
   return (
     <article
       // Focusable when it toggles, as X's own timeline cells are. It stays an article (a button role

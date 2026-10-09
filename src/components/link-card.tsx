@@ -17,8 +17,11 @@ interface Props {
   web: boolean;
   /** The iOS timeline cell: its pill, "From" line and small card are measured on iPhone captures (2026-10-08). */
   ios: boolean;
-  /** The Android app: no card fill (dark-theme captures of tests 20–31, 2026-10-08). */
-  android: boolean;
+  /**
+   * The Android app, with the body's size and line height: no card fill (tests 20–31), and its own small
+   * card (tests 22, 24 and 121 at 360 and 411.4 dp, 2026-10-08). Null elsewhere.
+   */
+  android: { fontSize: number; lineHeight: number } | null;
 }
 
 const clamp = (lines: number): React.CSSProperties => ({
@@ -41,8 +44,12 @@ const clamp = (lines: number): React.CSSProperties => ({
  * image's left and bottom, ~18pt high, black at 50%, 13pt text at the body's tracking, ending at
  * least 24pt short of the right edge; "From domain" at 13pt, 12pt in from the card's left; no card
  * fill; the small card a 322×81 box with an 80pt thumbnail, the title above the domain and no
- * description. Android and the iOS post screen keep the earlier layout values, unmeasured; Android
- * draws no card fill (its colours: theme.ts).
+ * description. The iOS post screen keeps the earlier values, unmeasured. Android (Pixel 3 captures of
+ * tests 22, 24 and 121, 2026-10-08): the small card a 100dp-high box across the text column, radius 8,
+ * no fill; a 100dp square thumbnail, then a divider in the row separator's colour; title (up to 2
+ * lines seen) over the domain, both at the body's size, from 116dp to the card's right edge with no end
+ * padding (the captured breaks need 167.4–174.3 at 360 and ≥ 218.4 at 411.4), centred vertically; no
+ * description. Its large card keeps the earlier layout, unmeasured; Android's colours: theme.ts.
  */
 export function LinkCard({ card, theme, width, viewport, font: fontKind, web, ios, android }: Props) {
   const font = { fontFamily: fontStack(fontKind), fontSize: 15, lineHeight: "20px" } as const;
@@ -95,6 +102,28 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
           </div>
         </div>
         <div style={{ ...font, ...(web || ios ? { fontSize: 13, lineHeight: "16px" } : {}), paddingLeft: ios ? 12 : 0, color: theme.secondary, marginTop: 4, ...clamp(1) }}>From {card.host}</div>
+      </div>
+    );
+  }
+
+  if (android) {
+    const text = { fontFamily: fontStack(fontKind), fontSize: android.fontSize, lineHeight: `${android.lineHeight}px`, letterSpacing: "var(--ls-web)" } as const;
+    // 1px border + 99 thumbnail + 1px divider + 15 = the text's 116dp. The captures' border and divider are
+    // device-pixel hairlines (0.33 and 0.67dp), so the thumbnail reads 99.3dp there.
+    return (
+      <div data-card="" style={{ ...frame, height: 100, display: "flex" }}>
+        <div data-card-thumb="" style={{ width: 99, flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: theme.secondary }}>
+          {card.image ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={card.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          ) : (
+            <LinkIcon size={32} />
+          )}
+        </div>
+        <div style={{ ...text, borderLeft: `1px solid ${theme.border}`, paddingLeft: 15, minWidth: 0, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+          <div style={{ color: theme.text, ...clamp(2) }}>{card.title}</div>
+          <div style={{ color: theme.cardHost, ...clamp(1) }}>{card.host}</div>
+        </div>
       </div>
     );
   }
