@@ -50,8 +50,12 @@ scripts/android/android.sh dp reset
 - `adb shell uiautomator dump` works on the X app: each post body is one node whose `text` is the
   full post and whose `bounds` locate it, handy to find a post while scrolling a profile.
 - `view` opens a live scrcpy mirror for watching.
-- Transcribe lines into `fixtures/app/galaxy-s25.json` (360 dp); move the screenshots to `.captures/android-pixel3/` (gitignored), like the iPhone captures in
+- Transcribe lines into `fixtures/app/galaxy-s25.json` (360 dp) or `fixtures/app/pixel-10.json` (412); move the screenshots to `.captures/android-pixel3/` (gitignored), like the iPhone captures in
   `.captures/iphone-15-pro/`. Never commit screenshots.
+- A search lists every post that matches, so lookalikes ("Native quote of a card post" with and without a link) share a
+  screen: match the cell by its whole text, not its first words. Cut posts end their text node with " Show more".
+- X shows "A new version is ready!" on most launches while an update waits: dismiss it with `back`, never "Install now"
+  (a new X version would move the fixtures' baseline). It auto-translates test 03: tap "Show original" (a view toggle).
 
 **Navigation only**: open links, scroll, go back. Never tap like, repost, reply, follow, bookmark or
 compose, and never the floating + button.
@@ -64,11 +68,15 @@ compose, and never the floating + button.
 
 ## Findings
 
-Recorded in QUIRKS.md (Android rows) with `fixtures/app/galaxy-s25.json`, which `npm run verify` checks:
+Recorded in QUIRKS.md (Android rows) with `fixtures/app/galaxy-s25.json` and `fixtures/app/pixel-10.json`, which `npm run verify` checks:
 
 - **No line fold.** The Android app shows a post under 280 whole however many lines it runs (tests 11,
   12 and 13: 9, 10 and 30 lines). The iPhone app folds test 12 after line 9.
 - **The 280 cut, like x.com.** Long posts get Show more at the same character as the web (tests
-  05–08). The token wraps like a word.
+  05–08).
 - **Cell geometry.** The body runs from 60 dp to width − 12 dp (column = width − 72) at x.com's web
-  tracking, 15/20.
+  tracking, 15/20 at 360 and 392 dp and 16/21.33 at 411.4 dp (the switch, between 392 and 411.4, is assumed at 400).
+- **Wrapping.** No break after a hyphen (an over-long word breaks at the last character that fits); a link breaks
+  after a "/"; the Show more token wraps like two words, so "Show" can end a line with "more" on the next (tests 05, 94, 116).
+- **Links.** A trailing link to a post stays as text above the quote (x.com and the iPhone hide it).
+- **Styling.** The timeline row shows no Premium bold or italic (tests 70, 70b), like the iPhone's.
