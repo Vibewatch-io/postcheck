@@ -84,43 +84,49 @@ const COLOURED = (deviceLast) => `(() => {
     if (c && open) runs[runs.length - 1] += node.nodeValue; else if (c) runs.push(node.nodeValue); open = c; }
   return runs;
 })()`;
+/**
+ * The stage scales a tall phone down to fit the window (the Pixel 10 to ×0.945 with the font banner
+ * showing), so every box read from client rects is divided by that scale, `k`, to come back in the
+ * device's own pixels. ROWS works in line heights instead, and lineFit undoes the transform itself.
+ */
+const STAGE_SCALE = `const k = art.getBoundingClientRect().width / art.offsetWidth || 1; const px = (v) => Math.round(v / k);`;
+
 /** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small card's thumbnail. */
 const CARD_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
-  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0]; ${STAGE_SCALE}
   const c = art.querySelector('[data-card]'); if (!c) return null; const b = c.getBoundingClientRect();
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement.getBoundingClientRect();
   const t = c.querySelector('[data-card-thumb]')?.getBoundingClientRect();
-  return { box: [Math.round(b.left - (body?.left ?? b.left)), Math.round(b.top - (body?.bottom ?? b.top)), Math.round(b.width), Math.round(b.height)], thumb: t ? [Math.round(t.width), Math.round(t.height)] : null };
+  return { box: [px(b.left - (body?.left ?? b.left)), px(b.top - (body?.bottom ?? b.top)), px(b.width), px(b.height)], thumb: t ? [px(t.width), px(t.height)] : null };
 })()`;
 /** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
 const QUOTE_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
-  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0]; ${STAGE_SCALE}
   const q = art.querySelector('[data-quote]'); if (!q) return null; const b = q.getBoundingClientRect();
-  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [Math.round(r.left - b.left), Math.round(r.top - b.top), Math.round(r.width), Math.round(r.height)]; };
+  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [px(r.left - b.left), px(r.top - b.top), px(r.width), px(r.height)]; };
   const text = [...q.querySelectorAll('[data-w]')][0]?.parentElement;
-  return { box: [Math.round(b.width), Math.round(b.height)], avatar: rel(q.querySelector('img, svg')), text: rel(text), photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
+  return { box: [px(b.width), px(b.height)], avatar: rel(q.querySelector('img, svg')), text: rel(text), photo: rel(q.querySelector('[data-quote-photo]')), poll: rel(q.querySelector('[data-quote-poll]')) };
 })()`;
 /** The attached media's item boxes [x, y, w, h] relative to the first item, each item's badge, and the ALT badges. */
 const MEDIA_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
-  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0]; ${STAGE_SCALE}
   const items = [...art.querySelectorAll('[data-media-item]')]; if (!items.length) return null; const o = items[0].getBoundingClientRect();
-  return { items: items.map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left - o.left), Math.round(r.top - o.top), Math.round(r.width), Math.round(r.height), e.dataset.badge, e.dataset.kind]; }), alt: art.querySelectorAll('[data-media-alt]').length };
+  return { items: items.map((e) => { const r = e.getBoundingClientRect(); return [px(r.left - o.left), px(r.top - o.top), px(r.width), px(r.height), e.dataset.badge, e.dataset.kind]; }), alt: art.querySelectorAll('[data-media-alt]').length };
 })()`;
 
 /**
  * The poll under the post: its box, where it starts under the text, each choice (pill, label, picture) and
- * the footer, relative to the poll, in the device's own pixels: the stage scales a tall phone down to fit
- * the window (the Pixel 10 to ×0.945 with the font banner showing), so client rects are divided by it.
+ * the footer, relative to the poll, in the device's own pixels (STAGE_SCALE; the offsets from the text's
+ * baseline keep two decimals).
  */
 const POLL_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
-  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
+  const art = ${deviceLast} ? arts[arts.length - 1] : arts[0]; ${STAGE_SCALE}
   const p = art.querySelector('[data-poll]'); if (!p) return null; const b = p.getBoundingClientRect();
-  const k = art.getBoundingClientRect().width / art.offsetWidth || 1;
-  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [r.left - b.left, r.top - b.top, r.width, r.height].map((v) => Math.round(v / k)); };
+  const rel = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [r.left - b.left, r.top - b.top, r.width, r.height].map(px); };
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement;
   const choices = [...p.querySelectorAll('[data-poll-choice]')];
   // Phone captures are read against the body's last baseline: a 0% result bar is invisible, so a label's centre and the footer's baseline are what shows.
@@ -129,7 +135,7 @@ const POLL_BOX = (deviceLast) => `(() => {
   const c0 = choices[0]?.getBoundingClientRect(); const pic0 = p.querySelector('[data-poll-picture]')?.getBoundingClientRect();
   const r2 = (v) => Math.round((v / k) * 100) / 100;
   const fromBaseline = bl === null ? null : { inset: [r2(b.left - bb.left), r2(bb.right - b.right)], labelCentre: c0 ? r2((c0.top + c0.bottom) / 2 - bl) : null, picTop: pic0 ? r2(pic0.top - bl) : null, footerBaseline: foot ? r2(baseline(foot) - bl) : null };
-  return { fromBaseline, size: [Math.round(b.width / k), Math.round(b.height / k)], gap: body ? Math.round((b.top - body.getBoundingClientRect().bottom) / k) : null,
+  return { fromBaseline, size: [px(b.width), px(b.height)], gap: body ? px(b.top - body.getBoundingClientRect().bottom) : null,
     labels: choices.map((c) => c.textContent.trim()), pills: choices.map(rel), rows: [...p.querySelectorAll('[data-poll-row]')].map(rel), images: [...p.querySelectorAll('[data-poll-picture]')].map(rel), next: rel(p.querySelector('[data-poll-next]')), footer: rel(p.querySelector('[data-poll-footer]')), footerText: p.querySelector('[data-poll-footer]')?.textContent.trim() ?? '',
     card: !!art.querySelector('[data-attachment] > :not([data-poll])') };
 })()`;
@@ -450,11 +456,10 @@ async function colourDiff(label, deviceLast, id, want) {
  * footer's time is when the capture was taken, so only its place and form are checked. An image
  * poll captured in the author's results view (`view: "results"`, 57b) is a different layout from
  * the voter view the tool draws: only its choices and picture count are compared. Android's text polls
- * were captured only in the results view: their box (`inset` from each side of the text column), the
- * first label's centre and the footer's baseline below the body's last baseline (`labelCentre`,
- * `footerBaseline`) and the label pitch hold the tool's voter view to the same rows (QUIRKS.md: the web's
- * two views share one box; Android's is inferred to). A phone capture of an image poll's voter view
- * records `picTop` and `footerBaseline` the same way. A reader's shown order that differs from the
+ * are recorded in both views, which share one box (57d): its `inset` from each side of the text column,
+ * the first label's centre and the footer's baseline below the body's last baseline (`labelCentre`,
+ * `footerBaseline`) and the label pitch, plus the pill's height (`pillHeight`) in the voter view. A phone
+ * capture of an image poll's voter view records `picTop` and `footerBaseline` the same way. A reader's shown order that differs from the
  * posted one (`shownOrder`) is checked as a set of labels only: the tool draws the posted order.
  */
 async function pollDiff(label, deviceLast, id, want, typed, platform) {
@@ -478,6 +483,7 @@ async function pollDiff(label, deviceLast, id, want, typed, platform) {
     if (want.row && !results && (!near([got.rows[0]?.[3], pitch], want.row))) problems.push(`row height, pitch X ${want.row} / tool ${got.rows[0]?.[3]}, ${pitch}`);
     if (want.pill && !near(got.pills[0]?.slice(2), want.pill.slice(2))) problems.push(`pill size X ${want.pill.slice(2)} / tool ${got.pills[0]?.slice(2)}`);
     if (want.pitch && !want.carousel && Math.abs(pitch - want.pitch) > 1) problems.push(`pitch X ${want.pitch} / tool ${pitch}`);
+    if (want.pillHeight !== undefined && !(got.pills[0] && Math.abs(got.pills[0][3] - want.pillHeight) <= 1)) problems.push(`pill height X ${want.pillHeight} / tool ${got.pills[0]?.[3]}`);
     if (want.carousel && want.picture) {
       // x.com's voter carousel: boxes relative to the card, the pitch along x.
       const xPitch = got.images.length > 1 ? got.images[1][0] - got.images[0][0] : null;
@@ -496,7 +502,6 @@ async function pollDiff(label, deviceLast, id, want, typed, platform) {
       if (want.pictureShare !== undefined && !(pic && Math.abs(pic[2] / got.size[0] - want.pictureShare) <= 0.005)) problems.push(`picture share of the poll's width X ${want.pictureShare} / tool ${pic && Math.round((pic[2] / got.size[0]) * 1000) / 1000}`);
       if (want.itemGap !== undefined && !(pic && pic2 && Math.abs(pic2[0] - pic[0] - pic[2] - want.itemGap) <= 1)) problems.push(`gap between pictures X ${want.itemGap} / tool ${pic && pic2 && pic2[0] - pic[0] - pic[2]}`);
       if (want.pillGap !== undefined && !(pic && pl && Math.abs(pl[1] - pic[1] - pic[3] - want.pillGap) <= 1)) problems.push(`pill under its picture X ${want.pillGap} / tool ${pic && pl && pl[1] - pic[1] - pic[3]}`);
-      if (want.pillHeight !== undefined && !(pl && Math.abs(pl[3] - want.pillHeight) <= 1)) problems.push(`pill height X ${want.pillHeight} / tool ${pl?.[3]}`);
       const pillBottom = pic && pl && got.fromBaseline?.picTop != null ? got.fromBaseline.picTop + pl[1] + pl[3] - pic[1] : null;
       // The footer's own baseline moves with GT America's metrics too: Chirp tier only, like the checks below.
       if (want.footerBelowPill !== undefined && tier === "chirp" && !(pillBottom !== null && Math.abs(got.fromBaseline.footerBaseline - pillBottom - want.footerBelowPill) <= 1)) problems.push(`footer baseline under the pill X ${want.footerBelowPill} / tool ${pillBottom !== null && Math.round((got.fromBaseline.footerBaseline - pillBottom) * 100) / 100}`);
@@ -571,7 +576,8 @@ async function quotePollLine(label, id, want) {
  * each time, so the same cell reads ±0.5 from one capture to the next: matched to 1.5pt.
  */
 async function cellDiff(label, id, want) {
-  const got = await page.evaluate(() => { const arts = [...document.querySelectorAll("article")]; return arts[arts.length - 1].getBoundingClientRect().height; });
+  // In the device's own points: divided by the stage's scale, as STAGE_SCALE does.
+  const got = await page.evaluate(() => { const arts = [...document.querySelectorAll("article")]; const r = arts[arts.length - 1].getBoundingClientRect(); return r.height / (r.width / arts[arts.length - 1].offsetWidth || 1); });
   if (Math.abs(got - want) <= 1.5) { pass++; console.log(`  ok   ${label} cell ${id}`); }
   else { fail++; console.log(`  FAIL ${label} cell ${id}\n       height X ${want} / tool ${Math.round(got * 10) / 10}`); }
 }
@@ -620,12 +626,12 @@ for (const f of readdirSync("fixtures/app")) {
 const STATE_BOXES = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0];
-  const a = art.getBoundingClientRect();
+  const a = art.getBoundingClientRect(); ${STAGE_SCALE}
   const word = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'));
   if (!word) return { error: 'no post text in the cell' };
   const body = word.parentElement.getBoundingClientRect();
   const cover = art.querySelector('[data-sensitive]')?.getBoundingClientRect();
-  const box = (r, ox, oy) => ({ x: r.left - ox, y: r.top - oy, w: r.width, h: r.height, r: r.right - ox, b: r.bottom - oy, cx: (r.left + r.right) / 2 - ox });
+  const box = (r, ox, oy) => ({ x: (r.left - ox) / k, y: (r.top - oy) / k, w: r.width / k, h: r.height / k, r: (r.right - ox) / k, b: (r.bottom - oy) / k, cx: ((r.left + r.right) / 2 - ox) / k });
   const out = { body: box(body, body.left, a.top) };
   for (const e of art.querySelectorAll('[data-pinned-icon], [data-pinned-text], [data-paid-icon], [data-paid-text], [data-tag-text], [data-sensitive], [data-cover-icon], [data-cover-title], [data-cover-text], [data-cover-show]')) {
     const name = e.getAttributeNames().find((n) => n.startsWith('data-')).slice(5);
@@ -635,7 +641,7 @@ const STATE_BOXES = (deviceLast) => `(() => {
   }
   const reply = art.querySelector('[data-reply-icon]');
   const covered = [...art.querySelectorAll('[data-media-item]')].flatMap((e, i) => (e.querySelector('[data-item-cover]') ? [i] : []));
-  return { height: a.height, boxes: out, covered, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : null };
+  return { height: a.height / k, boxes: out, covered, replyOpacity: reply ? Number(getComputedStyle(reply).opacity) : null };
 })()`;
 const states = JSON.parse(readFileSync("fixtures/post-states.json", "utf8"));
 for (const pane of ["web", "app"]) {
