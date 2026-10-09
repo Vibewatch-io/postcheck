@@ -21,8 +21,8 @@
   --color-brand-warm-border: #e4e1da;
   --color-brand-warm-border-hover: #d4d0c8;
   --color-brand-warm-surface: #f2f0eb;
-  /* Tip severity, in the tip list and the marks beside the preview: fix = error, tip = warning, note = info.
-     Each holds at least 3:1 against every ground a mark sits on (ivory page, white or black cell, bezel). */
+  /* Tip severity, in the tip list: fix = error, tip = warning, note = info. Each holds at least 3:1
+     against the ivory page. */
   --color-severity-fix: #e5484d;
   --color-severity-tip: #c27a0a;
   --color-severity-note: #8a867e;

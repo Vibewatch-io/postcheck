@@ -12,7 +12,7 @@ import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, 
 import { draftToDoc, serializeDoc, trimDraft, type Draft, type DocNode } from "@/lib/draft";
 import { ComposerField, FormatBar, PostOptions, useComposer } from "./composer";
 import { NO_POST_STATE, type PostState } from "@/lib/post-state";
-import { buildAdvice, type Advice, type DeviceLines, type Severity } from "@/lib/advice";
+import { buildAdvice, type Advice, type DeviceLines } from "@/lib/advice";
 import { DefaultAvatar, XPost, type Badge, type Identity } from "./x-post";
 import { PHONE_BEZEL, PhoneFrame } from "./phone-frame";
 import { CameraIcon, SearchIcon } from "./icons";
@@ -398,6 +398,8 @@ export function Postcheck() {
         // (App Store, X articles); a failed lookup gets advice that says only that.
         card: cardState === "failed" ? "failed" : card === "loading" ? undefined : card,
         lineSets,
+        preview: view === "app" ? phoneDevice.id : webDevice.id,
+        verified: identity.badge !== "none",
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
         hasMedia: media.length > 0,
         mediaKinds: media.map((m) => m.kind),
@@ -412,7 +414,7 @@ export function Postcheck() {
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, cardState, lineSets, phoneClamp, media, poll, pollOnPost, webDevice, phoneDevice, styles.length, draft.text],
+    [post, entities, length, card, cardState, lineSets, view, identity.badge, phoneClamp, media, poll, pollOnPost, webDevice, phoneDevice, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
@@ -664,7 +666,6 @@ export function Postcheck() {
       <Preview
         stacked={narrow}
         minWidth={widestPreview}
-        marks={showTips ? advice : NO_MARKS}
         report={previewOnly ? "never" : typed ? "shown" : "reserved"}
         view={view}
         setView={setView}
@@ -732,8 +733,6 @@ interface PreviewProps {
   stacked: boolean;
   /** The right half never gets narrower than the wider preview at true size. */
   minWidth: number;
-  /** Tips whose marks are drawn beside the preview, on the line they're about. */
-  marks: Advice[];
   fontBanner: React.ReactNode;
   /** Which body font loaded. PNG export is off on the GT America tier: Grilli Type's web licence forbids saving the font into images. */
   fontTier: FontTier | null;
@@ -763,11 +762,10 @@ interface PreviewProps {
  * read X. The web view is always true size. The phone is laid out at true size and, in a short
  * window, drawn smaller as a whole (a transform, so line breaks can't move) to keep its real shape.
  */
-function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions, report }: PreviewProps) {
+function Preview({ stacked, minWidth, fontBanner, fontTier, webDevice, setWebDevice, phoneDevice, setPhoneDevice, here, themeId, web, app, view, setView, actions, report }: PreviewProps) {
   const areaRef = useRef<HTMLDivElement>(null);
   const noticeRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
   // The height under the notices; the preview gets it less the "Looks different on X?" line's.
   const [space, setSpace] = useState<number | null>(null);
   const room = space === null ? null : space - (report === "never" ? 0 : FOOT_GAP + FOOT_LINE);
@@ -807,8 +805,6 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
   const scale = stacked
     ? frameless || areaWidth === null ? 1 : Math.min(1, areaWidth / width)
     : view === "app" && room !== null && room > 0 ? Math.min(1, Math.max(MIN_PHONE_SCALE, room / phoneHeight)) : 1;
-  // Tip marks go just inside the preview's left edge when there's no margin beside it.
-  const marksInside = stacked && (frameless || areaWidth === null || areaWidth < width * scale + 2 * (MARK_OFFSET + 3 * MARK_STEP));
 
   // Measured before paint, so the first frame after a view switch never uses the other view's height.
   useLayoutEffect(() => {
@@ -936,19 +932,17 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
       </div>
       {/* Wide windows keep the controls in the page header; stacked, they sit over the preview. */}
       {stacked ? toolbar : controlsSlot && createPortal(toolbar, controlsSlot)}
-      {/* The side padding (cancelled by the negative margin) is room for the tip marks left of the preview.
-          Beside the composer the phone always fits (it scales, then sheds furniture, and its screen
+      {/* Beside the composer the phone always fits (it scales, then sheds furniture, and its screen
           scrolls itself), so nothing here scrolls: while it slides in from the web view's position it
           may hang past the bottom for a moment, which must not flash a scrollbar. A tall web post page
           and the stacked layout still scroll. */}
       <div
-        className={stacked ? "flex justify-center" : `-mx-12 min-h-0 max-w-[calc(100%+96px)] px-12 ${view === "app" ? "overflow-visible" : "overflow-auto"}`}
+        className={stacked ? "flex justify-center" : `min-h-0 max-w-full ${view === "app" ? "overflow-visible" : "overflow-auto"}`}
         // This phone runs edge to edge, out through the page's side padding.
         style={stacked && frameless ? { width: "100vw", marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" } : stacked ? { width: "100%" } : undefined}
       >
         {/* The box takes the drawn size; the preview inside keeps its true-size layout (export reads that). */}
-        <div ref={boxRef} className="relative flex-none" style={{ width: width * scale, height: drawnHeight ?? undefined }}>
-          <TipMarks advice={marks} deviceId={device.id} stageRef={stageRef} boxRef={boxRef} inside={marksInside} />
+        <div className="relative flex-none" style={{ width: width * scale, height: drawnHeight ?? undefined }}>
           <div style={scale < 1 ? { width, transform: `scale(${scale})`, transformOrigin: "top left" } : { width }}>
             <div ref={stageRef} style={{ display: "inline-block", width }}>
               {view === "app" ? app(stacked || room === null ? undefined : room / scale) : web}
@@ -973,85 +967,6 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
         </p>
       )}
     </div>
-  );
-}
-
-const NO_MARKS: Advice[] = [];
-/** Marks sit this far left of the preview's edge, and this far apart when several share a line. */
-const MARK_OFFSET = 14;
-const MARK_STEP = 10;
-
-/**
- * A small dot left of the preview on each line a tip is about, in the tip's severity colour. Drawn
- * outside the stage, so PNG export never includes them; positions are read from the rendered post
- * (after scaling and the phone's own scroll), so they follow the text exactly.
- */
-function TipMarks({ advice, deviceId, stageRef, boxRef, inside }: { advice: Advice[]; deviceId: string; stageRef: React.RefObject<HTMLDivElement | null>; boxRef: React.RefObject<HTMLDivElement | null>; inside: boolean }) {
-  const [dots, setDots] = useState<Array<{ key: string; y: number; col: number; severity: Severity; title: string }>>([]);
-  useLayoutEffect(() => {
-    const stage = stageRef.current;
-    const box = boxRef.current;
-    if (!stage || !box) return;
-    let frame = 0;
-    const measure = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const top = box.getBoundingClientRect().top;
-        const words = [...stage.querySelectorAll<HTMLElement>("[data-w]")];
-        const screen = stage.querySelector("[data-screen-scroll]")?.getBoundingClientRect();
-        const next: typeof dots = [];
-        const perRow = new Map<number, Set<string>>();
-        for (const a of advice) {
-          for (const m of a.marks ?? []) {
-            if (m.devices && !m.devices.includes(deviceId)) continue;
-            // A word span ends past its own offset; the first such span holds the character.
-            const el = "at" in m ? words.find((w) => Number(w.dataset.e) > m.at) : stage.querySelector(m.el === "more" ? "[data-more]" : "[data-attachment] > *");
-            const rect = el?.getClientRects()[0];
-            if (!rect) continue;
-            const mid = rect.top + rect.height / 2;
-            // Off the phone's screen (scrolled away inside it): no mark.
-            if (screen && (mid < screen.top || mid > screen.bottom)) continue;
-            const y = Math.round(mid - top);
-            const row = perRow.get(y) ?? new Set<string>();
-            perRow.set(y, row);
-            if (row.has(a.id)) continue;
-            next.push({ key: `${a.id}:${y}`, y, col: row.size, severity: a.severity, title: a.title });
-            row.add(a.id);
-          }
-        }
-        setDots(next);
-      });
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(stage);
-    ro.observe(box);
-    const mo = new MutationObserver(measure);
-    mo.observe(stage, { childList: true, subtree: true, characterData: true });
-    stage.addEventListener("scroll", measure, true);
-    window.addEventListener("resize", measure);
-    void document.fonts.ready.then(measure);
-    return () => {
-      cancelAnimationFrame(frame);
-      ro.disconnect();
-      mo.disconnect();
-      stage.removeEventListener("scroll", measure, true);
-      window.removeEventListener("resize", measure);
-    };
-  }, [advice, deviceId, stageRef, boxRef]);
-  return (
-    <>
-      {/* Inside the preview there's room for one dot per line (the most severe; tips come sorted). */}
-      {dots.filter((d) => !inside || d.col === 0).map((d) => (
-        <span
-          key={d.key}
-          title={d.title}
-          aria-hidden
-          className={`absolute h-1.5 w-1.5 rounded-full ${SEVERITY_STYLE[d.severity].dot}`}
-          style={{ top: d.y - 3, left: inside ? 3 : -MARK_OFFSET - 3 - d.col * MARK_STEP }}
-        />
-      ))}
-    </>
   );
 }
 

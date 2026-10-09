@@ -517,7 +517,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const ios = device.kind === "phone" && device.platform === "ios" && device.view !== "post";
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrl));
 
-  // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
+  // The wrapper has no box of its own (display: contents), so layout is untouched; verify finds
   // the attachment through it.
   const attached = media?.length ? (
     // x.com covers all the media when any item is flagged; the app swaps a lone flagged item for its
