@@ -120,8 +120,8 @@ const APP_ROW_MIN_HEIGHT = 120;
 /** The column media fills on a device, and whether it takes x.com's rules or the app's. */
 export function mediaColumn(device: Device): { width: number; web: boolean } {
   if (device.kind !== "phone") return { width: device.textWidth, web: true };
-  // iOS timeline: the quote embed's column, which is also the text's. The post screen has no capture: the
-  // app's rules at its body column, assumed. Android's items measure the app's sizes scaled to its body column
+  // iOS timeline: the quote embed's column, which is also the text's. The post screen: the app's rules at its
+  // body column (measured on a video frame, width − 19), sizes assumed. Android's items measure the app's sizes scaled to its body column
   // (@postcheck_test tests 50–59c at 360 dp), but it crops a tall photo to 3:4 (QUIRKS.md: not modelled).
   if (device.platform === "ios" && device.view !== "post") return { width: device.width - 71, web: false };
   return { width: device.textWidth, web: false };

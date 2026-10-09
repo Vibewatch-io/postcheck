@@ -87,27 +87,27 @@ const phone = (
 });
 
 /**
- * The app's post screen: stacked name/handle header, body at 17px/24px across
- * the full width minus 16px insets, no fold. Measured from an iPhone Mirroring
- * capture (402pt device) of Vibewatch_io/status/2092648171961041203: 24pt line
- * pitch, and "🐝 Receive automatic weekly reports about what" spans ~371pt,
- * which Chirp gives at 17px (369.8).
+ * The app's post screen: stacked name/handle header, no fold, the body in a column from 12pt to 7pt
+ * short of the right edge (width − 19, 374 at 393pt; the timeline cell's right edge), which the link
+ * card and media fill too. iPhone 15 Pro captures of 13 post screens (QUIRKS.md, "App post screen"):
+ * the body ink is 1.137× the timeline's height (17.06px), lines step 23.27pt (blank lines included),
+ * and the 44pt avatar sits at 12 like the text. Its tracking is in globals.css (--ls-app-post).
  */
 const phonePost = (d: Device): Device => ({
   ...d,
   id: `${d.id}-post`,
   label: `${d.label} · post`,
-  textWidth: d.width - 32,
+  textWidth: d.width - 19,
   fontSize: 17,
-  lineHeight: 24,
+  lineHeight: 23.27,
   maxLines: undefined,
   view: "post",
 });
 
 /**
- * The iOS post screen keeps the tracking its one capture was fitted with (−0.32px): the −0.18px of
- * the app pane comes from timeline captures, and no post-screen capture has been read the same way
- * (QUIRKS.md). Spread into the style of the element that holds that device's text.
+ * The iOS post screen's tracking (--ls-app-post, −0.204px): the timeline's −0.18px at 15px is the same
+ * −0.012em at 17px, which 99 post-screen lines fit (QUIRKS.md). Spread into the style of the element
+ * that holds that device's text.
  */
 export function postScreenTracking(d: Device): CSSProperties | undefined {
   return d.pane === "app" && d.view === "post" ? ({ "--ls-app": "var(--ls-app-post)" } as CSSProperties) : undefined;

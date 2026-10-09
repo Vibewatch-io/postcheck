@@ -38,11 +38,11 @@
 
 /* Tracking per loaded font, calibrated against x.com (web pane) and the iOS
    app's body ink on iPhone captures (app pane; QUIRKS.md, "Layout: app"). GT
-   America is fitted to Chirp at those values. --ls-app-post keeps the iOS post
-   screen at the older calibration its one capture was fitted with (devices.ts
-   postScreenTracking). Stamped by font-tier.tsx. */
-:root { --ls-web: 0px; --ls-app: -0.18px; --ls-app-post: -0.32px; }
-html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.057px; --ls-app-post: -0.196px; }
+   America is fitted to Chirp at those values. --ls-app-post is the iOS post
+   screen's 17px body: the app's −0.012em, fitted on post-screen captures
+   (devices.ts postScreenTracking). Stamped by font-tier.tsx. */
+:root { --ls-web: 0px; --ls-app: -0.18px; --ls-app-post: -0.204px; }
+html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.057px; --ls-app-post: -0.069px; }
 html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; --ls-app-post: 0px; }
 /* The Android app's no-break-after-hyphen (post-body.tsx): a word joiner after the hyphen, outside the DOM text. */
 .nb-hyphen::after { content: "\2060"; }

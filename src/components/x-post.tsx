@@ -513,7 +513,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   // "Postcheck_test…", @postcheck_test tests 40–44); iOS and x.com drop it. A trailing card link it hides like them.
   const hiddenUrl = device.platform === "android" && quote ? null : hiddenUrlStart;
   const viewport = device.kind === "phone" ? device.width : 1200;
-  // The iOS timeline cell, where the app's card is measured; the iOS post screen has no capture.
+  // The iOS timeline cell, where the app's card is measured; on the iOS post screen only its column is (width − 19).
   const ios = device.kind === "phone" && device.platform === "ios" && device.view !== "post";
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrl));
 
@@ -568,10 +568,11 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
 
   if (device.kind === "focal" || device.view === "post") {
     const web = device.kind === "focal";
+    // The iOS post screen: avatar and body at 12, the body's column ending 7 short (devices.ts phonePost).
     return (
-      <article style={{ padding: "12px 16px", backgroundColor: theme.bg, width: device.width, boxSizing: "border-box", borderLeft: web ? `1px solid ${theme.border}` : undefined, borderRight: web ? `1px solid ${theme.border}` : undefined, ...font, ...postScreenTracking(device) }}>
+      <article style={{ padding: web ? "12px 16px" : `12px ${device.width - 12 - device.textWidth}px 12px 12px`, backgroundColor: theme.bg, width: device.width, boxSizing: "border-box", borderLeft: web ? `1px solid ${theme.border}` : undefined, borderRight: web ? `1px solid ${theme.border}` : undefined, ...font }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Avatar src={identity.avatar} size={40} square={square} />
+          <Avatar src={identity.avatar} size={web ? 40 : 44} square={square} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4, color: theme.text, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden" }}>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
@@ -583,8 +584,10 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
             <MoreIcon size={16} />
           </div>
         </div>
-        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
-          {hasBody && body}
+        {/* iOS: the body's first ink 73pt under the avatar's top on all 13 post-screen captures (QUIRKS.md). */}
+        <div style={{ marginTop: web ? 12 : 25, display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Only the 17px body takes the post screen's tracking; a quote or card inside keeps its own. */}
+          {hasBody && <div style={postScreenTracking(device)}>{body}</div>}
           {attachment}
         </div>
         {below}
