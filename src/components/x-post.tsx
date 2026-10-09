@@ -7,10 +7,11 @@ import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
 import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type StyleRun } from "@/lib/entities";
 import { quoteTime, type QuoteState } from "@/lib/quote";
+import { NO_POST_STATE, tagLine, type PostState } from "@/lib/post-state";
 import { mediaColumn, mediaLayout, videoTime, type MediaItem } from "@/lib/media";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
-import { BookmarkIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, MuteIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
+import { BookmarkIcon, EyeSlashIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, MuteIcon, PaidPartnershipIcon, PersonIcon, PinIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
 
 export interface Identity {
   name: string;
@@ -51,6 +52,8 @@ interface Props {
   media?: MediaItem[];
   /** Premium bold / italic runs. */
   styles?: StyleRun[];
+  /** Pinned, paid partnership, reply limit and tag (a media item carries its own sensitive flag). */
+  state?: PostState;
   bodyRef?: Ref<HTMLDivElement>;
 }
 
@@ -76,13 +79,14 @@ export function DefaultAvatar({ size, className, style }: { size: number | strin
 }
 
 /** The action row; `height` is the row the icons are centred in (36 on x.com, 20 in the iOS timeline cell). */
-function Actions({ theme, full, height = 36 }: { theme: XTheme; full: boolean; height?: number }) {
+function Actions({ theme, full, height = 36, replyDimmed = false }: { theme: XTheme; full: boolean; height?: number; replyDimmed?: boolean }) {
   const item = (icon: ReactNode, grow: boolean) => (
     <div style={{ flex: grow ? "1 1 0" : "0 0 auto", minWidth: 0, display: "flex", alignItems: "center", height, color: theme.icon }}>{icon}</div>
   );
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: full ? "space-between" : undefined, width: "100%" }}>
-      {item(<ReplyIcon size={20} />, !full)}
+      {/* iOS dims the reply icon when the viewer can't reply: about a third as bright (tests 101, 103). */}
+      {item(<ReplyIcon data-reply-icon="" size={20} style={replyDimmed ? { opacity: 0.33 } : undefined} />, !full)}
       {item(<RepostIcon size={20} />, !full)}
       {item(<LikeIcon size={20} />, !full)}
       {item(<ViewsIcon size={20} />, !full)}
@@ -264,13 +268,18 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
             <MuteIcon size={16} />
           </div>
         )}
+        {/* Over the badges: the cover hides the item, its GIF or mute mark included (assumed). */}
+        {!web && m.sensitive && <ItemCover src={m.src} w={b.w} h={b.h} />}
       </div>
     );
   });
   if (carousel) {
-    // Clipped to the column and scrolled sideways, with no scrollbar showing.
+    // Clipped to the column and scrolled sideways, with no scrollbar showing. x.com frames the row 1px
+    // above and below: its block is 352 for 350px items (a sensitive cover over it, test 111b; the tag
+    // line 4px under it, 110c). On the 643px four-strip row it is assumed; the app's carousel frame
+    // is not measured.
     return (
-      <div data-media="carousel" role="region" aria-label="Post media" style={{ width: layout.column, height, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+      <div data-media="carousel" role="region" aria-label="Post media" style={{ width: layout.column, height: web ? height + 2 : height, padding: web ? "1px 0" : undefined, display: "flex", overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
         {cells}
       </div>
     );
@@ -283,6 +292,171 @@ function MediaBlock({ items, device, theme }: { items: MediaItem[]; device: Devi
     >
       {cells}
       {!layout.border && hairline}
+    </div>
+  );
+}
+
+/**
+ * Where X puts the post-state rows (QUIRKS.md, "Post chrome"). Web: x.com's logged-in DOM
+ * (2026-10-08), timeline and post page. iOS: iPhone 15 Pro captures of tests 104, 110, 111 and 131
+ * (393pt, 2026-10-07), the sizes from Chirp widths against the capture's ink, the offsets from its
+ * ink against Chirp's metrics. Android has no capture and the iOS post screen none for these
+ * states: both take the iOS timeline numbers (assumed).
+ */
+function stateLook(device: Device) {
+  if (device.kind === "phone") {
+    return {
+      // "Pinned" 14pt bold; pin 14pt, right-aligned to the avatar column.
+      pinned: { size: 14, lineHeight: 18, icon: 14, iconTop: 2 },
+      // The row adds 19pt to the cell; the name's cap sits 11pt under the photo.
+      tag: { block: 19, top: 8, size: 14, icon: 0 },
+      // The row adds 22pt; its cap sits 11pt under the last body line.
+      paid: { block: 22, top: 8, size: 14, icon: 13, gap: 4 },
+    };
+  }
+  const focal = device.kind === "focal";
+  return {
+    pinned: { size: 13, lineHeight: 16, icon: 16, iconTop: 0 },
+    // Timeline: 13px under the photo, no icon (+20). Post page: 15px with the person icon.
+    tag: focal ? { block: 24, top: 4, size: 15, icon: 19 } : { block: 20, top: 4, size: 13, icon: 0 },
+    // 8px under the text, a 16px icon and 13px text (+25).
+    paid: { block: 25, top: 8, size: 13, icon: 16, gap: 3 },
+  };
+}
+
+/** "Pinned" over the name row, its pin in the avatar column (timeline only: the post page has none). */
+function PinnedRow({ device, theme, avatar }: { device: Device; theme: XTheme; avatar: number }) {
+  const look = stateLook(device).pinned;
+  return (
+    <div data-pinned="" style={{ display: "flex", gap: 8, height: 16, marginBottom: 4, color: theme.secondary, fontSize: look.size, lineHeight: `${look.lineHeight}px`, fontWeight: 700, whiteSpace: "nowrap" }}>
+      <div style={{ width: avatar, flexShrink: 0, display: "flex", justifyContent: "flex-end" }}>
+        <PinIcon data-pinned-icon="" size={look.icon} style={{ marginTop: look.iconTop }} />
+      </div>
+      <span data-pinned-text="">Pinned</span>
+    </div>
+  );
+}
+
+/** The tagged people under the media: "Vibewatch", "Vibewatch and Good For Bitcoin". */
+function TagRow({ device, theme, name }: { device: Device; theme: XTheme; name: string }) {
+  const look = stateLook(device).tag;
+  const lineHeight = look.size === 15 ? 20 : 16;
+  return (
+    <div data-tag="" style={{ height: look.block, boxSizing: "border-box", paddingTop: look.top, color: theme.secondary, fontSize: look.size, lineHeight: `${lineHeight}px`, whiteSpace: "nowrap", overflow: "visible" }}>
+      <div style={{ display: "flex", alignItems: "center", height: lineHeight, minWidth: 0 }}>
+        {look.icon > 0 && <PersonIcon size={look.icon} style={{ flexShrink: 0, marginRight: 4 }} />}
+        <span data-tag-text="" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+      </div>
+    </div>
+  );
+}
+
+/** "Paid partnership", the composer's content disclosure, under the post. */
+function PaidRow({ device, theme }: { device: Device; theme: XTheme }) {
+  const look = stateLook(device).paid;
+  const web = device.kind !== "phone";
+  return (
+    <div data-paid="" style={{ height: look.block, boxSizing: "border-box", paddingTop: look.top, color: theme.secondary, fontSize: look.size, lineHeight: "16px", whiteSpace: "nowrap" }}>
+      {/* x.com: the icon at the row's top and the text 1px lower; iOS: both centred on one 16pt line. */}
+      <div style={{ display: "flex", alignItems: web ? "flex-start" : "center", gap: look.gap, height: web ? 17 : 16 }}>
+        <PaidPartnershipIcon data-paid-icon="" size={look.icon} style={{ flexShrink: 0 }} />
+        <span data-paid-text="" style={{ marginTop: web ? 1 : 0 }}>
+          Paid partnership
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The iOS app's cover on one flagged item among several: only that item is covered, in its own box
+ * (test 111b, its first 70pt seen as the carousel's peeking item: the title starts 12pt in). The
+ * rest of its layout is assumed: the single cover's pieces, centred in the item. A slot too small
+ * for them (a row of two squares is 159pt, a strip 30pt wide) keeps what fits: it drops the
+ * explanation and the pill first, then the title (assumed; only the 219pt carousel slot was seen).
+ */
+function ItemCover({ src, w, h }: { src: string; w: number; h: number }) {
+  const full = h >= 215 && w >= 200;
+  const titled = h >= 80 && w >= 150;
+  return (
+    <div data-item-cover="" style={{ position: "absolute", inset: 0, overflow: "hidden", color: "#FFFFFF", fontSize: 15 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" style={{ position: "absolute", inset: -72, width: "calc(100% + 144px)", height: "calc(100% + 144px)", maxWidth: "none", objectFit: "cover", filter: "blur(24px)" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "10px 12px", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <EyeSlashIcon size={20} style={{ alignSelf: "center", flexShrink: 0 }} />
+        {titled && <div style={{ marginTop: 14, lineHeight: "20px", fontWeight: 700 }}>Content warning: Sensitive content</div>}
+        {full && <div style={{ marginTop: 14, lineHeight: "18px" }}>The author flagged this post as showing sensitive content.</div>}
+        {full && <div style={{ marginTop: 11, alignSelf: "flex-end", height: 24, minWidth: 80, padding: "0 12px", boxSizing: "border-box", borderRadius: 9999, backgroundColor: "rgba(0, 0, 0, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+          Show
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Media with a flagged item. x.com keeps the media's box and darkens a blurred copy (X serves the
+ * blur; a CSS blur stands in for it) by half, with a centred column (max 400px) of icon, title,
+ * explanation and a "Show" pill. The iOS app swaps the photo for a 324×163 cover at 393pt whatever
+ * its shape, its pieces at fixed offsets from the cover's edges.
+ */
+function SensitiveCover({ items, device, theme }: { items: MediaItem[]; device: Device; theme: XTheme }) {
+  const src = items[0].src;
+  const blurred = (
+    // A blur fades out over about three radii at the image's edges: draw it that far past the box,
+    // which clips it, so the cover stays even to its corners.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" style={{ position: "absolute", inset: -72, width: "calc(100% + 144px)", height: "calc(100% + 144px)", maxWidth: "none", objectFit: "cover", filter: "blur(24px)" }} />
+  );
+  const white = "#FFFFFF";
+  if (device.kind === "phone") {
+    const w = device.width - 69;
+    // Measured at 393pt only: 324×163. Wider screens keep that shape; a narrower one keeps the
+    // 163pt and grows if its text wraps further, so the pieces never overlap (assumed).
+    const h = Math.max(163, Math.round((w * 163) / 324));
+    return (
+      <div data-sensitive="" style={{ position: "relative", width: w, minHeight: h, boxSizing: "border-box", padding: "14px 0 10px", borderRadius: 12, overflow: "hidden", color: white, fontSize: 15, display: "flex", flexDirection: "column" }}>
+        {blurred}
+        <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
+        {/* At 393pt: icon 14 from the top, title at 20,48, text at 21,82, pill 11 from the right and 10 from the bottom. */}
+        <EyeSlashIcon size={20} style={{ position: "relative", alignSelf: "center", flexShrink: 0 }} />
+        <div style={{ position: "relative", margin: "14px 20px 0", lineHeight: "20px", fontWeight: 700 }}>
+          <span data-cover-title="">Content warning: Sensitive content</span>
+        </div>
+        <div style={{ position: "relative", margin: "14px 21px 0", lineHeight: "18px" }}>The author flagged this post as showing sensitive content.</div>
+        <div style={{ flex: "1 0 11px" }} />
+        <div data-cover-show="" style={{ position: "relative", alignSelf: "flex-end", flexShrink: 0, marginRight: 11, height: 24, minWidth: 80, padding: "0 12px", boxSizing: "border-box", borderRadius: 9999, backgroundColor: "rgba(0, 0, 0, 0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
+          Show
+        </div>
+      </div>
+    );
+  }
+  // The media keeps its own box, the blur over it (of the first item: which image x.com's served blur
+  // comes from is not recorded). With several items x.com covers them all as one (test 111b): a
+  // 518×352 cover over the framed carousel.
+  return (
+    // Clipped to the cover's corners, so a carousel's square-cut edge never shows past them.
+    <div data-sensitive="" style={{ position: "relative", width: "fit-content", borderRadius: 16, overflow: "hidden" }}>
+      <MediaBlock items={items} device={device} theme={theme} />
+      <div aria-hidden style={{ position: "absolute", inset: 0, borderRadius: 16, overflow: "hidden" }}>{blurred}</div>
+      <div style={{ position: "absolute", inset: 0, borderRadius: 16, backgroundColor: "rgba(0, 0, 0, 0.5)", padding: "12px 16px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", color: white, fontSize: 15, lineHeight: "20px" }}>
+        <div style={{ width: "100%", maxWidth: 400, padding: "0 12px", boxSizing: "border-box" }}>
+          <div style={{ display: "flex", justifyContent: "center", height: 24 }}>
+            <EyeSlashIcon data-cover-icon="" size={24} />
+          </div>
+          <div style={{ marginTop: 12, fontWeight: 700 }}>
+            <span data-cover-title="">Content warning: Sensitive content</span>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <span data-cover-text="">The post author flagged this post as showing sensitive content.</span>
+          </div>
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+            <div data-cover-show="" style={{ height: 32, padding: "0 16px", boxSizing: "border-box", border: "1px solid transparent", borderRadius: 9999, backgroundColor: "rgba(255, 255, 255, 0.25)", display: "flex", alignItems: "center", fontSize: 14, lineHeight: "16px", fontWeight: 700 }}>
+              Show
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -314,7 +488,7 @@ const IOS_CELL = { nameTop: -3.6, grokTop: -2, bodyTop: 1.3, gap: 7.7, actionsTo
  * 12px → card → action row. The post page ("focal") variant runs the body at
  * 17px/24px under the header and adds the timestamp row.
  */
-export function XPost({ device, theme, identity, tokens, showMore, onShowMore, toggle, hiddenUrlStart, card, quote, media, styles, bodyRef }: Props) {
+export function XPost({ device, theme, identity, tokens, showMore, onShowMore, toggle, hiddenUrlStart, card, quote, media, styles, state = NO_POST_STATE, bodyRef }: Props) {
   const font = { fontFamily: fontStack(device.font), fontSize: 15, lineHeight: "20px" } as const;
   const handle = identity.handle.replace(/^@/, "") || "yourhandle";
   const name = identity.name || "Your name";
@@ -328,7 +502,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
   // the attachment through it.
   const attached = media?.length ? (
-    <MediaBlock items={media} device={device} theme={theme} />
+    // x.com covers all the media when any item is flagged; the app swaps a lone flagged item for its
+    // fixed cover and covers a flagged item among several in place (MediaBlock).
+    media.some((m) => m.sensitive) && (device.kind !== "phone" || media.length === 1) ? <SensitiveCover items={media} device={device} theme={theme} /> : <MediaBlock items={media} device={device} theme={theme} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
@@ -336,6 +512,19 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} />
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
+  // Under the text and attachment: the tag, then the disclosure. Each was captured alone; the order
+  // when both show is assumed (QUIRKS.md).
+  const tagged = media?.length ? tagLine(state.tagged) || null : null;
+  const below = (
+    <>
+      {tagged && <TagRow device={device} theme={theme} name={tagged} />}
+      {state.paid && <PaidRow device={device} theme={theme} />}
+    </>
+  );
+  // iOS dims the reply icon for a viewer outside the limit, in the row and on the post screen (test
+  // 101). Only "accounts you follow" and "accounts you mention" were seen dimmed; the capturing
+  // account could reply to the verified-only post.
+  const replyDimmed = device.kind === "phone" && (state.replies === "following" || state.replies === "mentioned");
   // LinkCard draws the small layout for any card without a large image.
   const smallCard = ios && !media?.length && !quote && card && card !== "loading" && !(card.layout === "large" && card.image);
 
@@ -377,11 +566,12 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
           {hasBody && body}
           {attachment}
         </div>
+        {below}
         <div style={{ marginTop: 12, color: theme.secondary, fontSize: 15 }}>
           10:14 AM · {web ? "Sep 10, 2026" : "9/10/26"} · <span style={{ color: theme.text, fontWeight: 700 }}>12.4K</span> Views
         </div>
         <div style={{ marginTop: 12, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}`, padding: "2px 0" }}>
-          <Actions theme={theme} full />
+          <Actions theme={theme} full replyDimmed={replyDimmed} />
         </div>
       </article>
     );
@@ -411,7 +601,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         cursor: toggle ? "pointer" : undefined,
         // App cell measured on an iPhone 15 Pro capture: 12px inset, 44px avatar, 8px gap, 12px right.
         // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
-        padding: isPhone ? (android ? "12px" : `12px 13px ${IOS_CELL.bottom}px 12px`) : "12px 16px",
+        // A pinned post's "Pinned" row takes the top 8px of the inset, then 16 + 4 (x.com and iOS: +16).
+        // One shorthand only: a longhand beside it would survive React's style diff on a device switch.
+        padding: `${state.pinned ? 8 : 12}px ${isPhone ? (android ? "12px 12px" : `13px ${IOS_CELL.bottom}px 12px`) : "16px 12px"}`,
         backgroundColor: theme.bg,
         width: device.width,
         boxSizing: "border-box",
@@ -421,6 +613,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         ...font,
       }}
     >
+      {state.pinned && <PinnedRow device={device} theme={theme} avatar={isPhone && !android ? 44 : 40} />}
       <div style={{ display: "flex", gap: 8 }}>
         <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
@@ -440,8 +633,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
             {hasBody && body}
             {attachment}
           </div>
+          {below}
           <div style={{ marginTop: ios ? (attached ? IOS_CELL.actionsTop : IOS_CELL.textActionsTop) : 4, marginLeft: -8 }}>
-            <Actions theme={theme} full={false} height={ios ? 20 : 36} />
+            <Actions theme={theme} full={false} height={ios ? 20 : 36} replyDimmed={replyDimmed} />
           </div>
         </div>
       </div>
