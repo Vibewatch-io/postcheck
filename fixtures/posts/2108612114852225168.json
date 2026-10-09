@@ -1,0 +1,37 @@
+{
+  "id_str": "2108612114852225168",
+  "text": "Test 57d: text poll, open for 7 days",
+  "display_text_range": [
+    0,
+    36
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "poll4choice_text_only",
+    "url": "card://2108612114508308480"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "One",
+      "image": false
+    },
+    {
+      "label": "Two",
+      "image": false
+    },
+    {
+      "label": "Three",
+      "image": false
+    },
+    {
+      "label": "Four",
+      "image": false
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
