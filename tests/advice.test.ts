@@ -147,3 +147,36 @@ test("the media carousel tip marks only the previews that scroll sideways", () =
   assert.deepEqual(assumed?.marks, [{ el: "attachment", devices: ["web"] }]);
   assert.match(assumed!.detail, /one capture/);
 });
+
+// @postcheck_test tests 94/94b: X posts a long post without its poll. Test 95: a poll replaces the
+// link card and the link stays as text, so no card tip may claim otherwise.
+test("a poll past 280 is flagged as dropped; a shown poll replaces the card tips", () => {
+  const long = "word ".repeat(60).trim();
+  const le = extractEntities(long);
+  const dropped = buildAdvice({ text: long, entities: le, length: weightedLength(long, le), card: undefined, lineSets: [], poll: "dropped" });
+  assert.ok(dropped.some((a) => a.id === "poll-dropped" && a.severity === "fix"));
+  // Past 280 with a picture missing, both fixes show: one alone would hide the other blocker.
+  const both = buildAdvice({ text: long, entities: le, length: weightedLength(long, le), card: undefined, lineSets: [], poll: "dropped", pollPictures: true }).map((a) => a.id);
+  assert.ok(both.includes("poll-dropped") && both.includes("poll-pictures"));
+  const text = "Poll with a link https://github.com/vercel/next.js";
+  const entities = extractEntities(text);
+  const ids = buildAdvice({ text, entities, length: weightedLength(text, entities), card: null, lineSets: [], poll: "shown" }).map((a) => a.id);
+  assert.ok(ids.includes("poll-beats-card"));
+  assert.ok(!ids.includes("no-card"));
+  // With a fetched card for the trailing link, the poll still wins: no "card shown" tip.
+  const card = { url: "https://github.com/vercel/next.js", host: "github.com", title: "Next.js", description: "", image: null, layout: "large" as const };
+  const withCard = buildAdvice({ text, entities, length: weightedLength(text, entities), card, lineSets: [], poll: "shown" }).map((a) => a.id);
+  assert.ok(withCard.includes("poll-beats-card") && !withCard.includes("trailing-url-hidden"));
+  const two = "Two links https://github.com/vercel/next.js and https://vibewatch.io";
+  const te = extractEntities(two);
+  const twoIds = buildAdvice({ text: two, entities: te, length: weightedLength(two, te), card: null, lineSets: [], poll: "shown" }).map((a) => a.id);
+  assert.ok(twoIds.includes("poll-beats-card") && !twoIds.includes("multiple-urls"));
+});
+
+// Composing test 57c: X kept Post off for a poll with no text. A poll alone is the user's draft, so
+// its tips show: the question, and anything the poll itself still needs.
+test("a poll with no text asks for the question and keeps its own tips", () => {
+  const ids = buildAdvice({ text: "", entities: [], length: weightedLength("", []), card: undefined, lineSets: [], poll: "shown", pollPictures: true }).map((a) => a.id);
+  assert.deepEqual(ids.sort(), ["poll-no-text", "poll-pictures"]);
+  assert.deepEqual(buildAdvice({ text: "", entities: [], length: weightedLength("", []), card: undefined, lineSets: [] }), []);
+});

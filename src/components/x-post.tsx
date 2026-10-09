@@ -11,6 +11,8 @@ import { NO_POST_STATE, tagLine, type PostState } from "@/lib/post-state";
 import { mediaColumn, mediaLayout, videoTime, type MediaItem } from "@/lib/media";
 import { PostBody } from "./post-body";
 import { LinkCard } from "./link-card";
+import { PollCard } from "./poll";
+import type { Poll } from "@/lib/poll";
 import { BookmarkIcon, EyeSlashIcon, GoldVerifiedIcon, GrayVerifiedIcon, GrokIcon, LikeIcon, MoreIcon, MuteIcon, PaidPartnershipIcon, PersonIcon, PinIcon, ReplyIcon, RepostIcon, ShareIcon, VerifiedIcon, ViewsIcon } from "./icons";
 
 export interface Identity {
@@ -50,6 +52,8 @@ interface Props {
   quote: { entity: Entity; state: QuoteState | null } | null;
   /** Attached photos, GIFs and videos, up to 4. A post with media never shows a link card or a quote. */
   media?: MediaItem[];
+  /** The poll X shows under the text, if any. Like a photo, it replaces any link card. */
+  poll?: Poll | null;
   /** Premium bold / italic runs. */
   styles?: StyleRun[];
   /** Pinned, paid partnership, reply limit and tag (a media item carries its own sensitive flag). */
@@ -499,7 +503,7 @@ const IOS_CELL = { nameTop: -3.6, grokTop: -2, bodyTop: 1.3, gap: 7.7, actionsTo
  * 12px → card → action row. The post page ("focal") variant runs the body at
  * 17px/24px under the header and adds the timestamp row.
  */
-export function XPost({ device, theme, identity, tokens, showMore, onShowMore, toggle, hiddenUrlStart, card, quote, media, styles, state = NO_POST_STATE, bodyRef }: Props) {
+export function XPost({ device, theme, identity, tokens, showMore, onShowMore, toggle, hiddenUrlStart, card, quote, media, poll, styles, state = NO_POST_STATE, bodyRef }: Props) {
   const font = { fontFamily: fontStack(device.font), fontSize: 15, lineHeight: "20px" } as const;
   const handle = identity.handle.replace(/^@/, "") || "yourhandle";
   const name = identity.name || "Your name";
@@ -519,6 +523,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     // x.com covers all the media when any item is flagged; the app swaps a lone flagged item for its
     // fixed cover and covers a flagged item among several in place (MediaBlock).
     media.some((m) => m.sensitive) && (device.kind !== "phone" || media.length === 1) ? <SensitiveCover items={media} device={device} theme={theme} /> : <MediaBlock items={media} device={device} theme={theme} />
+  ) : poll ? (
+    <PollCard poll={poll} device={device} theme={theme} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (

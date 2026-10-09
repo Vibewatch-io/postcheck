@@ -20,6 +20,8 @@ import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
+import { POLL_MIN_CHOICES, emptyPoll, filledChoices, missingPictures, shownPoll, type Poll } from "@/lib/poll";
+import { PollEditor } from "./poll-editor";
 import { APP_MIN_RATIO, mediaLayout, type MediaItem, type MediaKind } from "@/lib/media";
 import { MediaPicker } from "./media-picker";
 
@@ -62,6 +64,8 @@ export function Postcheck() {
   const editor = useComposer(setDraft);
   const [identity, setIdentity] = useState<Identity>({ name: "", handle: "", avatar: null, badge: "none" });
   const [media, setMedia] = useState<MediaItem[]>(NO_MEDIA);
+  // X's composer takes media or a poll, never both: each one disables the other's button.
+  const [poll, setPoll] = useState<Poll | null>(null);
   const [postState, setPostState] = useState<PostState>(NO_POST_STATE);
   // The tag goes with the last item, so nothing hidden stays set or travels in a share link.
   const changeMedia = useCallback(
@@ -126,9 +130,9 @@ export function Postcheck() {
   const [opening, setOpening] = useState(false);
   // What the page showed before a share took over, so going Back (or to a damaged link) returns to
   // it. `latest` mirrors the current state for the hashchange listener, which is bound once.
-  const latest = useRef({ draft, identity, media, postState, phoneDevice, webDevice, themeId, themeChosen, view });
+  const latest = useRef({ draft, identity, media, poll, postState, phoneDevice, webDevice, themeId, themeChosen, view });
   useLayoutEffect(() => {
-    latest.current = { draft, identity, media, postState, phoneDevice, webDevice, themeId, themeChosen, view };
+    latest.current = { draft, identity, media, poll, postState, phoneDevice, webDevice, themeId, themeChosen, view };
   });
   const beforeShare = useRef<typeof latest.current | null>(null);
   useLayoutEffect(() => {
@@ -142,6 +146,7 @@ export function Postcheck() {
       setDraft(b.draft);
       setIdentity(b.identity);
       setMedia(b.media);
+      setPoll(b.poll);
       setPostState(b.postState);
       setPhoneDevice(b.phoneDevice);
       setWebDevice(b.webDevice);
@@ -167,6 +172,7 @@ export function Postcheck() {
           setDraft({ text: p.text, styles: p.styles });
           setIdentity(p.identity);
           setMedia(p.media);
+          setPoll(p.poll);
           setPostState(p.post);
           setPhoneChosen(true);
           setPhoneDevice(DEVICES.find((d) => d.id === p.phone) ?? DEFAULT_PHONE);
@@ -203,7 +209,10 @@ export function Postcheck() {
   }, [editor, shared]);
 
   // What X will actually post: outer whitespace trimmed, bold / italic as style runs over the plain text.
-  const formatted = useMemo(() => trimDraft(draft.text.trim() ? draft : { text: SAMPLE, styles: [] }), [draft]);
+  // A poll makes the draft the user's own even before any text: the preview drops the sample and
+  // the tips say what the poll still needs (X won't post one without text).
+  const ownDraft = draft.text.trim() !== "" || poll !== null;
+  const formatted = useMemo(() => trimDraft(ownDraft ? draft : { text: SAMPLE, styles: [] }), [draft, ownDraft]);
   const post = formatted.text;
   const styles = formatted.styles;
   // Reset during render rather than in an effect, so an edit never paints an expanded frame and
@@ -218,14 +227,17 @@ export function Postcheck() {
   const length = useMemo(() => weightedLength(post, entities), [post, entities]);
   const cut280 = useMemo(() => showMoreCut(post, length.limitIndex), [post, length.limitIndex]);
 
+  // Over 280 X keeps the post and drops its poll (tests 94, 94b), so the preview drops it too.
+  const pollOnPost = useMemo(() => shownPoll(poll, length.weighted), [poll, length.weighted]);
   // A link to a post becomes a quote wherever it sits, and a quote beats a link card (@postcheck_test
-  // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46).
-  const quote = !media.length ? quoteUrl(entities) ?? null : null;
+  // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46). Media or
+  // a poll replaces both, and the link stays as text (test 95; the poll-and-quote case is assumed).
+  const quote = !media.length && !pollOnPost ? quoteUrl(entities) ?? null : null;
   const quoteId = quote ? statusId(quote.href) : null;
   // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
   const cardEntity = quote ? undefined : cardUrl(entities);
-  const cardKey = cardEntity && !cardEntity.isStatus && !media.length && !cardless(cardEntity.href!) ? cardEntity.href! : null;
+  const cardKey = cardEntity && !cardEntity.isStatus && !media.length && !pollOnPost && !cardless(cardEntity.href!) ? cardEntity.href! : null;
   // A recorded "none" or "failed" is an answer, not a lookup still to come. Both draw no card and
   // leave the link text visible; only the advice tells them apart.
   const cardState: CardState | null = cardKey ? (Object.hasOwn(cards, cardKey) ? cards[cardKey] : "loading") : null;
@@ -393,10 +405,14 @@ export function Postcheck() {
           const layout = mediaLayout(media, d);
           return layout ? [{ deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, layout, ios: d.platform === "ios", tall: media.length === 1 && media[0].kind === "photo" && media[0].width / media[0].height < APP_MIN_RATIO }] : [];
         }),
+        // An incomplete poll is unpostable whatever the length, so "empty" wins over "dropped".
+        poll: poll ? (pollOnPost ? "shown" : filledChoices(poll).length < POLL_MIN_CHOICES ? "empty" : "dropped") : null,
+        // Missing pictures are their own blocker, whatever the length (both fixes show past 280).
+        pollPictures: poll ? filledChoices(poll).length >= POLL_MIN_CHOICES && missingPictures(poll) : false,
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, cardState, lineSets, phoneClamp, media, webDevice, phoneDevice, styles.length, draft.text],
+    [post, entities, length, card, cardState, lineSets, phoneClamp, media, poll, pollOnPost, webDevice, phoneDevice, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {
@@ -442,12 +458,13 @@ export function Postcheck() {
       ready: Boolean(editor),
       // **bold** / __italic__ markers become style runs; `media` attaches stand-ins of the recorded
       // kinds and sizes (`photo` alone, one 16:9 photo); `state` sets the post states (pinned, paid
-      // partnership, reply limit, tag); a media entry's `sensitive` flags that item.
-      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number; sensitive?: boolean }>; state?: Partial<PostState> } = {}) => {
+      // partnership, reply limit, tag); a media entry's `sensitive` flags that item; `poll` attaches a poll.
+      setDraft: (raw: string, opts: { photo?: boolean; media?: Array<{ kind: MediaKind; width: number; height: number; alt?: boolean; durationMs?: number; sensitive?: boolean }>; state?: Partial<PostState>; poll?: Poll } = {}) => {
         const { text, styles } = stripFormatting(raw);
         editor?.commands.setContent(draftToDoc(text, styles));
         const items = opts.media ?? (opts.photo ? [{ kind: "photo" as const, width: 1600, height: 900 }] : []);
         setMedia(items.length ? items.map((m) => ({ src: STAND_IN_PHOTO, alt: false, ...m })) : NO_MEDIA);
+        setPoll(opts.poll ?? null);
         setPostState({ ...NO_POST_STATE, ...opts.state });
       },
       getText: () => (editor ? serializeDoc(editor.getJSON() as DocNode).text : draft.text),
@@ -479,15 +496,15 @@ export function Postcheck() {
 
   // Tips only appear for the user's own draft, and only when there's something to say. They hang
   // below the composer, so the composer never moves when they come and go.
-  const showTips = !previewOnly && draft.text.trim() !== "" && advice.length > 0;
+  const showTips = !previewOnly && ownDraft && advice.length > 0;
 
   // Nothing typed yet shares an empty draft: the recipient sees the same sample, still as a
   // placeholder, and "Edit a copy" starts them empty rather than with the sample as real text.
-  const typed = draft.text.trim() !== "";
+  const typed = ownDraft;
   const sharePreview = useCallback(
     // A link made on someone's own phone names the listed phone nearest to it.
-    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, post: postState, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
-    [typed, post, styles, identity, media, postState, themeId, phoneDevice, webDevice.id, view],
+    (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, poll, post: postState, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
+    [typed, post, styles, identity, media, poll, postState, themeId, phoneDevice, webDevice.id, view],
   );
   const actions = shared ? (
     <button type="button" onClick={editCopy} className="h-8 flex-none whitespace-nowrap rounded-lg bg-brand-warm-dark px-3 text-[13px] font-medium text-white hover:bg-brand-warm-dark/90">
@@ -496,6 +513,20 @@ export function Postcheck() {
   ) : (
     <ShareButton preview={sharePreview} />
   );
+  // The block under the composer keeps room for the tips only: in a short window they lift the
+  // composer as far as they need, while an open poll hangs below and the half scrolls to it, so
+  // opening a poll never moves the composer.
+  const tipsRef = useRef<HTMLDivElement>(null);
+  const [tipsHeight, setTipsHeight] = useState(0);
+  useEffect(() => {
+    const el = tipsRef.current;
+    if (!el) return;
+    const measure = () => setTipsHeight(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const hints = showTips && (
     <div className="px-1 pt-5">
       <h2 className="font-syne text-sm font-semibold lining-nums text-brand-warm-dark">
@@ -603,7 +634,13 @@ export function Postcheck() {
         <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex flex-wrap items-center gap-3">
             <FormatBar editor={editor} />
-            <MediaPicker media={media} onChange={changeMedia} />
+            {/* A slow media read must not attach media beside a poll added while it ran: the update checks the latest state. */}
+            <MediaPicker media={media} disabled={poll !== null} onChange={(update) => latest.current.poll === null && changeMedia(update)} />
+            {!poll && (
+              <button type="button" disabled={media.length > 0} title={media.length ? "X takes media or a poll, not both" : undefined} className="rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark hover:bg-brand-warm-surface disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent" onClick={() => setPoll(emptyPoll())}>
+                Add poll
+              </button>
+            )}
             <PostOptions state={postState} onChange={setPostState} media={media} onMedia={changeMedia} />
           </span>
           <span className="flex items-center gap-2 tabular-nums" title="Weighted length, the way X counts it">
@@ -617,8 +654,10 @@ export function Postcheck() {
 
       </section>
       </div>
-      <div className={narrow ? "w-full" : "w-full flex-1 basis-0"} style={{ maxWidth: COMPOSER_MAX }}>
-        {hints}
+      <div className={narrow ? "w-full" : "w-full flex-1 basis-0"} style={narrow ? { maxWidth: COMPOSER_MAX } : { maxWidth: COMPOSER_MAX, minHeight: tipsHeight }}>
+        {/* The poll hangs below the toolbar with the tips; only the tips claim room (see tipsRef). */}
+        {poll && <PollEditor poll={poll} onChange={setPoll} readFile={readFile} />}
+        <div ref={tipsRef}>{hints}</div>
       </div>
       </div>
 
@@ -648,11 +687,11 @@ export function Postcheck() {
         themeId={themeId}
         web={
           <div style={{ backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: webDevice.kind === "focal" ? `1px solid ${theme.border}` : undefined, width: webDevice.width }}>
-            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} toggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={styles} state={postState} />
+            <XPost device={webDevice} theme={theme} identity={identity} tokens={webRender.tokens} showMore={webRender.showMore} onShowMore={() => expand(webDevice)} toggle={toggleFor(webDevice, webRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={styles} state={postState} />
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} state={postState} />;
+          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} state={postState} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>
@@ -804,8 +843,8 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
         el.scrollTop = 0;
         return [() => { cell.style.marginTop = margin; el.scrollTop = top; }];
       }));
-      // A media carousel swiped sideways: the same, along x.
-      for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"]')) {
+      // A media or image-poll carousel swiped sideways: the same, along x.
+      for (const el of node.querySelectorAll<HTMLElement>('[data-media="carousel"], [data-poll-carousel]')) {
         const left = el.scrollLeft;
         const first = el.firstElementChild as HTMLElement | null;
         if (!left || !first) continue;

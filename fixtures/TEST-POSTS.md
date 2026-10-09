@@ -146,9 +146,10 @@ Long test 08: an emoji starts on character 280 and ends on 281. the quick brown 
 | 54 | Four photos | Layout. (Web: sideways carousel, no 2x2 grid.) |
 | 55 | A GIF | GIF badge and layout. Corpus gap. |
 | 56 | A short video | Video poster and duration badge. |
-| 57 | Poll with 4 options | Poll layout. Corpus gap; the tool doesn't draw polls. |
+| 57 | Poll with 4 options | Poll layout (drawn since 2026-10-08; `verify` checks it). |
 | 58 | Photo with alt text | ALT badge. |
 | 57b | Poll with 4 options, an image on each choice (tiles 1–4) | Image poll layout (`poll_choice_images` card). The first web attempt never uploaded the choice images; it worked after a page refresh. |
+| 57c | `Test 57c: image poll, open for 7 days` · `One`–`Four`, tiles 5–8, 7 days | The voter view of an open image poll (read from another account). Posted 2026-10-08 (2108319976751002108). With a picture on choice 1 only, Post stayed off; with all four it stalled until the poll length was changed and changed back. |
 | 59b | A photo and a video | Mixed media in one post. |
 | 59c | Photo, GIF, video, photo | Mixed media with badges. |
 
@@ -223,7 +224,9 @@ The review ended by 2026-10-08 (check back) and the name went back to `Postcheck
 
 Test 57 (4 text choices) and 57b (4 image choices) are posted. The author always sees a poll's results
 view; the voter view (choice buttons) only shows to another account, so the iPhone (@marshallmixing)
-capture is the voter view and the web capture (@Postcheck_test) is the results view.
+capture is the voter view and the web capture (@Postcheck_test) is the results view. Exception: 57c's
+web entry is the voter view, read as @marshallmixing (an open image poll's voter view is a carousel, a
+different layout from its results view); recapture it from another account, not @Postcheck_test.
 
 | # | Text and choices | Tests |
 |---|---|---|
@@ -312,11 +315,12 @@ Posted 2026-10-06 (batch 7), texts `Test 110: …` to `Test 115: …` as in 51�
 
 ## What the tool can't draw yet
 
-Posts 42–45 (native quotes), 52–55 (multiple photos, GIF), 56 (video badge), 57 and group 9 (polls),
+Posts 42–45 (native quotes), 52–55 (multiple photos, GIF), 56 (video badge),
 66 (price charts), group 10's thread and repost chrome, group 11's media sizes and
 120–122 (player and app cards) test layouts the tool doesn't render today. The post states (101–103, 105 on 104's post, 110, 111, 131; 104's edit has no timeline marker to draw)
 are drawn and checked from `fixtures/post-states.json`. Capture them anyway: they are the spec for building those features, and the
-harness can check line breaks around them before the media itself is drawn.
+harness can check line breaks around them before the media itself is drawn. Polls (57, 57b, 57c and group 9) are
+drawn since 2026-10-08, in the voter view; `verify` checks them.
 
 ## After capturing
 

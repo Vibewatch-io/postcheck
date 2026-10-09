@@ -1,0 +1,37 @@
+{
+  "id_str": "2108319976751002108",
+  "text": "Test 57c: image poll, open for 7 days",
+  "display_text_range": [
+    0,
+    37
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": {
+    "name": "1906814671912599552:poll_choice_images",
+    "url": "card://2108319976365137920"
+  },
+  "photos": 0,
+  "poll": [
+    {
+      "label": "One",
+      "image": true
+    },
+    {
+      "label": "Two",
+      "image": true
+    },
+    {
+      "label": "Three",
+      "image": true
+    },
+    {
+      "label": "Four",
+      "image": true
+    }
+  ],
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
