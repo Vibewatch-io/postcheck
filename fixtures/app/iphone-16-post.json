@@ -1,0 +1,272 @@
+{
+ "source": "X iOS app post screens (tap a post open) on a 393pt iPhone 15 Pro via iPhone Mirroring, dark theme, default text sizes, captured 2026-10-08 (pp_t*.png in the main checkout scripts/phone): @Postcheck_test tests 05–08, Length tests A and B; @goodforbtc 2093757415825248606, 2095546954688380962, 2091923825818812586 and the long 2093440498879152216 (three screens, scrolled 450pt each); @Vibewatch_io 2096976856780329081, 2093715338768847095, 2092648171961041203. Blank lines are paragraph breaks as drawn. The post screen never folds.",
+ "device": "iphone-16-post",
+ "posts": [
+  {
+   "id": "2100299215364931868",
+   "lines": [
+    "Long test 05: the word before Show more ends",
+    "exactly on character 280. the quick brown fox",
+    "jumps over a lazy dog the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps over a",
+    "lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "and this sentence keeps going past the cut so the",
+    "post needs Show more on the web timeline."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100299387255902230",
+   "lines": [
+    "Long test 06: character 280 falls in the middle of",
+    "a long word here. the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a extraordinarily and",
+    "this sentence keeps going past the cut so the",
+    "post needs Show more on the web timeline."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100650875857629266",
+   "lines": [
+    "Long test 07: a link starts before character 280",
+    "and ends after it. the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a vibewatch.io and",
+    "this sentence keeps going past the cut so the",
+    "post needs Show more on the web timeline."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100299521561706589",
+   "lines": [
+    "Long test 08: an emoji starts on character 280",
+    "and ends on 281. the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a lazy dog the..🚀",
+    "and this sentence keeps going past the cut so the",
+    "post needs Show more on the web timeline."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2100298548843872339",
+   "lines": [
+    "Length test A: this post is exactly 280 weighted",
+    "characters and ends on a whole word. the quick",
+    "brown fox jumps over a lazy dog the quick brown",
+    "fox jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2107204293661204490",
+   "lines": [
+    "Length test B: text plus one link, where every link",
+    "counts as 23 characters no matter how long it is.",
+    "and so on and so on and so on and so on and so",
+    "on and so on and so on and so on and so on and",
+    "so on and so on and so on and so on and so on",
+    "and so on and."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2093757415825248606",
+   "lines": [
+    "The bug reports were AI-generated. The",
+    "vulnerabilities were real.",
+    "",
+    "Core Lightning is shipping emergency fixes under",
+    "a two-week embargo and telling every node",
+    "operator to go offline until they land. Brandon",
+    "and Kate on the closest call Bitcoin has had."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2095546954688380962",
+   "lines": [
+    "Would you lock up 2.5x your down payment in",
+    "BTC to buy a house without selling it?",
+    "",
+    "@coinbase's crypto mortgage is live nationwide:",
+    "conforming Fannie Mae first mortgage, a second",
+    "loan against your coins, no margin calls when",
+    "price drops. @katemparkman runs through who",
+    "it's for."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2091923825818812586",
+   "lines": [
+    "Was the Coldcard hack this cycle's FTX?",
+    "",
+    "Every cycle bottoms on a black swan. Last time it",
+    "was an exchange; this time Bitcoiners lost their",
+    "cold storage and the price barely moved.",
+    "Brandon reads that as the bottom, unless 50k",
+    "says otherwise."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2096976856780329081",
+   "lines": [
+    "Ask a social-listening tool what your community",
+    "says on Discord and it comes back empty. A",
+    "server has no public index and no search API",
+    "returning every mention across it.",
+    "",
+    "The only way in is a bot with real server",
+    "membership.",
+    "",
+    "What that actually requires:"
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2093715338768847095",
+   "lines": [
+    "NEW: Vibewatch now reads your Discourse",
+    "forum too, not just Discord and Telegram chat.",
+    "",
+    "Forum posts carry the considered take:",
+    "governance debates, long-form feedback. Chat",
+    "tools miss half the conversation. We score it",
+    "thread-aware, not reply-by-reply."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2092648171961041203",
+   "lines": [
+    "Announcing first-class support for buzz.xyz by",
+    "@blocks.",
+    "",
+    "🐝 Ask your Vibewatch agent questions with full",
+    "context across a dozen social integrations.",
+    "",
+    "🐝 Receive automatic weekly reports about what",
+    "your community is saying on socials.",
+    "",
+    "Available today."
+   ],
+   "showMore": false
+  },
+  {
+   "id": "2093440498879152216",
+   "lines": [
+    "Core Lightning node operators are being told to",
+    "go offline while a two-week embargo holds.",
+    "",
+    "Plus the first quantum-resistant Bitcoin",
+    "transaction mined on mainnet, Coinbase's",
+    "Bitcoin-backed mortgage goes nationwide, and",
+    "Strategy adds $1.59B to its reserve ↓",
+    "",
+    "Today, @marshallmixing and @katemparkman",
+    "dig into:",
+    "",
+    "• Critical vulnerabilities in Core Lightning:",
+    "maintainers told every node operator to upgrade",
+    "or restart with the --offline flag. Details under a",
+    "two-week embargo — the bugs surfaced through",
+    "AI-generated vulnerability reports that proved",
+    "real. If you run a Lightning node, act now.",
+    "",
+    "• The first quantum-resistant Bitcoin transaction",
+    "was mined on mainnet: @StarkWareLtd",
+    "submitted it through Marathon's Slipstream",
+    "service and shared the news live at Bitcoin Asia.",
+    "Non-standard transactions that work today at",
+    "roughly $150 each.",
+    "",
+    "• @coinbase's Bitcoin-backed mortgage is live",
+    "nationwide: pledge 250% of the down payment",
+    "in BTC, get a conforming Fannie Mae first",
+    "mortgage plus a second loan against the coins.",
+    "No margin calls just because the price drops.",
+    "",
+    "• Pakistan released a full licensing framework for",
+    "crypto exchanges, custody, lending, and",
+    "derivatives: apply by September 5 or cease",
+    "operations.",
+    "",
+    "• Quick headlines: JPMorgan is considering its",
+    "own stablecoin per the Wall Street Journal,",
+    "HashKey Cloud joins Bitcoin staking on @Stacks,",
+    "and @galaxyhq says last week's rise was",
+    "Bitcoin's largest weekly dollar gain ever.",
+    "",
+    "• Treasury tracker: @strive +1,110 BTC (21,356),",
+    "@EMPD_BTC -100 (1,179). Pipeline: Alpha Modus",
+    "signed a $254M PIPE for 3,170 BTC, Genius",
+    "Group plans $827M over five years, @_ALCPB",
+    "raising €21M. @strategy: no buys, no sells; +",
+    "$1.59B USD reserve, $136M more STRC bought",
+    "back.",
+    "",
+    "• Follow us @goodforbtc for clips all week."
+   ],
+   "showMore": false,
+   "gap": "the app breaks \"+$1.59B\" after the \"+\"; Chrome keeps the \"+\" with the amount, so the tool moves it to the next line (one sample, not modelled)",
+   "gapTool": [
+    "Core Lightning node operators are being told to",
+    "go offline while a two-week embargo holds.",
+    "Plus the first quantum-resistant Bitcoin",
+    "transaction mined on mainnet, Coinbase's",
+    "Bitcoin-backed mortgage goes nationwide, and",
+    "Strategy adds $1.59B to its reserve ↓",
+    "Today, @marshallmixing and @katemparkman",
+    "dig into:",
+    "• Critical vulnerabilities in Core Lightning:",
+    "maintainers told every node operator to upgrade",
+    "or restart with the --offline flag. Details under a",
+    "two-week embargo — the bugs surfaced through",
+    "AI-generated vulnerability reports that proved",
+    "real. If you run a Lightning node, act now.",
+    "• The first quantum-resistant Bitcoin transaction",
+    "was mined on mainnet: @StarkWareLtd",
+    "submitted it through Marathon's Slipstream",
+    "service and shared the news live at Bitcoin Asia.",
+    "Non-standard transactions that work today at",
+    "roughly $150 each.",
+    "• @coinbase's Bitcoin-backed mortgage is live",
+    "nationwide: pledge 250% of the down payment",
+    "in BTC, get a conforming Fannie Mae first",
+    "mortgage plus a second loan against the coins.",
+    "No margin calls just because the price drops.",
+    "• Pakistan released a full licensing framework for",
+    "crypto exchanges, custody, lending, and",
+    "derivatives: apply by September 5 or cease",
+    "operations.",
+    "• Quick headlines: JPMorgan is considering its",
+    "own stablecoin per the Wall Street Journal,",
+    "HashKey Cloud joins Bitcoin staking on @Stacks,",
+    "and @galaxyhq says last week's rise was",
+    "Bitcoin's largest weekly dollar gain ever.",
+    "• Treasury tracker: @strive +1,110 BTC (21,356),",
+    "@EMPD_BTC -100 (1,179). Pipeline: Alpha Modus",
+    "signed a $254M PIPE for 3,170 BTC, Genius",
+    "Group plans $827M over five years, @_ALCPB",
+    "raising €21M. @strategy: no buys, no sells;",
+    "+$1.59B USD reserve, $136M more STRC bought",
+    "back.",
+    "• Follow us @goodforbtc for clips all week."
+   ]
+  }
+ ]
+}
