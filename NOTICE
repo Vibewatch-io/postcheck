@@ -11,8 +11,9 @@ just how we'd like it done.
 Some things in this repository aren't ours to license, so the MIT licence
 doesn't cover them:
 
-- X's logo, verification badges and action icons in src/components/icons.tsx,
-  drawn after x.com's. They belong to X Corp.
+- X's and Grok's marks and X's interface icons in src/components/icons.tsx,
+  and X's default avatar in src/components/x-post.tsx, drawn after X's own.
+  They belong to X Corp and xAI.
 - The X posts in fixtures/ and the captures of how X drew them. The posts
   belong to their authors; they're here as test evidence.
 - Fonts. Chirp is X's and loads from X's CDN at runtime. GT America is licensed

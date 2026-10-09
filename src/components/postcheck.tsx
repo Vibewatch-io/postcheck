@@ -716,7 +716,7 @@ const FONT_NAMES: Record<FontTier, string> = { chirp: "Chirp", gt: "GT America f
 function mismatchLink(device: Device, themeId: ThemeId, fontTier: FontTier | null): string {
   const where = device.frameless
     ? `${device.label}, ${device.platform === "android" ? "Android" : "iPhone"} rules`
-    : device.kind === "phone" ? `${device.label} (${device.width}pt)` : device.label;
+    : device.kind === "phone" ? `${device.label} (${device.width}${device.platform === "android" ? "dp" : "pt"})` : device.label;
   const settings = [where, themeId, fontTier && FONT_NAMES[fontTier]].filter(Boolean).join(" · ");
   return `${MISMATCH_FORM}&settings=${encodeURIComponent(settings)}`;
 }
