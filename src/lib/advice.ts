@@ -57,7 +57,10 @@ export interface AdviceInput {
    * the iOS line fold, media layout) are given for it alone, not for previews the writer isn't looking at.
    */
   preview?: string;
-  /** The author has a check of any colour: Premium, so posting past 280 is allowed. */
+  /**
+   * The author has a check of any colour. Assumed to post past 280: blue and gold come with longer
+   * posts; gray (government) is treated the same, unconfirmed.
+   */
   verified?: boolean;
   /** Set when the app's line clamp would fold the post. */
   appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId?: string } | null;
@@ -147,7 +150,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
   }
 
   if (length.weighted > MAX_WEIGHTED_LENGTH) {
-    // A check of any colour means Premium, which posts past 280: the fold shows in the preview.
+    // A checked author is assumed to post past 280 (see `verified`): the fold shows in the preview.
     if (!input.verified) {
       out.push({
         id: "over-limit",

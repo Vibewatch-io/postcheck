@@ -36,7 +36,7 @@ test("a verified author gets no 280-character warning", () => {
   assert.ok(!ids(true).includes("over-limit"));
 });
 
-// The tip's text names every preview its dots appear on.
+// Without a selected preview, the tip names every preview where the word dangles.
 test("a word dangling on two previews names both in the tip", () => {
   const text = "one two three four";
   const entities = extractEntities(text);
