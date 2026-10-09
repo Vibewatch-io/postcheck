@@ -63,6 +63,19 @@ const HASHTAG_RE = /(^|[^&\p{L}\p{N}_])#([\p{L}\p{N}_]*\p{L}[\p{L}\p{N}_]*)/gu;
 // inferred (uncaptured); 16+ letters is untested.
 const CASHTAG_RE = /(^|[^A-Za-z0-9_$])\$([A-Za-z]{1,15}(?:[._][A-Za-z]{1,2})?)(?![A-Za-z0-9_$])/g;
 
+// The iOS app colours an email address in link blue ("user@vibewatch.io", @postcheck_test test 32,
+// every iPhone capture); x.com and Android leave it plain, and X's data has no entity for it. The
+// domain needs a dot: "a@Vibewatch_io" (test 65) stays plain on iOS (observed when it was transcribed).
+const EMAIL_RE = /(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])/g;
+
+/**
+ * Email addresses the iOS app draws in link blue: [start, end) offsets into `text`. Not entities:
+ * they don't link on x.com, cost their own length and never make a card.
+ */
+export function emailRanges(text: string): Array<[number, number]> {
+  return [...text.matchAll(EMAIL_RE)].map((m) => [m.index!, m.index! + m[0].length]);
+}
+
 /** Emoji (incl. ZWJ sequences, skin tones, flags, keycaps). */
 export const EMOJI_RE =
   /(?:\p{Regional_Indicator}\p{Regional_Indicator})|(?:[#*0-9]\uFE0F?\u20E3)|(?:\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu;
@@ -165,14 +178,19 @@ export function extractEntities(text: string): Entity[] {
   const free = (s: number, e: number) => !taken.some(([a, b]) => s < b && e > a);
 
   const urlMatches = [...text.matchAll(SCHEME_URL_RE), ...text.matchAll(BARE_URL_RE)];
+  // No part of an email address links as a bare domain: in "a@mail.example.co.uk" the match would
+  // start at "example.co.uk", after a "." (twitter-text never links a bare domain after "-", "_", "."
+  // or "/"). A scheme URL still links, even straight after an address ("a@b.com.https://…").
+  const emails = emailRanges(text);
   for (const m of urlMatches) {
     const lead = m[1].length;
     const start = m.index! + lead;
     const matched = trimUrlTail(m[2]);
     if (!matched) continue;
     const end = start + matched.length;
-    if (!free(start, end)) continue;
-    const href = /^https?:\/\//i.test(matched) ? matched : `https://${matched}`;
+    const schemed = /^https?:\/\//i.test(matched);
+    if (!free(start, end) || (!schemed && emails.some(([a, b]) => start < b && end > a))) continue;
+    const href = schemed ? matched : `https://${matched}`;
     const host = hostOf(matched);
     out.push({
       type: "url",

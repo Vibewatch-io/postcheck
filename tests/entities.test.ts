@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { extractEntities, weightedLength, showMoreCut, displayUrl, tokenize, appFoldCut, stripFormatting, MAX_WEIGHTED_LENGTH } from "../src/lib/entities";
+import { extractEntities, emailRanges, weightedLength, showMoreCut, displayUrl, tokenize, appFoldCut, stripFormatting, MAX_WEIGHTED_LENGTH } from "../src/lib/entities";
 
 interface Fixture {
   id_str: string;
@@ -230,4 +230,18 @@ test("a malformed punycode label is printed as stored, not decoded to control ch
 test("a scheme only matches ASCII letters: httpſ:// is not a scheme", () => {
   const urls = extractEntities("see httpſ://example.com and HTTPS://Example.com").filter((e) => e.type === "url").map((e) => e.text);
   assert.deepEqual(urls, ["example.com", "HTTPS://Example.com"]);
+});
+
+test("the iOS app's blue email runs: a dotted domain only, never a link entity (tests 32, 65)", () => {
+  const t32 = "Email user@vibewatch.io is not a mention or a link";
+  assert.deepEqual(emailRanges(t32).map(([s, e]) => t32.slice(s, e)), ["user@vibewatch.io"]);
+  assert.equal(extractEntities(t32).length, 0);
+  assert.deepEqual(emailRanges("a@Vibewatch_io and hi@Vibewatch_io"), []);
+  const end = "(mail first.last+x@mail.example.co.uk).";
+  assert.deepEqual(emailRanges(end).map(([s, e]) => end.slice(s, e)), ["first.last+x@mail.example.co.uk"]);
+  // A later domain label must not link on its own and split the address (PR #42 review).
+  assert.deepEqual(extractEntities(end), []);
+  // ...but a scheme URL straight after an address still links (and quotes): only bare domains are held back.
+  const glued = "foo@example.com.https://x.com/u/status/123";
+  assert.deepEqual(extractEntities(glued).map((x) => [x.text, x.isStatus]), [["https://x.com/u/status/123", true]]);
 });

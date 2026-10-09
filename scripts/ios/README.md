@@ -52,6 +52,19 @@ hyphen.
 - The post screen at 17pt reproduces the one captured post at any column
   width from 358 to 370px; 361 (screen − 32) fits.
 
+## Correction (2026-10-08): the absolute scale
+
+The "Absolute geometry" and "Browser rendering" bullets above pinned the scale
+on a misread: captured lines reach 319pt of ink, which a 316–317 column can't
+hold. Measured directly, the body ink of 110 captured lines (21 posts) fits
+x.com's web Chirp at −0.179px (sd 1.1px), and against this oracle it sits
+nearest wght 300 / opsz 15 with ~0 to −0.07 kern, not −0.2. Line breaks fix
+only the ratio of glyph widths to column width, so the oracle's 14/14 fit
+still holds; the tool now draws the body at −0.18px in a 322pt column (screen
+− 71, the media column). The post screen bullet above was not re-read this
+way, so the post screen keeps −0.32px. QUIRKS.md, "Layout: app", has the
+numbers.
+
 ## Also here
 
 - `measure.swift`: typographic width of lines in a given font/size/axes (`KERN` env for tracking).
