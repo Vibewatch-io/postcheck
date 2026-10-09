@@ -139,6 +139,32 @@ export function CameraIcon({ size = 20 }: { size?: number }) {
   );
 }
 
+// Post-state marks, paths read off x.com's DOM (2026-10-08, QUIRKS.md "Post chrome").
+/** "Pinned" (socialContext row of a pinned post). */
+export const PinIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M13 21l-1 2-1-2v-5H4.5v-2.287l.152-.243 2.306-3.69-.54-3.785C6.117 3.887 7.753 2 9.883 2h4.234c2.13 0 3.766 1.887 3.465 3.995l-.541 3.785 2.459 3.933V16H13v5z" />
+  </svg>
+);
+/** "Paid partnership" (x.com's `icon-promoted-pill`). */
+export const PaidPartnershipIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M19.498 3h-15c-1.381 0-2.5 1.12-2.5 2.5v13c0 1.38 1.119 2.5 2.5 2.5h15c1.381 0 2.5-1.12 2.5-2.5v-13c0-1.38-1.119-2.5-2.5-2.5zm-3.502 12h-2v-3.59l-5.293 5.3-1.414-1.42L12.581 10H8.996V8h7v7z" />
+  </svg>
+);
+/** The tagged-people line on the post page (the timeline row has no icon). */
+export const PersonIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M17.863 13.44c1.477 1.58 2.366 3.8 2.632 6.46l.11 1.1H3.395l.11-1.1c.266-2.66 1.155-4.88 2.632-6.46C7.627 11.85 9.648 11 12 11s4.373.85 5.863 2.44zM12 2C9.791 2 8 3.79 8 6s1.791 4 4 4 4-1.79 4-4-1.791-4-4-4z" />
+  </svg>
+);
+/** The content-warning cover over a sensitive photo. */
+export const EyeSlashIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3.693 21.707l-1.414-1.414 2.429-2.429c-2.479-2.421-3.606-5.376-3.658-5.513l-.131-.352.131-.352c.133-.353 3.331-8.648 10.937-8.648 2.062 0 3.989.621 5.737 1.85l2.556-2.557 1.414 1.414L3.693 21.707zm-.622-9.706c.356.797 1.354 2.794 3.051 4.449l2.417-2.418c-.361-.609-.553-1.306-.553-2.032 0-2.206 1.794-4 4-4 .727 0 1.424.192 2.033.554l2.263-2.264C14.953 5.434 13.512 5 11.986 5c-5.416 0-8.258 5.535-8.915 7.001zM11.986 10c-1.103 0-2 .897-2 2 0 .178.023.352.067.519l2.451-2.451c-.167-.044-.341-.067-.519-.067zm10.951 1.647l.131.352-.131.352c-.133.353-3.331 8.648-10.937 8.648-.709 0-1.367-.092-2-.223v-2.047c.624.169 1.288.27 2 .27 5.415 0 8.257-5.533 8.915-7-.252-.562-.829-1.724-1.746-2.941l1.438-1.438c1.53 1.971 2.268 3.862 2.33 4.027z" />
+  </svg>
+);
+
 /** A speaker with a cross: the iOS app's mute mark on a video in the timeline (drawn, not traced). */
 export const MuteIcon = (p: P) => (
   <svg {...base(p)}>
