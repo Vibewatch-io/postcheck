@@ -171,23 +171,64 @@ console.log(`fonts: tier ${tier}; web Chirp ${widths.web}px (x.com measured 320.
 if (args.includes("--no-chirp")) { if (tier !== "gt") { console.error(`expected the GT America tier without X's CDN, got ${tier}`); process.exit(3); } }
 else if (tier !== "chirp" || Math.abs(widths.web - 320.3) > 1 || Math.abs(widths.app - 313.0) > 1) { console.error("font metrics drifted; x.com may have shipped a new Chirp build. Re-measure and update globals.css."); process.exit(3); }
 
+// On the GT America tier, a second page with X's CDN allowed measures lines in Chirp, the font X laid
+// them out in (see lineFit).
+let ref = null;
+if (args.includes("--no-chirp")) {
+  ref = await browser.newPage();
+  ref.on("crash", () => died("the Chirp reference page crashed"));
+  await ref.goto(base);
+  await ref.waitForFunction(() => !!document.documentElement.dataset.font, null, { timeout: 15000 });
+  if ((await ref.evaluate(() => document.documentElement.dataset.font)) !== "chirp") { console.error("the Chirp reference page could not load X's fonts"); process.exit(3); }
+  await ref.evaluate(() => Promise.allSettled([document.fonts.load("15px TwitterChirpWeb"), document.fonts.load("15px TwitterChirp")]));
+}
+
 let pass = 0, fail = 0, edge = 0, gap = 0;
-/** Width of a line of text in the pane's body font (the quote embed's with `quote`), and that body's width, for edge-case classification. */
+/**
+ * Width of a line of text in the pane's body font (the quote embed's with `quote`) and that body's width,
+ * in layout px (the stage scales a tall phone down; client rects come back scaled). On the GT America
+ * tier also `chirp`: the same line in Chirp at the Chirp tier's tracking for that pane.
+ */
 async function lineFit(deviceLast, text, quote = false) {
-  return page.evaluate(({ deviceLast, text, quote }) => {
+  const fit = await page.evaluate(({ deviceLast, text, quote }) => {
     const arts = [...document.querySelectorAll("article")];
     const art = deviceLast ? arts[arts.length - 1] : arts[0];
     const body = [...art.querySelectorAll("[data-w]")].find((w) => !w.closest("[data-quote]") !== quote).parentElement;
+    let scale = 1;
+    for (let e = body; e; e = e.parentElement) { const t = getComputedStyle(e).transform; if (t && t !== "none") scale *= new DOMMatrixReadOnly(t).a; }
     const cs = getComputedStyle(body);
     const s = document.createElement("span");
-    s.style.cssText = `position:absolute;white-space:pre;font-family:${cs.fontFamily};font-size:${cs.fontSize}`;
+    s.style.cssText = `position:absolute;white-space:pre;font-family:${cs.fontFamily};font-size:${cs.fontSize};letter-spacing:${cs.letterSpacing}`;
     s.textContent = text;
     body.appendChild(s);
+    const w = s.getBoundingClientRect().width / scale;
+    s.remove();
+    // The body's own tracking as written (var(--ls-web) or var(--ls-app)), so the reference page resolves it for its tier.
+    return { width: Math.round(w * 10) / 10, limit: Math.round((body.getBoundingClientRect().width / scale) * 10) / 10, family: cs.fontFamily, size: cs.fontSize, tracking: body.style.letterSpacing };
+  }, { deviceLast, text, quote });
+  const { family, size, tracking, ...out } = fit;
+  if (ref) out.chirp = await ref.evaluate(({ text, family, size, tracking }) => {
+    const s = document.createElement("span");
+    s.style.cssText = `position:absolute;white-space:pre;font-family:${family};font-size:${size};letter-spacing:${tracking || "normal"}`;
+    s.textContent = text;
+    document.body.appendChild(s);
     const w = s.getBoundingClientRect().width;
     s.remove();
-    return { width: Math.round(w * 10) / 10, limit: Math.round(body.getBoundingClientRect().width * 10) / 10 };
-  }, { deviceLast, text, quote });
+    return Math.round(w * 10) / 10;
+  }, { text, family, size, tracking });
+  return out;
 }
+/**
+ * A line within 5px of the body edge is a font-metrics coin flip. On the GT America tier it is one too when
+ * it is within 5px in Chirp: X's own break was a coin flip, so any substitute font may land either side.
+ * That holds only while GT America stays within 12px of Chirp on the line (the corpus's widest is 10.3px,
+ * test 15's hyphenated word; QUIRKS.md, "Fallback when X blocks its CDN"), so a broken fallback still fails.
+ */
+function nearEdge(fit) {
+  if (Math.abs(fit.width - fit.limit) <= 5) return true;
+  return fit.chirp !== undefined && Math.abs(fit.chirp - fit.limit) <= 5 && Math.abs(fit.width - fit.chirp) <= 12;
+}
+const fitNote = (fit, what) => `${fit.width}px vs ${fit.limit}px ${what}${fit.chirp !== undefined ? `; ${fit.chirp}px in Chirp` : ""}`;
 /** Type a draft straight into the composer (**bold** / __italic__ markers become styling). False when a lookup is stuck (already counted as a failure). */
 async function compose(text, opts = {}) {
   await page.evaluate(([t, o]) => window.__postcheck.setDraft(t, o), [text, opts]);
@@ -264,14 +305,18 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
     return;
   }
   // A line that differs by one word right at the body edge is a font-metrics coin flip, not a rule error.
+  // Only where the wrap moved: one line runs on into the next and the text is the same (whitespace aside,
+  // so a break inside a word still counts; a folded or cut post may end at a different character).
   let edgeNote = null;
-  if (bad !== null && exp[bad] && act[bad]) {
-    const longer = exp[bad].length > act[bad].length ? exp[bad] : act[bad];
-    const shorter = longer === exp[bad] ? act[bad] : exp[bad];
+  const [ej, aj] = [exp.join(""), act.join("")].map((t) => t.replace(/\s+/g, ""));
+  const sameText = ej === aj || ((expMore || gotMore) && (ej.startsWith(aj) || aj.startsWith(ej)));
+  const longer = exp[bad]?.length > act[bad]?.length ? exp[bad] : act[bad];
+  const shorter = longer === exp[bad] ? act[bad] : exp[bad];
+  if (bad !== null && exp[bad] && act[bad] && sameText && longer.startsWith(shorter)) {
     const fit = await lineFit(deviceLast, longer);
-    if (Math.abs(fit.width - fit.limit) <= 5) edgeNote = `${fit.width}px vs ${fit.limit}px body`;
+    if (nearEdge(fit)) edgeNote = fitNote(fit, "body");
     // The folded line: the app's character-level cut landing one or two characters away is the same sub-pixel question.
-    else if (expMore && bad === exp.length - 1 && longer.startsWith(shorter) && longer.length - shorter.length <= 2) edgeNote = `fold cut ${longer.length - shorter.length} char(s) off`;
+    else if (expMore && bad === exp.length - 1 && longer.length - shorter.length <= 2) edgeNote = `fold cut ${longer.length - shorter.length} char(s) off`;
   }
   if (edgeNote) { edge++; console.log(`  edge ${label} ${id}  (${edgeNote})`); }
   else { fail++; console.log(`  FAIL ${label} ${id}`); }
@@ -326,7 +371,7 @@ async function quoteDiff(label, deviceLast, id, want) {
       const clamped = exp.length === 5 && rows.length === 5;
       const wrapOnly = a && b && (a.startsWith(b) || b.startsWith(a)) && (ea === ra || (clamped && (ea.startsWith(ra) || ra.startsWith(ea))));
       const fit = wrapOnly ? await lineFit(deviceLast, a.length > b.length ? a : b, true) : null;
-      if (fit && Math.abs(fit.width - fit.limit) <= 5) edgeNote = [`${fit.width}px vs ${fit.limit}px text`, lines];
+      if (fit && nearEdge(fit)) edgeNote = [fitNote(fit, "text"), lines];
       else problems.push(lines);
     }
     if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
