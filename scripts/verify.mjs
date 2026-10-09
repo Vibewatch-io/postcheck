@@ -459,10 +459,11 @@ async function mediaDiff(label, deviceLast, id, want, web) {
   else { pass++; console.log(`  ok   ${label} media ${id}`); }
 }
 
-/** Whether a quote embed of a poll carries the "Show this poll" line (x.com and the iPhone do, the Android app doesn't). */
+/** Whether a quote embed of a poll carries the "Show this poll" line (x.com and the iPhone do, the Android app doesn't). The quote must have resolved: an unavailable one has no line either. */
 async function quotePollLine(label, id, want) {
-  const got = await page.evaluate(() => { const arts = [...document.querySelectorAll("article")]; return !!arts[arts.length - 1].querySelector("[data-quote-poll]"); });
-  if (got === want) { pass++; console.log(`  ok   ${label} quote poll line ${id}`); }
+  const { got, resolved } = await page.evaluate(() => { const art = [...document.querySelectorAll("article")].at(-1); return { got: !!art.querySelector("[data-quote-poll]"), resolved: !!art.querySelector("[data-quote] [data-w]") }; });
+  if (!resolved) { fail++; console.log(`  FAIL ${label} quote poll line ${id}\n       the quote didn't resolve`); }
+  else if (got === want) { pass++; console.log(`  ok   ${label} quote poll line ${id}`); }
   else { fail++; console.log(`  FAIL ${label} quote poll line ${id}\n       "Show this poll" X ${want} / tool ${got}`); }
 }
 

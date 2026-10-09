@@ -54,7 +54,8 @@ const IMAGE_POLL = {
  */
 const ANDROID = { inset: 6, top: -5.33, pitch: 40, widePitch: 40.38, footerTop: 10 } as const;
 
-export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; theme: XTheme }) {
+/** `afterText`: the poll follows the post's text (Android's lift is measured from the text's baseline). */
+export function PollCard({ poll, device, theme, afterText = true }: { poll: Poll; device: Device; theme: XTheme; afterText?: boolean }) {
   const choices = filledChoices(poll);
   const images = isImagePoll(poll);
   const ios = device.kind === "phone" && device.platform === "ios";
@@ -99,8 +100,9 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
     );
     if (images) {
       return (
-        // 57c's cell (separator to separator, 388) runs 12.5 taller than the action row's rule under media gives.
-        <div data-poll="" onClick={stop} style={{ width, paddingTop: 8, paddingBottom: 12.5 }}>
+        // 57c's timeline cell (separator to separator, 388) runs 12.5 taller than the action row's rule under
+        // media gives. The post screen has no capture: it keeps no extra space.
+        <div data-poll="" onClick={stop} style={device.view === "post" ? { width } : { width, paddingTop: 8, paddingBottom: 12.5 }}>
           {carousel(213, 8, 7, 27, 13.5, 18, 7)}
           {footer}
         </div>
@@ -120,7 +122,8 @@ export function PollCard({ poll, device, theme }: { poll: Poll; device: Device; 
         0 vote • {timeLeft(poll.minutes, "app")}
       </div>
     );
-    const box: CSSProperties = { width, marginLeft: ANDROID.inset, marginTop: ANDROID.top };
+    // With no text above (a poll-only draft) the poll keeps the column's own spacing: assumed.
+    const box: CSSProperties = { width, marginLeft: ANDROID.inset, marginTop: afterText ? ANDROID.top : undefined };
     const pitch = device.fontSize === 16 ? ANDROID.widePitch : ANDROID.pitch;
     if (images) {
       return (

@@ -516,7 +516,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     // fixed cover and covers a flagged item among several in place (MediaBlock).
     media.some((m) => m.sensitive) && (device.kind !== "phone" || media.length === 1) ? <SensitiveCover items={media} device={device} theme={theme} /> : <MediaBlock items={media} device={device} theme={theme} />
   ) : poll ? (
-    <PollCard poll={poll} device={device} theme={theme} />
+    <PollCard poll={poll} device={device} theme={theme} afterText={hasBody} />
   ) : quote ? (
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
