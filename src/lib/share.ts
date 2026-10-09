@@ -1,5 +1,6 @@
 import type { StyleRun } from "./entities";
 import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
+import { NO_POST_STATE, REPLY_LIMITS, TAG_MAX, hasPostState, type PostState } from "./post-state";
 import { MAX_MEDIA, MAX_MEDIA_SIDE, MAX_VIDEO_MS, type MediaItem, type MediaKind } from "./media";
 import { POLL_CHOICE_MAX, POLL_MAX_CHOICES, POLL_MAX_MINUTES, POLL_MIN_CHOICES, POLL_MIN_MINUTES, type Poll } from "./poll";
 
@@ -36,6 +37,8 @@ export interface SharedPreview {
   /** Up to 4 items, each a JPEG Share made (a GIF's or video's first frame). */
   media: MediaItem[];
   poll: Poll | null;
+  /** Pinned, paid partnership, reply limit, tag. */
+  post: PostState;
   theme: (typeof THEMES)[number];
   /** Device ids: a phone for the Mobile view, a web layout for the Web view. */
   phone: string;
@@ -46,7 +49,8 @@ export interface SharedPreview {
 /**
  * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. Media travels
  * as `items`, [jpeg, kind, width, height, alt (0/1), video ms]; links made before several items
- * could be attached carry one photo in `media`, which still opens. A poll is
+ * could be attached carry one photo in `media`, which still opens. `post` (the post states) is
+ * optional and left out when nothing is set, so a plain preview's link is unchanged. A poll is
  * optional too (links made before polls still open): its choices, minutes, and for an image poll a
  * JPEG Share made per choice (or null).
  */
@@ -59,7 +63,8 @@ interface Wire {
   badge: string;
   avatar: string | null;
   media: string | null;
-  items?: Array<[string, string, number, number, number, number]>;
+  items?: Array<[string, string, number, number, number, number] | [string, string, number, number, number, number, number]>;
+  post?: { pinned?: boolean; paid?: boolean; replies?: string; tagged?: string };
   poll?: { c: string[]; m: number; i?: Array<string | null> };
   theme: string;
   phone: string;
@@ -68,6 +73,8 @@ interface Wire {
 }
 
 export async function encodeShare(p: SharedPreview): Promise<string> {
+  // A photo's own states mean nothing without the photo (a link too long for it drops it).
+  const post = p.media.length ? p.post : { ...p.post, tagged: "" };
   const wire: Wire = {
     v: 1,
     text: p.text,
@@ -77,7 +84,9 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     badge: p.identity.badge,
     avatar: p.identity.avatar,
     media: null,
-    items: p.media.map((m) => [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0]),
+    // A seventh field, 1, marks an item flagged sensitive; links made before it carry six.
+    items: p.media.map((m) => (m.sensitive ? [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0, 1] : [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0])),
+    ...(hasPostState(post) ? { post: { pinned: post.pinned, paid: post.paid, replies: post.replies, tagged: post.tagged.trim().slice(0, TAG_MAX) } } : {}),
     ...(p.poll ? { poll: { c: p.poll.choices, m: p.poll.minutes, ...(p.poll.images.some(Boolean) ? { i: p.poll.images } : {}) } } : {}),
     theme: p.theme,
     phone: p.phone,
@@ -125,11 +134,15 @@ export function parseWire(raw: unknown): SharedPreview | null {
   const web = typeof w.web === "string" && WEB_IDS.has(w.web) ? w.web : "web";
   const view = w.view === "web" ? "web" : "app";
   const media = sharedMedia(w.items, w.media);
+  // A photo's own states only come with the photo (a link Share made never has one without the other).
+  const parsed = parsePostState(w.post);
+  const post = media.length ? parsed : { ...parsed, tagged: "" };
   return {
     text,
     styles,
     identity: { name, handle, badge, avatar: sharedImage(w.avatar) },
     media,
+    post,
     // X takes media or a poll, never both: a link carrying both keeps the media.
     poll: media.length ? null : sharedPoll(w.poll),
     theme,
@@ -150,6 +163,18 @@ export function sharedPoll(v: unknown): Poll | null {
   return { choices: c as string[], minutes: m as number, images: c.map((_, k) => (Array.isArray(i) ? sharedImage(i[k]) : null)) };
 }
 
+/** The optional post states, field by field: a bad field falls back to its default. */
+function parsePostState(raw: unknown): PostState {
+  if (!raw || typeof raw !== "object") return NO_POST_STATE;
+  const p = raw as Record<string, unknown>;
+  return {
+    pinned: p.pinned === true,
+    paid: p.paid === true,
+    replies: REPLY_LIMITS.find((r) => r === p.replies) ?? "everyone",
+    tagged: typeof p.tagged === "string" ? p.tagged.trim().slice(0, TAG_MAX) : "",
+  };
+}
+
 /** The shared items, each checked; a bad item is dropped. A v1 link's single image opens as one photo. */
 function sharedMedia(items: unknown, legacy: unknown): MediaItem[] {
   if (!Array.isArray(items)) {
@@ -159,13 +184,13 @@ function sharedMedia(items: unknown, legacy: unknown): MediaItem[] {
   }
   const out: MediaItem[] = [];
   for (const it of items.slice(0, MAX_MEDIA)) {
-    if (!Array.isArray(it) || it.length !== 6) continue;
-    const [raw, kind, width, height, alt, ms] = it;
+    if (!Array.isArray(it) || (it.length !== 6 && it.length !== 7)) continue;
+    const [raw, kind, width, height, alt, ms, flagged = 0] = it;
     const src = sharedImage(raw);
     const k = KINDS.find((x) => x === kind);
     const side = (n: unknown): n is number => Number.isInteger(n) && (n as number) > 0 && (n as number) <= MAX_MEDIA_SIDE;
-    if (!src || !k || !side(width) || !side(height) || (alt !== 0 && alt !== 1) || !Number.isInteger(ms) || ms < 0 || ms > MAX_VIDEO_MS) continue;
-    out.push({ src, kind: k, width, height, alt: alt === 1, ...(k === "video" && ms > 0 ? { durationMs: ms } : {}) });
+    if (!src || !k || !side(width) || !side(height) || (alt !== 0 && alt !== 1) || (flagged !== 0 && flagged !== 1) || !Number.isInteger(ms) || ms < 0 || ms > MAX_VIDEO_MS) continue;
+    out.push({ src, kind: k, width, height, alt: alt === 1, ...(k === "video" && ms > 0 ? { durationMs: ms } : {}), ...(flagged === 1 ? { sensitive: true } : {}) });
   }
   return out;
 }

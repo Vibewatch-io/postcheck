@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DEFAULT_PHONE_ID } from "../src/lib/devices";
+import { NO_POST_STATE, TAG_MAX } from "../src/lib/post-state";
 import { SHARE_MAX_TEXT, SHARE_PREFIX, decodeShare, encodeShare, jpegSize, parseWire, sharedImage, withoutFragment, type SharedPreview } from "../src/lib/share";
 
 /** The header of a JPEG (SOI, APP0, SOF0) claiming the given size: all jpegSize and sharedImage read. */
@@ -18,9 +19,10 @@ const preview: SharedPreview = {
   identity: { name: "Vibewatch", handle: "Vibewatch_io", badge: "gold", avatar: jpeg(96, 96) },
   media: [
     { src: jpeg(720, 405), kind: "photo", width: 1600, height: 900, alt: true },
-    { src: jpeg(405, 720), kind: "video", width: 720, height: 1280, alt: false, durationMs: 6000 },
+    { src: jpeg(405, 720), kind: "video", width: 720, height: 1280, alt: false, durationMs: 6000, sensitive: true },
   ],
   poll: null,
+  post: { pinned: true, paid: true, replies: "mentioned", tagged: "Vibewatch" },
   theme: "dark",
   phone: "iphone-17-pro-max-post",
   web: "web-post",
@@ -58,6 +60,24 @@ test("device ids must match their view's kind", () => {
   const p = parseWire({ v: 1, text: "hi", styles: [], phone: "web", web: "iphone-16", view: "app" });
   assert.equal(p?.phone, DEFAULT_PHONE_ID);
   assert.equal(p?.web, "web");
+});
+
+test("post states are optional, checked field by field, and left out of a plain preview's link", async () => {
+  assert.deepEqual(parseWire({ v: 1, text: "hi" })?.post, NO_POST_STATE);
+  const p = parseWire({ v: 1, text: "hi", media: jpeg(96, 54), post: { pinned: "yes", paid: true, replies: "nobody", tagged: ` ${"n".repeat(600)} ` } });
+  assert.deepEqual(p?.post, { pinned: false, paid: true, replies: "everyone", tagged: "n".repeat(TAG_MAX) });
+  const plain = await encodeShare({ ...preview, post: NO_POST_STATE });
+  const json = await new Response(new Blob([Buffer.from(plain.slice(SHARE_PREFIX.length), "base64url")]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+  assert.equal("post" in JSON.parse(json), false);
+  // A link that had to drop the photo drops the photo's own states with it.
+  const noPhoto = await decodeShare(await encodeShare({ ...preview, media: [] }));
+  assert.deepEqual(noPhoto?.post, { ...preview.post, tagged: "" });
+  assert.deepEqual(parseWire({ v: 1, text: "hi", post: { pinned: true, tagged: "x" } })?.post, { ...NO_POST_STATE, pinned: true });
+  // An item's sensitive flag rides as a seventh field; six-field items (older links) still open.
+  const items = parseWire({ v: 1, text: "hi", items: [[jpeg(96, 54), "photo", 1600, 900, 0, 0], [jpeg(96, 54), "photo", 1600, 900, 0, 0, 1], [jpeg(96, 54), "photo", 1600, 900, 0, 0, 2]] })?.media;
+  assert.deepEqual(items?.map((m) => Boolean(m.sensitive)), [false, true]);
+  const long = await decodeShare(await encodeShare({ ...preview, post: { ...preview.post, tagged: "n".repeat(600) } }));
+  assert.equal(long?.post.tagged, "n".repeat(TAG_MAX));
 });
 
 test("style runs outside the text or with unknown flags are dropped", () => {
@@ -110,7 +130,8 @@ test("text past the shared page's limit compresses small but never opens", async
 // X takes a photo or a poll: a link carries the poll's choices and length, and one claiming both
 // opens with the photo only. A poll the composer couldn't have made is dropped, the link still opens.
 test("a shared poll round-trips; a bad one or one beside a photo is dropped", async () => {
-  const withPoll: SharedPreview = { ...preview, media: [], poll: { choices: ["Yes", "No", ""], images: [null, null, null], minutes: 90 } };
+  // A tag belongs to a photo, so a poll (no media) travels without one.
+  const withPoll: SharedPreview = { ...preview, media: [], post: { ...preview.post, tagged: "" }, poll: { choices: ["Yes", "No", ""], images: [null, null, null], minutes: 90 } };
   assert.deepEqual(await decodeShare(await encodeShare(withPoll)), withPoll);
   // An image poll's pictures travel as JPEGs Share made; anything else is dropped from its choice.
   const pictured = parseWire({ v: 1, text: "hi", poll: { c: ["a", "b"], m: 60, i: [jpeg(240, 240), "data:image/png;base64,AA=="] } });
