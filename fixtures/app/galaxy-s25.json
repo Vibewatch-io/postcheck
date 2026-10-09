@@ -219,12 +219,19 @@
    "card": {
     "layout": "large",
     "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -237,12 +244,19 @@
    "card": {
     "layout": "large",
     "domain": "github.com",
+    "title": "GitHub - vercel/next.js: The React Framework",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -256,12 +270,19 @@
    "card": {
     "layout": "large",
     "domain": "github.com",
+    "title": "GitHub - vercel/next.js: The React Framework",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -328,12 +349,19 @@
    "card": {
     "layout": "large",
     "domain": "github.com",
+    "title": "GitHub - vercel/next.js: The React Framework",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -347,12 +375,19 @@
    "card": {
     "layout": "large",
     "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -366,12 +401,19 @@
    "card": {
     "layout": "large",
     "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -392,12 +434,19 @@
    "card": {
     "layout": "large",
     "domain": "github.com",
+    "title": "next.js/packages/next/src/server/lib/router-utils/resolve-routes.ts at canary · vercel/next.js",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -411,12 +460,19 @@
    "card": {
     "layout": "large",
     "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
@@ -430,12 +486,19 @@
    "card": {
     "layout": "large",
     "domain": "vibewatch.io",
+    "title": "Vibewatch — Community Intelligence for Web3 Teams",
     "hasImage": true,
     "box": [
      0,
      7,
      288,
-     null
+     151
+    ],
+    "pill": [
+     8,
+     6,
+     272,
+     19
     ]
    }
   },
