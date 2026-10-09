@@ -11,19 +11,11 @@ import { APP_MAX_HEIGHT, APP_MIN_RATIO, WEB_MAX_HEIGHT, overflows, type MediaKin
 
 export type Severity = "fix" | "tip" | "note";
 
-/**
- * Where a tip points in the preview: a character of the text (its line is marked), the Show more
- * fold, or the card / photo / quote under the text. `devices` limits a mark to the previews it is
- * true for (a word dangles at one width and not another).
- */
-export type Mark = ({ at: number } | { el: "more" | "attachment" }) & { devices?: string[] };
-
 export interface Advice {
   id: string;
   severity: Severity;
   title: string;
   detail: string;
-  marks?: Mark[];
 }
 
 /** One measured line of the rendered body: words on it, in reading order. */
@@ -60,8 +52,18 @@ export interface AdviceInput {
   card: CardData | null | "failed" | undefined;
   /** Rendered line metrics per device, for dangling-word checks. */
   lineSets: DeviceLines[];
+  /**
+   * The selected phone and web view. When set, dangling words are checked on these alone, not on
+   * every device measured in the background.
+   */
+  previews?: string[];
+  /**
+   * The author has a check of any colour: blue, gold and gray accounts can all post past 280
+   * (gray per the owner, 2026-10-09).
+   */
+  verified?: boolean;
   /** Set when the app's line clamp would fold the post. */
-  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId?: string } | null;
+  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId: string } | null;
   /** An image is attached: X shows it instead of any link card. */
   hasMedia?: boolean;
   /** What is attached, in order. */
@@ -87,7 +89,9 @@ const RANK: Record<Severity, number> = { fix: 0, tip: 1, note: 2 };
 // 2d4a03c, 2026-09-15). "The ranker doesn't penalize it" is not the same as "do it".
 
 export function buildAdvice(input: AdviceInput): Advice[] {
-  const { text, entities, length, card, lineSets, hasMedia, poll } = input;
+  const { text, entities, length, card, hasMedia, poll, previews } = input;
+  // One tip per obscure phone size is noise: only the phone and web view the writer picked count.
+  const lineSets = previews ? input.lineSets.filter((s) => previews.includes(s.deviceId)) : input.lineSets;
   const out: Advice[] = [];
   const trimmed = text.trim();
   // @postcheck_test tests 94 and 94b: the composer took the poll both times, and X stored the long
@@ -98,7 +102,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "fix",
       title: "X drops the poll past 280 characters",
       detail: "X lets you attach a poll to a longer post, then posts the text without it. Cut the post to 280 characters to keep the poll. The preview shows the post as X will publish it.",
-      marks: [{ el: "more" }],
     });
   } else if (poll === "empty") {
     out.push({
@@ -114,8 +117,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "fix",
       title: "Every choice needs a picture",
       detail: "X won't post an image poll until each choice has a picture. Add the rest, or remove them all for a text poll.",
-      // Past 280 the poll isn't drawn, so there is nothing to point at.
-      marks: poll === "shown" ? [{ el: "attachment" }] : [],
     });
   }
 
@@ -144,19 +145,20 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       title: `Opens with ${first.text}`,
       detail:
         "X treats a post that starts with a handle as a reply: it mostly reaches only people who follow both you and them. Put a word in front of the handle.",
-      marks: [{ at: first.start }],
     });
   }
 
   if (length.weighted > MAX_WEIGHTED_LENGTH) {
-    out.push({
-      id: "over-limit",
-      severity: "fix",
-      title: `${length.weighted} of ${MAX_WEIGHTED_LENGTH} characters`,
-      detail:
-        "The timeline shows the first 280 and folds the rest behind Show more, cut at the last word that fits. Accounts without Premium can't post past 280 at all. Whatever you want people to read has to land before the cut.",
-      marks: [{ el: "more" }],
-    });
+    // A checked author can post past 280 (see `verified`): the fold shows in the preview.
+    if (!input.verified) {
+      out.push({
+        id: "over-limit",
+        severity: "fix",
+        title: `${length.weighted} of ${MAX_WEIGHTED_LENGTH} characters`,
+        detail:
+          "The timeline shows the first 280 and folds the rest behind Show more, cut at the last word that fits. Accounts without Premium can't post past 280 at all. Whatever you want people to read has to land before the cut.",
+      });
+    }
   } else if (length.weighted > 260 && length.emoji > 0) {
     out.push({
       id: "emoji-weight",
@@ -177,7 +179,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         severity: "note",
         title: `${urls.length} links, one card`,
         detail: `X renders a single card, for the first link (${cu.display}). If that page has no card, there is none at all. The others stay as plain link text.`,
-        marks: urls.filter((u) => u.start !== cu.start).map((u) => ({ at: u.start })),
       });
     }
     if (hasMedia) {
@@ -188,7 +189,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         severity: "note",
         title: `${noun} attached, so no card`,
         detail: `With media on the post X shows the media and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
-        marks: [{ at: cu.start }],
       });
     } else if (poll === "shown" && !cu.isStatus) {
       // @postcheck_test test 95: the poll and the link text, no card.
@@ -197,7 +197,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         severity: "note",
         title: "Poll attached, so no card",
         detail: `With a poll on the post X shows the poll and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
-        marks: [{ at: cu.start }],
       });
     } else if (poll === "shown") {
       // A post link with a poll: drawn like a photo (no quote, link text kept), which no capture shows.
@@ -209,7 +208,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         detail: trailing
           ? `A link to a post becomes a quote post, and because it's last, x.com and the iPhone app drop the URL text. The Android app still prints it.${urls.length > 1 ? " The quote replaces any link card." : ""}`
           : `A link to a post becomes a quote post. Move it to the end and x.com and the iPhone app drop the URL text too. The Android app keeps it either way.${urls.length > 1 ? " The quote replaces any link card." : ""}`,
-        marks: [trailing ? { el: "attachment" } : { at: cu.start }],
       });
     } else if (card === "failed") {
       // The lookup couldn't tell (the page didn't answer, or answered without a title): say only that.
@@ -218,7 +216,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         severity: "note",
         title: `Couldn't check ${cu.host}`,
         detail: "Postcheck couldn't read a card from that page, so the preview shows the link as plain text. X may still show a card when you post.",
-        marks: [{ at: cu.start }],
       });
     } else if (card) {
       if (trailing) {
@@ -227,7 +224,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
           severity: "note",
           title: "Link text hidden, card shown",
           detail: `The link is the last thing in the post, so X drops the URL text and shows only the ${cu.host} card.`,
-          marks: [{ el: "attachment" }],
         });
       } else {
         out.push({
@@ -235,7 +231,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
           severity: "tip",
           title: "Link text stays visible",
           detail: `Because the link sits inside the text, X prints it as "${cu.display}" and also shows the card. Move it to the very end and only the card remains.`,
-          marks: [{ at: cu.start }],
         });
       }
     } else if (card === null) {
@@ -250,7 +245,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
             : kind === "x-article"
               ? "X shows a link to an X article as plain text, with no preview. The URL text stays visible even at the end of the post."
               : "Postcheck found no Open Graph or Twitter Card tags on that page. X builds a preview only from those, so the link shows as plain text. The URL text stays visible even at the end of the post.",
-        marks: [{ at: cu.start }],
       });
     }
   }
@@ -263,7 +257,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       title: `${hashtags.length} hashtags`,
       detail:
         "A row of hashtags reads as spam, and X's spam classifier flags hashtag abuse. Keep one if it names a real community, otherwise drop them.",
-      marks: hashtags.map((h) => ({ at: h.start })),
     });
   }
 
@@ -274,7 +267,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "note",
       title: `@${longMention[1]} won't link`,
       detail: "Handles are at most 15 characters, so X leaves this one as plain text.",
-      marks: [{ at: longMention.index! }],
     });
   }
 
@@ -308,8 +300,8 @@ export function buildAdvice(input: AdviceInput): Advice[] {
   }
 
   // Dangling words: a paragraph whose last rendered line holds a single short word. One tip per
-  // word, marked on every preview where it dangles.
-  const orphans = new Map<string, { tip: Advice; marks: Mark[]; where: string[] }>();
+  // word, naming every preview where it dangles.
+  const orphans = new Map<string, { tip: Advice; where: string[] }>();
   for (const set of lineSets) {
     if (set.view === "post") continue;
     const byPara = new Map<number, LineInfo[]>();
@@ -328,18 +320,15 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         const key = last.words[0];
         let orphan = orphans.get(key);
         if (!orphan) {
-          const marks: Mark[] = [];
-          orphan = { tip: { id: `orphan-${key}`, severity: "tip", title: `"${key}" dangles on its own line`, detail: "", marks }, marks, where: [] };
+          orphan = { tip: { id: `orphan-${key}`, severity: "tip", title: `"${key}" dangles on its own line`, detail: "" }, where: [] };
           orphans.set(key, orphan);
           out.push(orphan.tip);
         }
         if (!orphan.where.includes(set.deviceLabel)) orphan.where.push(set.deviceLabel);
-        if (last.spans[0]) orphan.marks.push({ at: last.spans[0].start, devices: [set.deviceId] });
       }
     }
   }
 
-  // The text names every preview the dots appear on, so the two never disagree.
   for (const [key, { tip, where }] of orphans) {
     const on = where.length === 1 ? where[0] : where.length === 2 ? `${where[0]} and ${where[1]}` : `${where[0]} and ${where.length - 1} other previews`;
     tip.detail = `On ${on} that paragraph wraps so the last line is just "${key}". Cut a word or add a few so the line break lands somewhere useful.`;
@@ -366,7 +355,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "note",
       title: "Readers swipe to see the rest",
       detail: `On ${on}, X puts these ${n} items in a sideways carousel at one height${cut}. The next item peeks in from the edge; the rest take a swipe.`,
-      marks: [{ el: "attachment", devices: sideways.map((l) => l.deviceId) }],
     });
   }
   const guessed = layouts.filter((l) => l.layout.assumed);
@@ -378,7 +366,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       detail: guessed.some((l) => l.layout.assumed === "narrow-carousel")
         ? "How X sizes a row of four very narrow images comes from one capture (45 by 643 pixels each on x.com), so the preview copies it. Other counts and shapes may come out differently."
         : "No capture shows a very narrow image among wider ones in X's carousel, so the preview's 45px width for it is a guess.",
-      marks: [{ el: "attachment", devices: guessed.map((l) => l.deviceId) }],
     });
   }
   const cropped = layouts.filter((l) => l.ios && l.tall && l.layout.mode === "single");
@@ -388,7 +375,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "note",
       title: "Tall photo cropped on iPhone",
       detail: `The iPhone timeline shows a photo this tall cropped to ${Math.round(APP_MIN_RATIO * APP_MAX_HEIGHT)} by ${APP_MAX_HEIGHT} points, so its top and bottom don't show there. x.com shows more of it, up to ${WEB_MAX_HEIGHT}px high.`,
-      marks: [{ el: "attachment", devices: cropped.map((l) => l.deviceId) }],
     });
   }
 
@@ -399,7 +385,6 @@ export function buildAdvice(input: AdviceInput): Advice[] {
       severity: "tip",
       title: `Collapses in the iOS app after ${clamped.maxLines} lines`,
       detail: `The web shows all ${clamped.total} lines, but on ${clamped.deviceLabel} the app folds this behind Show more after "${clamped.lastWord}". Anything below that only shows after a tap.`,
-      marks: clamped.deviceId ? [{ el: "more", devices: [clamped.deviceId] }] : [],
     });
   }
 
