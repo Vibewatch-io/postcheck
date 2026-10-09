@@ -398,7 +398,7 @@ export function Postcheck() {
         // (App Store, X articles); a failed lookup gets advice that says only that.
         card: cardState === "failed" ? "failed" : card === "loading" ? undefined : card,
         lineSets,
-        preview: view === "app" ? phoneDevice.id : webDevice.id,
+        previews: [phoneDevice.id, webDevice.id],
         verified: identity.badge !== "none",
         appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
         hasMedia: media.length > 0,
@@ -414,7 +414,7 @@ export function Postcheck() {
         hasStyles: styles.length > 0,
         typed: draft.text,
       }),
-    [post, entities, length, card, cardState, lineSets, view, identity.badge, phoneClamp, media, poll, pollOnPost, webDevice, phoneDevice, styles.length, draft.text],
+    [post, entities, length, card, cardState, lineSets, identity.badge, phoneClamp, media, poll, pollOnPost, webDevice, phoneDevice, styles.length, draft.text],
   );
 
   const readFile = useCallback((file: File | undefined, set: (url: string) => void) => {

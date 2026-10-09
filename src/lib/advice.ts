@@ -53,10 +53,10 @@ export interface AdviceInput {
   /** Rendered line metrics per device, for dangling-word checks. */
   lineSets: DeviceLines[];
   /**
-   * The id of the preview on screen. When set, the tips about one preview's layout (dangling words,
-   * the iOS line fold, media layout) are given for it alone, not for previews the writer isn't looking at.
+   * The selected phone and web view. When set, dangling words are checked on these alone, not on
+   * every device measured in the background.
    */
-  preview?: string;
+  previews?: string[];
   /**
    * The author has a check of any colour. Assumed to post past 280: blue and gold come with longer
    * posts; gray (government) is treated the same, unconfirmed.
@@ -89,10 +89,9 @@ const RANK: Record<Severity, number> = { fix: 0, tip: 1, note: 2 };
 // 2d4a03c, 2026-09-15). "The ranker doesn't penalize it" is not the same as "do it".
 
 export function buildAdvice(input: AdviceInput): Advice[] {
-  const { text, entities, length, card, hasMedia, poll, preview } = input;
-  // A tip about another preview's layout is noise while the writer looks at this one.
-  const onScreen = (deviceId: string | undefined) => preview === undefined || deviceId === preview;
-  const lineSets = input.lineSets.filter((s) => onScreen(s.deviceId));
+  const { text, entities, length, card, hasMedia, poll, previews } = input;
+  // One tip per obscure phone size is noise: only the phone and web view the writer picked count.
+  const lineSets = previews ? input.lineSets.filter((s) => previews.includes(s.deviceId)) : input.lineSets;
   const out: Advice[] = [];
   const trimmed = text.trim();
   // @postcheck_test tests 94 and 94b: the composer took the poll both times, and X stored the long
@@ -344,7 +343,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     });
   }
 
-  const layouts = (input.mediaLayouts ?? []).filter((l) => onScreen(l.deviceId));
+  const layouts = input.mediaLayouts ?? [];
   // Only a carousel that runs past its column needs a swipe: four narrow strips fit in it whole.
   const sideways = layouts.filter((l) => l.layout.mode === "carousel" && overflows(l.layout));
   if (sideways.length) {
@@ -380,7 +379,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
   }
 
   const clamped = input.appClamp;
-  if (clamped && onScreen(clamped.deviceId)) {
+  if (clamped) {
     out.push({
       id: "app-clamp",
       severity: "tip",

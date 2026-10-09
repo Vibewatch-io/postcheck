@@ -6,9 +6,9 @@ import { DEVICES } from "../src/lib/devices";
 import { cardlessKind } from "../src/lib/card";
 import { mediaLayout } from "../src/lib/media";
 
-// Layout tips follow the preview on screen: a word that dangles only on a preview the writer isn't
-// looking at gets no tip.
-test("a dangling word is flagged only on the selected preview", () => {
+// Dangling words are checked on the selected phone and web view only: a word that dangles on some
+// other phone size gets no tip.
+test("a dangling word is flagged only on the selected previews", () => {
   const text = "one two three four";
   const entities = extractEntities(text);
   const line = (words: string[], start: number) => ({
@@ -22,9 +22,9 @@ test("a dangling word is flagged only on the selected preview", () => {
   });
   const narrow: DeviceLines = { deviceId: "narrow", deviceLabel: "Narrow", lines: [line(["one", "two", "three"], 0), line(["four"], 14)], total: 2, tokenWidth: 0 };
   const wide: DeviceLines = { deviceId: "wide", deviceLabel: "Wide", lines: [line(["one", "two", "three", "four"], 0)], total: 1, tokenWidth: 0 };
-  const orphan = (preview: string) => buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [wide, narrow], preview }).find((a) => a.id === "orphan-four");
-  assert.equal(orphan("wide"), undefined);
-  assert.match(orphan("narrow")?.detail ?? "", /^On Narrow that paragraph wraps/);
+  const orphan = (previews: string[]) => buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [wide, narrow], previews }).find((a) => a.id === "orphan-four");
+  assert.equal(orphan(["wide"]), undefined);
+  assert.match(orphan(["wide", "narrow"])?.detail ?? "", /^On Narrow that paragraph wraps/);
 });
 
 // A check of any colour is Premium, which posts past 280 (the fold still shows in the preview).
@@ -136,10 +136,10 @@ test("only an unexpanded app timeline row hides styling", async () => {
   assert.equal(rowHidesStyles(web), false);
 });
 
-// The carousel tip is about the selected preview only when the media runs past its column: four
-// squares do on both; four narrow strips fit whole (in x.com's carousel, in the iPhone's row), and
-// get the note that their x.com sizing comes from one capture instead, on x.com alone.
-test("the media carousel tips follow the selected preview", () => {
+// The carousel tip names the previews where the media runs past the column: four squares do on
+// both; four narrow strips fit whole (in x.com's carousel, in the iPhone's row), and get the note
+// that their x.com sizing comes from one capture instead.
+test("the media carousel tip names only the previews that scroll sideways", () => {
   const text = "four photos";
   const entities = extractEntities(text);
   const squares = Array.from({ length: 4 }, () => ({ kind: "photo" as const, width: 1200, height: 1200 }));
@@ -149,13 +149,11 @@ test("the media carousel tips follow the selected preview", () => {
       const d = DEVICES.find((x) => x.id === id)!;
       return { deviceId: id, deviceLabel: d.label, layout: mediaLayout(items, d)!, ios: d.platform === "ios", tall: false };
     });
-  const tips = (items: typeof squares, preview: string) => buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasMedia: true, mediaLayouts: on(items), preview });
-  const iphone = DEVICES.find((x) => x.id === "iphone-16")!.label;
-  const tip = tips(squares, "iphone-16").find((a) => a.id === "media-carousel");
-  assert.ok(tip?.detail.startsWith(`On ${iphone}, `));
-  assert.equal(tips(strips, "web").find((a) => a.id === "media-carousel"), undefined);
-  assert.match(tips(strips, "web").find((a) => a.id === "media-assumed")?.detail ?? "", /one capture/);
-  assert.equal(tips(strips, "iphone-16").find((a) => a.id === "media-assumed"), undefined);
+  const tips = (items: typeof squares) => buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], hasMedia: true, mediaLayouts: on(items) });
+  const label = (id: string) => DEVICES.find((x) => x.id === id)!.label;
+  assert.ok(tips(squares).find((a) => a.id === "media-carousel")?.detail.startsWith(`On ${label("web")} and ${label("iphone-16")}, `));
+  assert.equal(tips(strips).find((a) => a.id === "media-carousel"), undefined);
+  assert.match(tips(strips).find((a) => a.id === "media-assumed")?.detail ?? "", /one capture/);
 });
 
 // @postcheck_test tests 94/94b: X posts a long post without its poll. Test 95: a poll replaces the

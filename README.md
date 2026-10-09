@@ -48,11 +48,11 @@ What was inferred rather than read off a DOM, and how it was checked:
 
 Suggestions come from `src/lib/advice.ts`. Each one is a rule with a mechanism behind it, not a style opinion, and reach advice must not contradict X's published ranker, [xai-org/x-algorithm](https://github.com/xai-org/x-algorithm). The code has no link penalty, so "links cost reach" is gone. "The ranker doesn't penalize it" is still not the same as "do it".
 
-Each tip's colour says how much it matters: red for something X will do to the post that you'll want to fix, amber for something worth changing, grey for something to know. Tips about how one preview lays the post out (a stranded word, the iPhone's line fold, a sideways media carousel) cover only the preview you have selected: switch to see the others. With a check mark of any colour, a post past 280 characters loses the over-280 warning and the counter stays neutral: blue and gold checks come with longer posts, and gray is assumed to. A poll still warns past 280, since X drops it for everyone.
+Each tip's colour says how much it matters: red for something X will do to the post that you'll want to fix, amber for something worth changing, grey for something to know. Tips about how a preview lays the post out (a stranded word, the iPhone's line fold, a sideways media carousel) cover the phone and web view you have selected, whichever one is showing, not every phone size. With a check mark of any colour, a post past 280 characters loses the over-280 warning and the counter stays neutral: blue and gold checks come with longer posts, and gray is assumed to. A poll still warns past 280, since X drops it for everyone.
 
 - Opens with a handle (X treats it as a reply; it mostly reaches people who follow both accounts)
 - Over 280 without a check mark (where the cut lands, and that non-Premium accounts can't post it)
-- A single word dangling on the last line of a paragraph in the selected preview, measured from the rendered DOM
+- A single word dangling on the last line of a paragraph on the selected phone or web view, measured from the rendered DOM
 - Link mid-text vs link last (visible URL text vs card only), several links, links to X posts
 - Pages with no Open Graph tags (no card, URL stays visible)
 - Hashtag piles (X's spam classifier has a hashtag-abuse category), handles too long to link, walls of text, stacked blank lines, outer whitespace
