@@ -98,7 +98,9 @@ const CARD_BOX = (deviceLast) => `(() => {
   const c = art.querySelector('[data-card]'); if (!c) return null; const b = c.getBoundingClientRect();
   const body = [...art.querySelectorAll('[data-w]')].find((w) => !w.closest('[data-quote]'))?.parentElement.getBoundingClientRect();
   const t = c.querySelector('[data-card-thumb]')?.getBoundingClientRect();
-  return { box: [px(b.left - (body?.left ?? b.left)), px(b.top - (body?.bottom ?? b.top)), px(b.width), px(b.height)], thumb: t ? [px(t.width), px(t.height)] : null };
+  // The card's own text in reading order (a small card's title and domain, a large card's pill) and whether it shows a picture.
+  const texts = [...c.querySelectorAll('div')].filter((d) => !d.children.length && d.textContent && !d.closest('[data-card-thumb]')).map((d) => d.textContent);
+  return { box: [px(b.left - (body?.left ?? b.left)), px(b.top - (body?.bottom ?? b.top)), px(b.width), px(b.height)], thumb: t ? [px(t.width), px(t.height)] : null, texts, image: !!c.querySelector('img') };
 })()`;
 /** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
 const QUOTE_BOX = (deviceLast) => `(() => {
@@ -368,7 +370,10 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
 }
 
-/** The link card's box against the iPhone capture's, to 1pt (a null in the box is not checked); `want` null: X drew no card. */
+/**
+ * The link card against the phone capture's: its box to 1pt (a null in the box is not checked), a small card's thumbnail,
+ * a small card's text in order (title then domain, no description) and whether it shows a picture. `want` null: X drew no card.
+ */
 async function cardDiff(label, deviceLast, id, want) {
   const got = await page.evaluate(CARD_BOX(deviceLast));
   const near = (a, b) => Array.isArray(a) && Array.isArray(b) && a.every((v, i) => b[i] === null || Math.abs(v - b[i]) <= 1);
@@ -378,6 +383,10 @@ async function cardDiff(label, deviceLast, id, want) {
   else {
     if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
     if (want.thumb && !near(got.thumb, want.thumb)) problems.push(`thumbnail X ${want.thumb} / tool ${got.thumb}`);
+    // Large cards' recorded titles are the headline inside the picture, not the pill's: only a small card's text is compared.
+    const texts = [want.title, want.domain];
+    if (want.layout === "small" && want.title && JSON.stringify(got.texts) !== JSON.stringify(texts)) problems.push(`text X ${JSON.stringify(texts)} / tool ${JSON.stringify(got.texts)}`);
+    if (want.hasImage !== undefined && got.image !== want.hasImage) problems.push(`picture X ${want.hasImage} / tool ${got.image}`);
   }
   if (problems.length) {
     fail++;
