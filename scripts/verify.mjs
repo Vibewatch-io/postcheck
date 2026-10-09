@@ -91,7 +91,7 @@ const COLOURED = (deviceLast) => `(() => {
  */
 const STAGE_SCALE = `const k = art.getBoundingClientRect().width / art.offsetWidth || 1; const px = (v) => Math.round(v / k);`;
 
-/** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small card's thumbnail. */
+/** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text), a small card's thumbnail, a large card's pill, its text and picture. */
 const CARD_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0]; ${STAGE_SCALE}

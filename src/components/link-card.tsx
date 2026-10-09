@@ -50,7 +50,8 @@ const clamp = (lines: number): React.CSSProperties => ({
  * lines seen) over the domain, both at the body's size, from 116dp to the card's right edge with no end
  * padding (the captured breaks need 167.4–174.3 at 360 and ≥ 218.4 at 411.4), centred vertically; no
  * description. Its large card (tests 07, 20–21, 25–27, 29–31, same captures): radius 12, the image filling a
- * 1.91:1 box; the pill 8dp from the card's left and right edges (a long title is cut with "…") and 6dp from its
+ * 1.91:1 box; the pill 8dp from the card's left and at most 8dp from its right (it hugs a title that fits; a long
+ * one is cut with "…") and 6dp from its
  * bottom, radius 8, black at 70%, 4dp sides, white text; "From domain" in the secondary colour, its text 8dp in
  * and its ink 4.3–4.6dp under the card. The pill and line grow with the ≥400dp layout: text 13.2 → 13.7dp (fitted
  * to the captured ink widths against Chirp), pill 19.33 → 20.57dp high. Android's colours: theme.ts.
@@ -77,10 +78,10 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
   if (card.layout === "large" && card.image) {
     // Android's two layouts (body 15 below 400dp, 16 from there): the pill's and the "From" line's text size, the
     // pill's height and the line's top margin (it puts the ink 4.33 and 4.57dp under the card on a 16px line).
-    const big = android && (android.fontSize >= 16 ? { size: 13.7, pill: 20.57, top: 2 } : { size: 13.2, pill: 19.33, top: 1.6 });
+    const droid = android && (android.fontSize >= 16 ? { size: 13.7, pill: 20.57, top: 2 } : { size: 13.2, pill: 19.33, top: 1.6 });
     return (
       <div style={{ width }}>
-        <div data-card="" style={{ ...frame, ...(big ? { borderRadius: 12 } : {}), position: "relative", aspectRatio: "1.91 / 1" }}>
+        <div data-card="" style={{ ...frame, ...(droid ? { borderRadius: 12 } : {}), position: "relative", aspectRatio: "1.91 / 1" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={card.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           <div
@@ -88,19 +89,19 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
             style={{
               position: "absolute",
               // iOS: 8pt and 24pt from the card's outer edges; Android: 8dp, 8dp and 6dp. Offsets here start inside its 1px border.
-              left: ios || big ? 7 : 12,
-              bottom: ios ? 7 : big ? 5 : 12,
-              maxWidth: ios ? "calc(100% - 30px)" : big ? "calc(100% - 14px)" : "calc(100% - 24px)",
+              left: ios || droid ? 7 : 12,
+              bottom: ios ? 7 : droid ? 5 : 12,
+              maxWidth: ios ? "calc(100% - 30px)" : droid ? "calc(100% - 14px)" : "calc(100% - 24px)",
               boxSizing: "border-box",
-              height: ios ? 18 : big ? big.pill : 20,
+              height: ios ? 18 : droid ? droid.pill : 20,
               padding: web ? "0 8px" : "0 4px",
-              borderRadius: big ? 8 : 4,
-              backgroundColor: ios ? "rgba(0,0,0,0.5)" : big ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.77)",
+              borderRadius: droid ? 8 : 4,
+              backgroundColor: ios ? "rgba(0,0,0,0.5)" : droid ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.77)",
               color: "#fff",
               fontFamily: fontStack(fontKind),
-              fontSize: big ? big.size : 13,
-              letterSpacing: ios ? "var(--ls-app)" : big ? "var(--ls-web)" : undefined,
-              lineHeight: ios ? "18px" : big ? `${big.pill}px` : "20px",
+              fontSize: droid ? droid.size : 13,
+              letterSpacing: ios ? "var(--ls-app)" : droid ? "var(--ls-web)" : undefined,
+              lineHeight: ios ? "18px" : droid ? `${droid.pill}px` : "20px",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -112,10 +113,10 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
         <div
           style={{
             ...font,
-            ...(web || ios ? { fontSize: 13, lineHeight: "16px" } : big ? { fontSize: big.size, lineHeight: "16px", letterSpacing: "var(--ls-web)" } : {}),
-            paddingLeft: ios ? 12 : big ? 8 : 0,
+            ...(web || ios ? { fontSize: 13, lineHeight: "16px" } : droid ? { fontSize: droid.size, lineHeight: "16px", letterSpacing: "var(--ls-web)" } : {}),
+            paddingLeft: ios ? 12 : droid ? 8 : 0,
             color: theme.secondary,
-            marginTop: big ? big.top : 4,
+            marginTop: droid ? droid.top : 4,
             ...clamp(1),
           }}
         >
