@@ -455,7 +455,7 @@ async function colourDiff(label, deviceLast, id, want) {
  * `footerBaseline`) and the label pitch hold the tool's voter view to the same rows (QUIRKS.md: the web's
  * two views share one box; Android's is inferred to). A phone capture of an image poll's voter view
  * records `picTop` and `footerBaseline` the same way. A reader's shown order that differs from the
- * posted one (`shownOrder`) is recorded, not checked: the tool draws the posted order.
+ * posted one (`shownOrder`) is checked as a set of labels only: the tool draws the posted order.
  */
 async function pollDiff(label, deviceLast, id, want, typed, platform) {
   if (!want && !typed) return;
@@ -466,6 +466,9 @@ async function pollDiff(label, deviceLast, id, want, typed, platform) {
   else if (!got) problems.push("no poll");
   else {
     if (want.choices && want.choices.join("|") !== got.labels.join("|")) problems.push(`choices X ${want.choices.join(" / ")} / tool ${got.labels.join(" / ")}`);
+    // A reader shown another order than the posted one: the same labels, whatever their order.
+    const sorted = (a) => [...a].sort().join("|");
+    if (want.shownOrder && sorted(want.shownOrder) !== sorted(got.labels)) problems.push(`choices X ${want.shownOrder.join(" / ")} (in any order) / tool ${got.labels.join(" / ")}`);
     if (got.card) problems.push("tool draws a card or quote beside the poll");
     const results = want.view === "results" && want.images;
     if (want.size && !results && !near(got.size, want.size)) problems.push(`box X ${want.size} / tool ${got.size}`);
