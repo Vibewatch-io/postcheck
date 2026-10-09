@@ -17,6 +17,8 @@ interface Props {
   web: boolean;
   /** The iOS timeline cell: its pill, "From" line and small card are measured on iPhone captures (2026-10-08). */
   ios: boolean;
+  /** The Android app: no card fill (dark-theme captures of tests 20–31, 2026-10-08). */
+  android: boolean;
 }
 
 const clamp = (lines: number): React.CSSProperties => ({
@@ -39,9 +41,10 @@ const clamp = (lines: number): React.CSSProperties => ({
  * image's left and bottom, ~18pt high, black at 50%, 13pt text at the body's tracking, ending at
  * least 24pt short of the right edge; "From domain" at 13pt, 12pt in from the card's left; no card
  * fill; the small card a 322×81 box with an 80pt thumbnail, the title above the domain and no
- * description. Android and the iOS post screen keep the earlier values, unmeasured.
+ * description. Android and the iOS post screen keep the earlier layout values, unmeasured; Android
+ * draws no card fill (its colours: theme.ts).
  */
-export function LinkCard({ card, theme, width, viewport, font: fontKind, web, ios }: Props) {
+export function LinkCard({ card, theme, width, viewport, font: fontKind, web, ios, android }: Props) {
   const font = { fontFamily: fontStack(fontKind), fontSize: 15, lineHeight: "20px" } as const;
   const frame: React.CSSProperties = {
     border: `1px solid ${theme.cardBorder}`,
@@ -49,7 +52,7 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
     overflow: "hidden",
     width,
     boxSizing: "border-box",
-    backgroundColor: web || ios ? undefined : theme.cardBg,
+    backgroundColor: web || ios || android ? undefined : theme.cardBg,
   };
 
   if (card === "loading") {
@@ -99,7 +102,7 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
   const thumb = ios ? 80 : viewport >= 450 ? 130 : viewport >= 400 ? 110 : 90;
   const titleLines = ios || viewport < 450 ? 2 : 1;
   const descLines = ios ? 0 : viewport >= 450 ? 2 : viewport >= 400 ? 1 : 0;
-  const host = <div style={{ color: theme.secondary, ...clamp(1) }}>{card.host}</div>;
+  const host = <div style={{ color: theme.cardHost, ...clamp(1) }}>{card.host}</div>;
   return (
     <div data-card="" style={{ ...frame, display: "flex" }}>
       {/* iOS: the app's hairline border lies over the thumbnail's edge (81 outer for an 80 thumbnail), so the 1px border here takes a row from it. */}

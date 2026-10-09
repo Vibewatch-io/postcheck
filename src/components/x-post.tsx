@@ -168,7 +168,7 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
   const frame: React.CSSProperties = {
     width: look.width,
     boxSizing: "border-box",
-    border: `1px solid ${theme.cardBorder}`,
+    border: `1px solid ${theme.quoteBorder}`,
     borderRadius: look.radius,
     overflow: "hidden",
     fontFamily: fontStack(device.font),
@@ -529,7 +529,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     <QuoteEmbed entity={quote.entity} state={quote.state} device={device} theme={theme} />
   ) : card ? (
     // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31 and 47: 322.4–322.8 wide at 393).
-    <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} />
+    <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={device.kind === "phone" && device.platform === "android"} />
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
   // Under the text and attachment: the tag, then the disclosure. Each was captured alone; the order

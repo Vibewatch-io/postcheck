@@ -12,6 +12,10 @@ export interface XTheme {
   link: string;
   icon: string;
   badge: string;
+  /** A quote embed's border: x.com draws it like a link card's. */
+  quoteBorder: string;
+  /** The small link card's domain line. */
+  cardHost: string;
 }
 
 // Both read off the logged-in x.com client on 2026-10-07 (C1/C2: test 20's
@@ -33,6 +37,8 @@ export const THEMES: Record<ThemeId, XTheme> = {
     link: "#1D9BF0",
     icon: "#536471",
     badge: "#1D9BF0",
+    quoteBorder: "#CFD9DE",
+    cardHost: "#536471",
   },
   dark: {
     id: "dark",
@@ -46,8 +52,24 @@ export const THEMES: Record<ThemeId, XTheme> = {
     link: "#1D9BF0",
     icon: "#71767B",
     badge: "#1D9BF0",
+    quoteBorder: "#2F3336",
+    cardHost: "#71767B",
   },
 };
+
+// The X Android app (12.31 on a Pixel 3, screenshot pixels, 2026-10-08/09; QUIRKS.md "Android colors").
+// Dark, over the whole 360 and 411.4 dp corpus: background #030303, text and names #D9D9D9, handle,
+// time, action icons and "From host" #7C838A, row separators #181A1C, quote borders #1D1D1D, the small
+// card's domain #829AAB; link card, media and poll picture borders, links and the check as x.com's.
+// Light (test 57c/57d only): x.com's palette except the row separator, #E6EBEE; the card domain and
+// quote border keep x.com's (assumed). Link cards have no fill on Android (link-card.tsx).
+const ANDROID_THEMES: Record<ThemeId, XTheme> = {
+  light: { ...THEMES.light, border: "#E6EBEE" },
+  dark: { ...THEMES.dark, bg: "#030303", text: "#D9D9D9", secondary: "#7C838A", icon: "#7C838A", border: "#181A1C", quoteBorder: "#1D1D1D", cardHost: "#829AAB" },
+};
+
+/** The palette a pane draws in: the Android app's own, x.com's for the web and the iOS app (assumed for iOS). */
+export const themeFor = (id: ThemeId, platform?: "ios" | "android"): XTheme => (platform === "android" ? ANDROID_THEMES : THEMES)[id];
 
 const FALLBACKS = '-apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
 
