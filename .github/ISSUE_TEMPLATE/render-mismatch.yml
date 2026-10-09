@@ -36,7 +36,14 @@ body:
     id: preview
     attributes:
       label: Screenshot from Postcheck
-      description: Show the whole preview, plus the switches and any note above it.
+      description: Show the whole preview, plus any note above it.
+    validations:
+      required: true
+  - type: input
+    id: settings
+    attributes:
+      label: Postcheck settings
+      description: Filled in for you when you come from the "Tell us" link under the preview. Otherwise, the phone or web view, the theme, and whether a font notice showed above the preview (line breaks depend on the font).
     validations:
       required: true
   - type: textarea

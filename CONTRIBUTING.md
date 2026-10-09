@@ -4,12 +4,12 @@ The most useful contribution is a post that Postcheck gets wrong. X changes thin
 
 ## Reporting a post that didn't render 1:1
 
-[Open a "Looks different on X" issue](../../issues/new?template=render-mismatch.yml). It asks for:
+Use the "Tell us" link under the preview, which fills in the view, theme and font you had, or [open a "Looks different on X" issue](../../issues/new?template=render-mismatch.yml) directly. It asks for:
 
 1. The post URL (it must be public; that's the only kind X has).
 2. Where you saw it: the iPhone app, the Android app or x.com.
 3. A screenshot of the real thing.
-4. A screenshot of what Postcheck showed. Include the switches and any note above the preview (a font notice appears there when X's font didn't load): line breaks depend on the font that loaded, and the GT America and system-font tiers are calibrated but not exact.
+4. A screenshot of what Postcheck showed, with any note above the preview (a font notice appears there when X's font didn't load): line breaks depend on the font that loaded, and the GT America and system-font tiers are calibrated but not exact.
 
 Which words or lines differ, and which phone or computer you used, help but are optional.
 
