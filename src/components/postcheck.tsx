@@ -710,6 +710,16 @@ const MIN_PHONE_SCALE = 0.7;
 /** The "Looks different on X?" line under the preview: its gap above and its height, both kept out of the phone's room. */
 const FOOT_GAP = 8;
 const FOOT_LINE = 16;
+
+const FONT_NAMES: Record<FontTier, string> = { chirp: "Chirp", gt: "GT America fallback", system: "system font fallback" };
+/** The mismatch form with what was on screen filled in: line breaks depend on the device, theme and font tier. */
+function mismatchLink(device: Device, themeId: ThemeId, fontTier: FontTier | null): string {
+  const where = device.frameless
+    ? `${device.label}, ${device.platform === "android" ? "Android" : "iPhone"} rules`
+    : device.kind === "phone" ? `${device.label} (${device.width}pt)` : device.label;
+  const settings = [where, themeId, fontTier && FONT_NAMES[fontTier]].filter(Boolean).join(" · ");
+  return `${MISMATCH_FORM}&settings=${encodeURIComponent(settings)}`;
+}
 /** The composer fills its half up to COMPOSER_MAX; below COMPOSER_MIN beside the preview, the page stacks. */
 const COMPOSER_MIN = 560;
 const COMPOSER_MAX = 640;
@@ -955,7 +965,7 @@ function Preview({ stacked, minWidth, marks, fontBanner, fontTier, webDevice, se
           {report === "shown" && (
             <>
               Looks different on X?{" "}
-              <a href={MISMATCH_FORM} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-warm-dark">
+              <a href={mismatchLink(device, themeId, fontTier)} target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-warm-dark">
                 Tell us
               </a>
             </>

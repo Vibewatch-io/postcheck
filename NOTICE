@@ -1,0 +1,22 @@
+Postcheck
+Copyright (c) 2026 Vibewatch (https://vibewatch.io)
+
+The code is MIT-licensed (see LICENSE): use it, change it, ship it.
+
+If you build on it, please credit "Postcheck by Vibewatch" with a link to
+https://github.com/Vibewatch-io/postcheck somewhere people will see it: your
+README, an about page or a footer line. The licence doesn't require this; it's
+just how we'd like it done.
+
+Some things in this repository aren't ours to license, so the MIT licence
+doesn't cover them:
+
+- X's logo, verification badges and action icons in src/components/icons.tsx,
+  drawn after x.com's. They belong to X Corp.
+- The X posts in fixtures/ and the captures of how X drew them. The posts
+  belong to their authors; they're here as test evidence.
+- Fonts. Chirp is X's and loads from X's CDN at runtime. GT America is licensed
+  to Vibewatch alone and is never in this repository. Geist is under the SIL
+  Open Font License (src/app/GeistVF.LICENSE.txt).
+- The names Postcheck and Vibewatch and their logos. A fork should go by its
+  own name.

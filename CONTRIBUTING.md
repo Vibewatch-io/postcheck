@@ -4,7 +4,7 @@ The most useful contribution is a post that Postcheck gets wrong. X changes thin
 
 ## Reporting a post that didn't render 1:1
 
-[Open a "Looks different on X" issue](../../issues/new?template=render-mismatch.yml). It asks for:
+Use the "Tell us" link under the preview, which fills in the view, theme and font you had, or [open a "Looks different on X" issue](../../issues/new?template=render-mismatch.yml) directly. It asks for:
 
 1. The post URL (it must be public; that's the only kind X has).
 2. Where you saw it: the iPhone app, the Android app or x.com.
