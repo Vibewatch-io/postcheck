@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 export type ViewKind = "web" | "focal" | "phone";
 
 export interface Device {
@@ -35,8 +37,7 @@ export interface Device {
 // Web numbers were measured on x.com (Sept 2026): a 600px column with 1px
 // borders and 16px padding = 566px of content; avatar 40px + 8px gap leaves
 // 518px for timeline text. The post page runs the text under the header at
-// full 566px. Phone numbers assume the app's 16px inset, 40px avatar and 8px
-// gap, so body width = screen width − 80.
+// full 566px. Phone numbers come from device captures (see phone() below).
 /**
  * The iOS app folds a post behind "Show more" past this many rendered lines, even
  * under 280 characters; the web shows all of it. The Android app has no line fold:
@@ -60,17 +61,16 @@ const phone = (
   kind: "phone",
   width,
   height,
-  // App cell: 12px inset, 44px avatar, 8px gap, ~13px right → column = width − 77 (the oracle's window is 316–317).
-  // CoreText with the app's own Chirp-UI (wght 300, opsz 15, tracking −0.2)
-  // reproduces all 14 captured cells at 316–317px on a 393pt iPhone 15 Pro.
-  // In the browser, x.com's current web Chirp with −0.32px tracking matches
-  // that font's line widths to ±0.5px (77 lines, see scripts/ios/README.md).
+  // App cell: 12px inset, 44px avatar, 8px gap → the body runs in the media column, width − 71
+  // (64→386 on a 393pt iPhone 15 Pro). Body ink on 110 captured lines (21 posts) matches x.com's web
+  // Chirp at −0.18px (globals.css; sd 1.1px). Line breaks fix only the ratio of tracking to column:
+  // this pair reproduces the captures as well as the old 316 / −0.32px one did (QUIRKS.md).
+  // The iOS body runs at a 19.28pt pitch, not 20: seven one-letter lines of test 13 step 19.27–19.29 in
+  // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
   // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 60dp to width − 12dp, so
   // column = width − 72; four lines of test 05 match x.com's untracked web Chirp at 15px to within ink side
   // bearings, with a 20dp pitch below 400 dp (scripts/android/README.md; the wide-screen size is below).
-  // The iOS body runs at a 19.28pt pitch, not 20: seven one-letter lines of test 13 step 19.27–19.29 in
-  // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
-  textWidth: platform === "ios" ? width - 77 : width - 72,
+  textWidth: platform === "ios" ? width - 71 : width - 72,
   pane: platform === "ios" ? "app" : "web",
   // Android sets the body at 16/21.33 on a wide screen: the same lines measure 6.4% wider at 411.4 dp than at
   // 360 and 392 dp, and the pitch is 56px at 2.625 px/dp (@postcheck_test tests 01–08 on a Pixel 3). The
@@ -87,22 +87,31 @@ const phone = (
 });
 
 /**
- * The app's post screen: stacked name/handle header, body at 17px/24px across
- * the full width minus 16px insets, no fold. Measured from an iPhone Mirroring
- * capture (402pt device) of Vibewatch_io/status/2092648171961041203: 24pt line
- * pitch, and "🐝 Receive automatic weekly reports about what" spans ~371pt,
- * which Chirp gives at 17px (369.8).
+ * The app's post screen: stacked name/handle header, no fold, the body in a column from 12pt to 7pt
+ * short of the right edge (width − 19, 374 at 393pt; the timeline cell's right edge), which the link
+ * card and media fill too. iPhone 15 Pro captures of 13 post screens (QUIRKS.md, "App post screen"):
+ * the body ink is 1.137× the timeline's height (17.06px), lines step 23.27pt (blank lines included),
+ * and the 44pt avatar sits at 12 like the text. Its tracking is in globals.css (--ls-app-post).
  */
 const phonePost = (d: Device): Device => ({
   ...d,
   id: `${d.id}-post`,
   label: `${d.label} · post`,
-  textWidth: d.width - 32,
+  textWidth: d.width - 19,
   fontSize: 17,
-  lineHeight: 24,
+  lineHeight: 23.27,
   maxLines: undefined,
   view: "post",
 });
+
+/**
+ * The iOS post screen's tracking (--ls-app-post, −0.204px): the timeline's −0.18px at 15px is the same
+ * −0.012em at 17px, which 99 post-screen lines fit (QUIRKS.md). Spread into the style of the element
+ * that holds that device's text.
+ */
+export function postScreenTracking(d: Device): CSSProperties | undefined {
+  return d.pane === "app" && d.view === "post" ? ({ "--ls-app": "var(--ls-app-post)" } as CSSProperties) : undefined;
+}
 
 /**
  * The iOS app's timeline row draws a Premium-styled post with no bold or italic at all, short or
