@@ -58,8 +58,8 @@ export interface AdviceInput {
    */
   previews?: string[];
   /**
-   * The author has a check of any colour. Assumed to post past 280: blue and gold come with longer
-   * posts; gray (government) is treated the same, unconfirmed.
+   * The author has a check of any colour: blue, gold and gray accounts can all post past 280
+   * (gray per the owner, 2026-10-09).
    */
   verified?: boolean;
   /** Set when the app's line clamp would fold the post. */
@@ -149,7 +149,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
   }
 
   if (length.weighted > MAX_WEIGHTED_LENGTH) {
-    // A checked author is assumed to post past 280 (see `verified`): the fold shows in the preview.
+    // A checked author can post past 280 (see `verified`): the fold shows in the preview.
     if (!input.verified) {
       out.push({
         id: "over-limit",

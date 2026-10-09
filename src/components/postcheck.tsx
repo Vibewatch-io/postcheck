@@ -473,7 +473,7 @@ export function Postcheck() {
     };
   }, [editor, draft.text]);
 
-  // A checked author is assumed to post past 280 (see buildAdvice's `verified`), so the counter
+  // A checked author can post past 280 (see buildAdvice's `verified`), so the counter
   // doesn't warn them: it keeps counting against the 280 fold.
   const capped = identity.badge === "none";
   const over = capped && length.weighted > MAX_WEIGHTED_LENGTH;
