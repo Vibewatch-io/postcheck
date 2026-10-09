@@ -50,8 +50,8 @@ const IMAGE_POLL = {
  * each side of the text column; `top` moves the poll from the cell's 12dp gap to 11.7dp under the text's
  * last baseline; `pitch` per text choice, 40dp at 360 and 106px (40.38dp) at 411.4, where the body is
  * 16/21.33; the text pill is assumed 4 short of it (36dp, the image poll's pill); `footerTop` puts the
- * footer's baseline 22.3dp under the last row (23.6 at 411.4; under the pills in an image poll's voter
- * view too). `picture`: an image poll's voter view (57c read as @marshallmixing, dark theme) is a
+ * footer's baseline 22.3dp under the last row (at 411.4, 23.6 under the image poll's pills and 23.5 under
+ * the results view's rows: drawn at 23.6, within 1 of both). `picture`: an image poll's voter view (57c read as @marshallmixing, dark theme) is a
  * carousel of squares 0.7 of the box wide (193dp at 360, 228.6 at 411.4), radius 8, 4dp apart, each
  * with a 36dp pill 8dp under it, radius 8, outlined in blue with the label bold blue at the body's size;
  * no Next button. The light theme's colours and the pill's side padding are x.com's (assumed).
