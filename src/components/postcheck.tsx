@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListedPhone, rowHidesStyles, thisPhone, type Device } from "@/lib/devices";
-import { THEMES, type ThemeId } from "@/lib/theme";
+import { themeFor, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
 import { cardless, type CardData, type NoCardReason } from "@/lib/card";
 import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
@@ -116,7 +116,9 @@ export function Postcheck() {
   // the text folds every preview again (see below); bold / italic alone don't, and a device stays
   // expanded if you switch away and back.
   const [expanded, setExpanded] = useState<Record<string, true>>({});
-  const theme = THEMES[themeId];
+  const theme = themeFor(themeId);
+  // The Android app draws in its own palette (theme.ts); the iOS app in x.com's.
+  const phoneTheme = themeFor(themeId, phoneDevice.platform);
   const fontTier = useFontTier();
 
   // A share link (#s=…) opens as the preview alone; "Edit a copy" loads it into the composer.
@@ -695,12 +697,12 @@ export function Postcheck() {
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={theme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} state={postState} />;
+          const cell = <XPost device={phoneDevice} theme={phoneTheme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} state={postState} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
-            <div style={{ width: phoneDevice.width, backgroundColor: theme.bg, borderTop: `1px solid ${theme.border}`, borderBottom: `1px solid ${theme.border}` }}>{cell}</div>
+            <div style={{ width: phoneDevice.width, backgroundColor: phoneTheme.bg, borderTop: `1px solid ${phoneTheme.border}`, borderBottom: `1px solid ${phoneTheme.border}` }}>{cell}</div>
           ) : (
-            <PhoneFrame device={phoneDevice} theme={theme} maxHeight={maxHeight}>{cell}</PhoneFrame>
+            <PhoneFrame device={phoneDevice} theme={phoneTheme} maxHeight={maxHeight}>{cell}</PhoneFrame>
           );
         }}
       />
