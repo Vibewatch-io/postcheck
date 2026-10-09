@@ -543,6 +543,32 @@
    }
   },
   {
+   "id": "2108612114852225168",
+   "lines": [
+    "Test 57d: text poll, open for 7 days"
+   ],
+   "showMore": false,
+   "poll": {
+    "view": "voter",
+    "inset": [
+     6,
+     6
+    ],
+    "labelCentre": 29.67,
+    "pitch": 40,
+    "pillHeight": 36,
+    "footerBaseline": 190.0,
+    "footer": "0 vote • 6 days 23 hours left",
+    "shownOrder": [
+     "Two",
+     "Three",
+     "Four",
+     "One"
+    ],
+    "source": "voter view of a text poll, read as @marshallmixing on the Pixel 3's X app (dark theme), 2026-10-09, 3 px per dp, no anti-aliasing on the pill edges: each choice a fully rounded pill (the corner reaches the side at half its height) with a 1 dp #1D9BF0 border, 36 dp (108 px) tall on a 40 dp pitch (4 dp apart), as wide as the box (6 dp in from each side of the text column); the label bold #1D9BF0 at the body's size (its cap height the body's: 10.67 dp), centred; the footer's baseline 22.33 dp under the last pill. labelCentre and footerBaseline from the body's last baseline (screenshot ink: the bottom of the T, the footer's 0). The same box as the author's results view (captured the same day as @Postcheck_test: the same label rows, the footer node at the same bounds). Light theme (Display → Day, 2026-10-09, both accounts): the same blue pills and labels, footer #536471, body #0F1419. X showed this reader Two, Three, Four, One (posted One to Four), so `shownOrder` is checked as a set of labels"
+   }
+  },
+  {
    "id": "2102798291289378944",
    "lines": [
     "Test 59b: a photo and a video"
