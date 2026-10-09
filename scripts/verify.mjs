@@ -182,7 +182,13 @@ if (args.includes("--no-chirp")) {
   await chirpPage.goto(base);
   await chirpPage.waitForFunction(() => window.__postcheck?.ready && !!document.documentElement.dataset.font, null, { timeout: 20000 });
   await chirpPage.evaluate(() => Promise.allSettled(["TwitterChirpWeb", "TwitterChirp"].flatMap((f) => [document.fonts.load(`15px ${f}`), document.fonts.load(`700 15px ${f}`)])));
-  if ((await chirpPage.evaluate(() => document.documentElement.dataset.font)) !== "chirp" || !(await chirpPage.evaluate(() => document.fonts.check("15px TwitterChirpWeb") && document.fonts.check("15px TwitterChirp")))) { console.error("--no-chirp needs X's CDN on a second page to measure lines in Chirp; it did not load"); process.exit(3); }
+  // Offline, fall back to judging edges in GT America alone, as before: wraps X made by a hair in
+  // Chirp then show as failures, so the warning says why.
+  if ((await chirpPage.evaluate(() => document.documentElement.dataset.font)) !== "chirp" || !(await chirpPage.evaluate(() => document.fonts.check("15px TwitterChirpWeb") && document.fonts.check("15px TwitterChirp")))) {
+    console.warn("warning: Chirp did not load on the measuring page (no route to X's CDN?); edges are judged in GT America only, so coin flips at the column edge may fail");
+    await chirpPage.close();
+    chirpPage = null;
+  }
 }
 /**
  * Width of a line of text in the pane's body font (the quote embed's with `quote`), and that body's
