@@ -84,8 +84,8 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
 }
 
 /**
- * The composer's media controls: add up to 4 photos, GIFs or videos (X's limit), mark a photo as
- * having alt text (x.com then shows an ALT badge; only photos were captured with one), remove one.
+ * The composer's media controls: add up to 4 photos, GIFs or videos (X's limit), remove one. Alt
+ * text is marked per photo in Post options (x.com then shows an ALT badge).
  */
 export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange: (update: (m: MediaItem[]) => MediaItem[]) => void }) {
   const full = media.length >= MAX_MEDIA;
@@ -121,18 +121,6 @@ export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange:
             <li key={i} className="relative h-9 w-9 flex-none overflow-hidden rounded-md border border-brand-warm-border">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={m.src} alt="" className="h-full w-full object-cover" />
-              {m.kind === "photo" && (
-                <button
-                  type="button"
-                  aria-pressed={m.alt}
-                  aria-label={`Media ${i + 1}: ${m.alt ? "has alt text" : "no alt text"}`}
-                  title={m.alt ? "Has alt text: x.com shows an ALT badge. Click to remove it." : "Mark as having alt text"}
-                  onClick={() => onChange((all) => all.map((x, j) => (j === i ? { ...x, alt: !x.alt } : x)))}
-                  className={`absolute bottom-0 left-0 rounded-tr px-0.5 text-[9px] font-bold leading-[11px] ${m.alt ? "bg-black/80 text-white" : "bg-white/80 text-brand-warm-secondary"}`}
-                >
-                  ALT
-                </button>
-              )}
               <button
                 type="button"
                 aria-label={`Remove media ${i + 1}`}
