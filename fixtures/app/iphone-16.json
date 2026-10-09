@@ -930,6 +930,12 @@
    "card": null,
    "poll": {
     "view": "voter",
+    "choices": [
+     "One",
+     "Two",
+     "Three",
+     "Four"
+    ],
     "carousel": true,
     "image": [
      0,
@@ -945,13 +951,9 @@
      27
     ],
     "footer": "0 votes · 6d left",
-    "choicesSeen": [
-     "One",
-     "Two"
-    ],
     "picTop": 21.25,
     "footerBaseline": 289,
-    "source": "voter view as @marshallmixing, iPhone 15 Pro via iPhone Mirroring, 2026-10-09 (scripts/phone/c9_57c.png, 1 px per pt: the avatar reads 44.4, a two-line body steps 20); edges read by coverage, relative to the first picture. Radius about 7 (the corner's coverage fits 7, not 8). The pill is outlined in blue with a bold blue label like a text poll's (x.com's is neutral). Only the first choice and the start of the second (One, Two: the posted order) are on screen; the carousel can't be swiped from the Mac. picTop and footerBaseline from the body's baseline (ink). 57b's reading (222 apart, 28 tall) differs: QUIRKS.md"
+    "source": "voter view as @marshallmixing, iPhone 15 Pro via iPhone Mirroring, 2026-10-09 (scripts/phone/c9_57c.png, 1 px per pt: the avatar reads 44.4, a two-line body steps 20); edges read by coverage, relative to the first picture. Radius about 7 (the corner's coverage fits 7, not 8). The pill is outlined in blue with a bold blue label like a text poll's (x.com's is neutral). The order is the posted one: One, Two, Three, Four, read as the owner swiped the carousel on the phone (scripts/phone/c9_sw_*.png, 2026-10-09); the last choice snaps to the left edge with the one before it peeking. picTop and footerBaseline from the body's baseline (ink). 57b's reading (222 apart, 28 tall) differs: QUIRKS.md"
    },
    "cell": 388
   },

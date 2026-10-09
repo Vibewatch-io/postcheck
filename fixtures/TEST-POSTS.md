@@ -241,7 +241,8 @@ different layout from its results view); recapture it from another account, not 
 
 Posted 2026-10-05 (batch 6). 91 lost its third choice in the composer and was re-posted as 91b. On 2026-10-09
 57c was captured on the iPhone from @marshallmixing (voter view) and every poll here plus 57, 57b and 57c on the
-Pixel 3 at 360 and 411.4 dp (the author's results view: the phone is signed in as @Postcheck_test). 94 posted twice
+Pixel 3 at 360 and 411.4 dp (the author's results view: the phone is signed in as @Postcheck_test); later that
+day 57c's voter view on the Pixel as @marshallmixing, and its whole iPhone carousel swiped through by the owner. 94 posted twice
 (94b with the choices typed by hand): both times X stored the long post with no poll.
 
 ```text

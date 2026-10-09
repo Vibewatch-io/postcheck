@@ -444,12 +444,13 @@ async function colourDiff(label, deviceLast, id, want) {
  * picture, next item and pill. A post X stored without its poll (`pollTyped`) must draw none. The
  * footer's time is when the capture was taken, so only its place and form are checked. An image
  * poll captured in the author's results view (`view: "results"`, 57b) is a different layout from
- * the voter view the tool draws: only its choices and picture count are compared. Android was captured
- * only in the results view: its text polls' box (`inset` from each side of the text column), the first
- * label's centre and the footer's baseline below the body's last baseline (`labelCentre`,
+ * the voter view the tool draws: only its choices and picture count are compared. Android's text polls
+ * were captured only in the results view: their box (`inset` from each side of the text column), the
+ * first label's centre and the footer's baseline below the body's last baseline (`labelCentre`,
  * `footerBaseline`) and the label pitch hold the tool's voter view to the same rows (QUIRKS.md: the web's
- * two views share one box; Android's is inferred to). An iPhone capture can record `picTop` and
- * `footerBaseline` the same way, and `choicesSeen` when only the first choices are on screen.
+ * two views share one box; Android's is inferred to). A phone capture of an image poll's voter view
+ * records `picTop` and `footerBaseline` the same way. A reader's shown order that differs from the
+ * posted one (`shownOrder`) is recorded, not checked: the tool draws the posted order.
  */
 async function pollDiff(label, deviceLast, id, want, typed, platform) {
   if (!want && !typed) return;
@@ -460,7 +461,6 @@ async function pollDiff(label, deviceLast, id, want, typed, platform) {
   else if (!got) problems.push("no poll");
   else {
     if (want.choices && want.choices.join("|") !== got.labels.join("|")) problems.push(`choices X ${want.choices.join(" / ")} / tool ${got.labels.join(" / ")}`);
-    if (want.choicesSeen && want.choicesSeen.join("|") !== got.labels.slice(0, want.choicesSeen.length).join("|")) problems.push(`first choices X ${want.choicesSeen.join(" / ")} / tool ${got.labels.join(" / ")}`);
     if (got.card) problems.push("tool draws a card or quote beside the poll");
     const results = want.view === "results" && want.images;
     if (want.size && !results && !near(got.size, want.size)) problems.push(`box X ${want.size} / tool ${got.size}`);
@@ -480,11 +480,20 @@ async function pollDiff(label, deviceLast, id, want, typed, platform) {
       // A recorded null means x.com showed no Next button (the choices fit the column).
       if (want.next === null ? got.next !== null : !near(got.next, want.next)) problems.push(`Next button X ${want.next} / tool ${got.next}`);
     } else if (want.carousel) {
-      if (!near(got.images[0]?.slice(2), want.image.slice(2))) problems.push(`picture X ${want.image.slice(2)} / tool ${got.images[0]?.slice(2)}`);
-      if (Math.abs((got.images[1]?.[0] ?? -99) - want.nextChoiceX) > 1) problems.push(`next choice at X ${want.nextChoiceX} / tool ${got.images[1]?.[0]}`);
+      if (want.image && !near(got.images[0]?.slice(2), want.image.slice(2))) problems.push(`picture X ${want.image.slice(2)} / tool ${got.images[0]?.slice(2)}`);
+      if (want.nextChoiceX !== undefined && Math.abs((got.images[1]?.[0] ?? -99) - want.nextChoiceX) > 1) problems.push(`next choice at X ${want.nextChoiceX} / tool ${got.images[1]?.[0]}`);
+      // Android sizes its pictures as a share of the poll's width, so a capture at a slightly different
+      // screen width (the Pixel 3 at 411.4 for the 412 Pixel 10) is checked by that share and the gaps.
+      const [pic, pic2, pl] = [got.images[0], got.images[1], got.pills[0]];
+      if (want.pictureShare !== undefined && !(pic && Math.abs(pic[2] / got.size[0] - want.pictureShare) <= 0.005)) problems.push(`picture share of the poll's width X ${want.pictureShare} / tool ${pic && Math.round((pic[2] / got.size[0]) * 1000) / 1000}`);
+      if (want.itemGap !== undefined && !(pic && pic2 && Math.abs(pic2[0] - pic[0] - pic[2] - want.itemGap) <= 1)) problems.push(`gap between pictures X ${want.itemGap} / tool ${pic && pic2 && pic2[0] - pic[0] - pic[2]}`);
+      if (want.pillGap !== undefined && !(pic && pl && Math.abs(pl[1] - pic[1] - pic[3] - want.pillGap) <= 1)) problems.push(`pill under its picture X ${want.pillGap} / tool ${pic && pl && pl[1] - pic[1] - pic[3]}`);
+      if (want.pillHeight !== undefined && !(pl && Math.abs(pl[3] - want.pillHeight) <= 1)) problems.push(`pill height X ${want.pillHeight} / tool ${pl?.[3]}`);
+      const pillBottom = pic && pl && got.fromBaseline?.picTop != null ? got.fromBaseline.picTop + pl[1] + pl[3] - pic[1] : null;
+      if (want.footerBelowPill !== undefined && !(pillBottom !== null && Math.abs(got.fromBaseline.footerBaseline - pillBottom - want.footerBelowPill) <= 1)) problems.push(`footer baseline under the pill X ${want.footerBelowPill} / tool ${pillBottom !== null && Math.round((got.fromBaseline.footerBaseline - pillBottom) * 100) / 100}`);
       // The pill's y is read from its picture's top, as the capture records it.
       const pillY = got.pills[0] && got.images[0] ? got.pills[0][1] - got.images[0][1] : null;
-      if (!near([pillY, got.pills[0]?.[3]], [want.button[1], want.button[3]])) problems.push(`choice pill y, height X ${[want.button[1], want.button[3]]} / tool ${[pillY, got.pills[0]?.[3]]}`);
+      if (want.button && !near([pillY, got.pills[0]?.[3]], [want.button[1], want.button[3]])) problems.push(`choice pill y, height X ${[want.button[1], want.button[3]]} / tool ${[pillY, got.pills[0]?.[3]]}`);
     }
     const fb = got.fromBaseline;
     if (want.inset && !near(fb?.inset, want.inset)) problems.push(`inset X ${want.inset} / tool ${fb?.inset}`);
