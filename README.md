@@ -26,7 +26,7 @@ Everything below was read off x.com in September 2026.
 |---|---|---|
 | Typeface | Chirp, loaded from X's own CDN the same way x.com loads it, with X's declared fallback stack behind it | `src/app/globals.css`, `src/lib/theme.ts` |
 | Column | 600px column, 16px padding, 40px avatar, 8px gap. Timeline body is 518px wide at 15px/20px; the post page runs 566px | `src/lib/devices.ts` |
-| Colors | Light and dark palettes (X retired Dim in 2025). The previews follow your system setting; the switch in the header overrides it | `src/lib/theme.ts` |
+| Colors | Light and dark palettes (X retired Dim in February 2026). The previews follow your system setting; the switch in the header overrides it | `src/lib/theme.ts` |
 | Length | twitter-text weighting: most Latin characters 1, CJK and symbols 2, emoji 2, every URL a flat 23. Budget 280 | `src/lib/entities.ts` |
 | Show more | Past 280 the timeline cuts at the last word that fits and appends an inline blue "Show more". A word ending exactly at 280 stays | `showMoreCut()` |
 | Link text | Scheme and `www.` stripped, path truncated at 15 characters with an ellipsis | `displayUrl()` |
