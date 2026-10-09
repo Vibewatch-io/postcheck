@@ -172,3 +172,11 @@ test("a poll past 280 is flagged as dropped; a shown poll replaces the card tips
   const twoIds = buildAdvice({ text: two, entities: te, length: weightedLength(two, te), card: null, lineSets: [], poll: "shown" }).map((a) => a.id);
   assert.ok(twoIds.includes("poll-beats-card") && !twoIds.includes("multiple-urls"));
 });
+
+// Composing test 57c: X kept Post off for a poll with no text. A poll alone is the user's draft, so
+// its tips show: the question, and anything the poll itself still needs.
+test("a poll with no text asks for the question and keeps its own tips", () => {
+  const ids = buildAdvice({ text: "", entities: [], length: weightedLength("", []), card: undefined, lineSets: [], poll: "shown", pollPictures: true }).map((a) => a.id);
+  assert.deepEqual(ids.sort(), ["poll-no-text", "poll-pictures"]);
+  assert.deepEqual(buildAdvice({ text: "", entities: [], length: weightedLength("", []), card: undefined, lineSets: [] }), []);
+});

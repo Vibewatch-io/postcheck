@@ -209,7 +209,10 @@ export function Postcheck() {
   }, [editor, shared]);
 
   // What X will actually post: outer whitespace trimmed, bold / italic as style runs over the plain text.
-  const formatted = useMemo(() => trimDraft(draft.text.trim() ? draft : { text: SAMPLE, styles: [] }), [draft]);
+  // A poll makes the draft the user's own even before any text: the preview drops the sample and
+  // the tips say what the poll still needs (X won't post one without text).
+  const ownDraft = draft.text.trim() !== "" || poll !== null;
+  const formatted = useMemo(() => trimDraft(ownDraft ? draft : { text: SAMPLE, styles: [] }), [draft, ownDraft]);
   const post = formatted.text;
   const styles = formatted.styles;
   // Reset during render rather than in an effect, so an edit never paints an expanded frame and
@@ -493,11 +496,11 @@ export function Postcheck() {
 
   // Tips only appear for the user's own draft, and only when there's something to say. They hang
   // below the composer, so the composer never moves when they come and go.
-  const showTips = !previewOnly && draft.text.trim() !== "" && advice.length > 0;
+  const showTips = !previewOnly && ownDraft && advice.length > 0;
 
   // Nothing typed yet shares an empty draft: the recipient sees the same sample, still as a
   // placeholder, and "Edit a copy" starts them empty rather than with the sample as real text.
-  const typed = draft.text.trim() !== "";
+  const typed = ownDraft;
   const sharePreview = useCallback(
     // A link made on someone's own phone names the listed phone nearest to it.
     (): SharedPreview => ({ text: typed ? post : "", styles: typed ? styles : [], identity, media, poll, post: postState, theme: themeId, phone: phoneDevice.frameless ? nearestListedPhone(phoneDevice).id : phoneDevice.id, web: webDevice.id, view }),
@@ -510,6 +513,20 @@ export function Postcheck() {
   ) : (
     <ShareButton preview={sharePreview} />
   );
+  // The block under the composer keeps room for the tips only: in a short window they lift the
+  // composer as far as they need, while an open poll hangs below and the half scrolls to it, so
+  // opening a poll never moves the composer.
+  const tipsRef = useRef<HTMLDivElement>(null);
+  const [tipsHeight, setTipsHeight] = useState(0);
+  useEffect(() => {
+    const el = tipsRef.current;
+    if (!el) return;
+    const measure = () => setTipsHeight(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const hints = showTips && (
     <div className="px-1 pt-5">
       <h2 className="font-syne text-sm font-semibold lining-nums text-brand-warm-dark">
@@ -613,7 +630,6 @@ export function Postcheck() {
         </form>
 
         <ComposerField editor={editor} placeholder={SAMPLE} />
-        {poll && <PollEditor poll={poll} onChange={setPoll} readFile={readFile} />}
 
         <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-brand-warm-gray">
           <span className="flex flex-wrap items-center gap-3">
@@ -638,8 +654,10 @@ export function Postcheck() {
 
       </section>
       </div>
-      <div className={narrow ? "w-full" : "w-full flex-1 basis-0"} style={{ maxWidth: COMPOSER_MAX }}>
-        {hints}
+      <div className={narrow ? "w-full" : "w-full flex-1 basis-0"} style={narrow ? { maxWidth: COMPOSER_MAX } : { maxWidth: COMPOSER_MAX, minHeight: tipsHeight }}>
+        {/* The poll hangs below the toolbar with the tips; only the tips claim room (see tipsRef). */}
+        {poll && <PollEditor poll={poll} onChange={setPoll} readFile={readFile} />}
+        <div ref={tipsRef}>{hints}</div>
       </div>
       </div>
 

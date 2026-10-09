@@ -55,7 +55,7 @@ export function PollEditor({ poll, onChange, readFile }: { poll: Poll; onChange:
   };
 
   return (
-    <fieldset className="mt-3 space-y-2 rounded-xl border border-brand-warm-border bg-white p-3" aria-label="Poll">
+    <fieldset className="mt-4 space-y-2 rounded-xl border border-brand-warm-border bg-white p-3" aria-label="Poll">
       {poll.choices.map((label, i) => (
         <div key={i} className="flex items-center gap-2">
           <label className={`${small} relative cursor-pointer overflow-hidden`} title={poll.images[i] ? "Change picture" : "Add picture"}>
