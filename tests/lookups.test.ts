@@ -32,3 +32,12 @@ test("a 2048-character link in CJK fits the lookup body cap", async () => {
   const req = new Request("http://localhost/api/unfurl", { method: "POST", body: JSON.stringify({ url }) });
   assert.equal(await readLookupField(req, "url"), url);
 });
+
+// No card says why. A lookup that never reached a page (here the guard refuses a loopback address,
+// with no network involved) is "failed", never "none": "none" makes the advice blame the page's tags.
+test("/api/unfurl answers a refused lookup as failed, not as a page without tags", async () => {
+  const req = new Request("http://localhost/api/unfurl", { method: "POST", body: JSON.stringify({ url: "http://127.0.0.1/" }) });
+  const res = await unfurl.POST(req);
+  assert.deepEqual(await res.json(), { card: null, reason: "failed" });
+  assert.equal(res.headers.get("cache-control"), "no-store");
+});

@@ -90,6 +90,10 @@ export function discard(res: Pick<Response, "body">): void {
   void res.body?.cancel().catch(() => {});
 }
 
+/**
+ * The body's first `cap` bytes, the chunk that crosses the cap included up to it. That chunk is the
+ * last one read (its bytes past the cap are dropped); the stream is cancelled after it.
+ */
 export async function readCapped(res: Pick<Response, "body">, cap: number): Promise<Uint8Array> {
   const reader = res.body?.getReader();
   if (!reader) return new Uint8Array();
@@ -100,6 +104,7 @@ export async function readCapped(res: Pick<Response, "body">, cap: number): Prom
     if (done) break;
     total += value.byteLength;
     if (total > cap) {
+      chunks.push(value.subarray(0, value.byteLength - (total - cap)));
       await reader.cancel();
       break;
     }
