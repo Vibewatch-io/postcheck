@@ -2,6 +2,7 @@ import type { StyleRun } from "./entities";
 import { DEFAULT_PHONE_ID, DEVICES } from "./devices";
 import { NO_POST_STATE, REPLY_LIMITS, TAG_MAX, hasPostState, type PostState } from "./post-state";
 import { MAX_MEDIA, MAX_MEDIA_SIDE, MAX_VIDEO_MS, type MediaItem, type MediaKind } from "./media";
+import { POLL_CHOICE_MAX, POLL_MAX_CHOICES, POLL_MAX_MINUTES, POLL_MIN_CHOICES, POLL_MIN_MINUTES, type Poll } from "./poll";
 
 /**
  * Share links. The whole preview (text, styling, identity, shrunk images, device, theme) is
@@ -35,6 +36,7 @@ export interface SharedPreview {
   identity: { name: string; handle: string; badge: (typeof BADGES)[number]; avatar: string | null };
   /** Up to 4 items, each a JPEG Share made (a GIF's or video's first frame). */
   media: MediaItem[];
+  poll: Poll | null;
   /** Pinned, paid partnership, reply limit, tag. */
   post: PostState;
   theme: (typeof THEMES)[number];
@@ -48,7 +50,9 @@ export interface SharedPreview {
  * Wire format v1. Style runs travel as [start, end, flags] with bold = 1, italic = 2. Media travels
  * as `items`, [jpeg, kind, width, height, alt (0/1), video ms]; links made before several items
  * could be attached carry one photo in `media`, which still opens. `post` (the post states) is
- * optional and left out when nothing is set, so a plain preview's link is unchanged.
+ * optional and left out when nothing is set, so a plain preview's link is unchanged. A poll is
+ * optional too (links made before polls still open): its choices, minutes, and for an image poll a
+ * JPEG Share made per choice (or null).
  */
 interface Wire {
   v: 1;
@@ -61,6 +65,7 @@ interface Wire {
   media: string | null;
   items?: Array<[string, string, number, number, number, number] | [string, string, number, number, number, number, number]>;
   post?: { pinned?: boolean; paid?: boolean; replies?: string; tagged?: string };
+  poll?: { c: string[]; m: number; i?: Array<string | null> };
   theme: string;
   phone: string;
   web: string;
@@ -82,6 +87,7 @@ export async function encodeShare(p: SharedPreview): Promise<string> {
     // A seventh field, 1, marks an item flagged sensitive; links made before it carry six.
     items: p.media.map((m) => (m.sensitive ? [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0, 1] : [m.src, m.kind, m.width, m.height, m.alt ? 1 : 0, m.durationMs ?? 0])),
     ...(hasPostState(post) ? { post: { pinned: post.pinned, paid: post.paid, replies: post.replies, tagged: post.tagged.trim().slice(0, TAG_MAX) } } : {}),
+    ...(p.poll ? { poll: { c: p.poll.choices, m: p.poll.minutes, ...(p.poll.images.some(Boolean) ? { i: p.poll.images } : {}) } } : {}),
     theme: p.theme,
     phone: p.phone,
     web: p.web,
@@ -137,11 +143,24 @@ export function parseWire(raw: unknown): SharedPreview | null {
     identity: { name, handle, badge, avatar: sharedImage(w.avatar) },
     media,
     post,
+    // X takes media or a poll, never both: a link carrying both keeps the media.
+    poll: media.length ? null : sharedPoll(w.poll),
     theme,
     phone,
     web,
     view,
   };
+}
+
+/** A shared poll, or null when it isn't one the composer could have made (a bad poll is dropped, not the link). */
+export function sharedPoll(v: unknown): Poll | null {
+  if (!v || typeof v !== "object") return null;
+  const { c, m, i } = v as { c?: unknown; m?: unknown; i?: unknown };
+  if (!Array.isArray(c) || c.length < POLL_MIN_CHOICES || c.length > POLL_MAX_CHOICES) return null;
+  if (!c.every((x) => typeof x === "string" && x.length <= POLL_CHOICE_MAX)) return null;
+  if (!Number.isInteger(m) || (m as number) < POLL_MIN_MINUTES || (m as number) > POLL_MAX_MINUTES) return null;
+  // Each picture passes the same check as any shared image; a bad one leaves its choice without.
+  return { choices: c as string[], minutes: m as number, images: c.map((_, k) => (Array.isArray(i) ? sharedImage(i[k]) : null)) };
 }
 
 /** The optional post states, field by field: a bad field falls back to its default. */

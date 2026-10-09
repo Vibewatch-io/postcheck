@@ -21,6 +21,7 @@ const preview: SharedPreview = {
     { src: jpeg(720, 405), kind: "photo", width: 1600, height: 900, alt: true },
     { src: jpeg(405, 720), kind: "video", width: 720, height: 1280, alt: false, durationMs: 6000, sensitive: true },
   ],
+  poll: null,
   post: { pinned: true, paid: true, replies: "mentioned", tagged: "Vibewatch" },
   theme: "dark",
   phone: "iphone-17-pro-max-post",
@@ -124,4 +125,23 @@ test("text past the shared page's limit compresses small but never opens", async
   const hash = await encodeShare(long);
   assert.ok(hash.length < 1_000, "compresses far below the link budget");
   assert.equal(await decodeShare(hash), null);
+});
+
+// X takes a photo or a poll: a link carries the poll's choices and length, and one claiming both
+// opens with the photo only. A poll the composer couldn't have made is dropped, the link still opens.
+test("a shared poll round-trips; a bad one or one beside a photo is dropped", async () => {
+  // A tag belongs to a photo, so a poll (no media) travels without one.
+  const withPoll: SharedPreview = { ...preview, media: [], post: { ...preview.post, tagged: "" }, poll: { choices: ["Yes", "No", ""], images: [null, null, null], minutes: 90 } };
+  assert.deepEqual(await decodeShare(await encodeShare(withPoll)), withPoll);
+  // An image poll's pictures travel as JPEGs Share made; anything else is dropped from its choice.
+  const pictured = parseWire({ v: 1, text: "hi", poll: { c: ["a", "b"], m: 60, i: [jpeg(240, 240), "data:image/png;base64,AA=="] } });
+  assert.deepEqual(pictured?.poll?.images, [jpeg(240, 240), null]);
+  const both = parseWire({ v: 1, text: "hi", media: jpeg(10, 10), poll: { c: ["a", "b"], m: 60 } });
+  assert.equal(both?.poll, null);
+  assert.equal(both?.media.length, 1);
+  for (const poll of [{ c: ["a"], m: 60 }, { c: ["a", "b", "c", "d", "e"], m: 60 }, { c: ["a", "x".repeat(26)], m: 60 }, { c: ["a", "b"], m: 4 }, { c: ["a", "b"], m: 10_081 }, { c: ["a", 2], m: 60 }]) {
+    const p = parseWire({ v: 1, text: "hi", poll });
+    assert.equal(p?.text, "hi");
+    assert.equal(p?.poll, null, JSON.stringify(poll));
+  }
 });

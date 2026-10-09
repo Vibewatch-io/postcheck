@@ -87,8 +87,9 @@ export async function readMediaFile(file: File): Promise<MediaItem | null> {
  * The composer's media controls: add up to 4 photos, GIFs or videos (X's limit), remove one. Alt
  * text is marked per photo in Post options (x.com then shows an ALT badge).
  */
-export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange: (update: (m: MediaItem[]) => MediaItem[]) => void }) {
-  const full = media.length >= MAX_MEDIA;
+export function MediaPicker({ media, onChange, disabled = false }: { media: MediaItem[]; onChange: (update: (m: MediaItem[]) => MediaItem[]) => void; disabled?: boolean }) {
+  // `disabled`: a poll is attached, and X takes media or a poll, never both.
+  const full = media.length >= MAX_MEDIA || disabled;
   const add = async (files: FileList | null) => {
     // Only as many as there are free slots are read: a big pick never decodes files that can't be added.
     const room = MAX_MEDIA - media.length;
@@ -100,7 +101,7 @@ export function MediaPicker({ media, onChange }: { media: MediaItem[]; onChange:
     <>
       <label
         className={`rounded-lg border border-brand-warm-border px-3 py-1.5 text-sm font-medium text-brand-warm-dark ${full ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-brand-warm-surface"}`}
-        title={full ? "X takes up to 4 photos, videos or GIFs" : "Add photos, GIFs or videos (up to 4)"}
+        title={disabled ? "X takes media or a poll, not both" : full ? "X takes up to 4 photos, videos or GIFs" : "Add photos, GIFs or videos (up to 4)"}
       >
         Add media
         <input

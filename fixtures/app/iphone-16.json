@@ -953,14 +953,9 @@
      "Three",
      "Four"
     ],
-    "pill": [
-     10,
-     0,
-     302,
-     34
-    ],
     "pitch": 34,
-    "footer": "0 votes · 22 hours 10 minutes left"
+    "footer": "0 votes · 22 hours 10 minutes left",
+    "note": "The 2026-09-23 reading of the pill (302x34 at x 10) does not match the 2026-10-05 capture of tests 90-92 (322x30 from the text column, same phone and viewer): pill size checked on those posts"
    }
   },
   {
@@ -1212,10 +1207,6 @@
   },
   {
    "id": "2107206419447775705",
-   "gap": "poll: a poll replaces the link card, so the link text stays visible; the tool has no polls yet",
-   "gapTool": [
-    "Poll with a link"
-   ],
    "lines": [
     "Poll with a link github.com/vercel/next.js"
    ],
@@ -1234,7 +1225,11 @@
     "this sentence keeps going past the cut so the",
     "post needs Show more on the web timeline."
    ],
-   "showMore": false
+   "showMore": false,
+   "pollTyped": [
+    "One",
+    "Two"
+   ]
   },
   {
    "id": "2107206149456195933",
@@ -1256,7 +1251,11 @@
     "sentence keeps going past the cut so the post",
     "needs Show more on the web timeline."
    ],
-   "showMore": false
+   "showMore": false,
+   "pollTyped": [
+    "One",
+    "Two"
+   ]
   },
   {
    "id": "2107205647146348590",
@@ -1270,21 +1269,65 @@
    "lines": [
     "Poll choices at the 25-character limit"
    ],
-   "showMore": false
+   "showMore": false,
+   "poll": {
+    "choices": [
+     "Twenty-five characters ok",
+     "Choice two is 25 chars ok",
+     "Third choice, 25 chars ok",
+     "Fourth choice 25 chars ok"
+    ],
+    "pill": [
+     0,
+     0,
+     322,
+     30
+    ],
+    "pitch": 34,
+    "source": "batch 6 capture of the profile timeline viewed from @marshallmixing (voter view), 2.0 px/pt: pill 322x30 from the text column, 34pt pitch"
+   }
   },
   {
    "id": "2107205542557184379",
    "lines": [
     "Poll with three choices"
    ],
-   "showMore": false
+   "showMore": false,
+   "poll": {
+    "choices": [
+     "Red",
+     "Green"
+    ],
+    "pill": [
+     0,
+     0,
+     322,
+     30
+    ],
+    "pitch": 34,
+    "source": "batch 6 capture of the profile timeline viewed from @marshallmixing (voter view), 2.0 px/pt: pill 322x30 from the text column, 34pt pitch"
+   }
   },
   {
    "id": "2107205492556886421",
    "lines": [
     "Poll with two choices"
    ],
-   "showMore": false
+   "showMore": false,
+   "poll": {
+    "choices": [
+     "Yes",
+     "No"
+    ],
+    "pill": [
+     0,
+     0,
+     322,
+     30
+    ],
+    "pitch": 34,
+    "source": "batch 6 capture of the profile timeline viewed from @marshallmixing (voter view), 2.0 px/pt: pill 322x30 from the text column, 34pt pitch"
+   }
   },
   {
    "id": "2107205404967211163",

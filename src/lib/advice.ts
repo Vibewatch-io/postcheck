@@ -68,6 +68,13 @@ export interface AdviceInput {
   mediaKinds?: MediaKind[];
   /** How the media is laid out on each preview shown (the selected web layout and phone). */
   mediaLayouts?: Array<{ deviceId: string; deviceLabel: string; layout: MediaLayout; ios: boolean; tall: boolean }>;
+  /**
+   * A poll is attached: "shown" (X shows it instead of any link card), "dropped" (the post is over
+   * 280, and X posts it without the poll) or "empty" (fewer than two choices filled in).
+   */
+  poll?: "shown" | "dropped" | "empty" | null;
+  /** An image poll with a choice that has no picture: X won't post it. */
+  pollPictures?: boolean;
   /** Bold / italic runs are present. */
   hasStyles?: boolean;
   /** The draft exactly as typed, before X's trimming and blank-line collapsing. */
@@ -80,10 +87,51 @@ const RANK: Record<Severity, number> = { fix: 0, tip: 1, note: 2 };
 // 2d4a03c, 2026-09-15). "The ranker doesn't penalize it" is not the same as "do it".
 
 export function buildAdvice(input: AdviceInput): Advice[] {
-  const { text, entities, length, card, lineSets, hasMedia } = input;
+  const { text, entities, length, card, lineSets, hasMedia, poll } = input;
   const out: Advice[] = [];
   const trimmed = text.trim();
-  if (!trimmed) return out;
+  // @postcheck_test tests 94 and 94b: the composer took the poll both times, and X stored the long
+  // post with no poll.
+  if (poll === "dropped") {
+    out.push({
+      id: "poll-dropped",
+      severity: "fix",
+      title: "X drops the poll past 280 characters",
+      detail: "X lets you attach a poll to a longer post, then posts the text without it. Cut the post to 280 characters to keep the poll. The preview shows the post as X will publish it.",
+      marks: [{ el: "more" }],
+    });
+  } else if (poll === "empty") {
+    out.push({
+      id: "poll-empty",
+      severity: "note",
+      title: "A poll needs two choices",
+      detail: "X won't post a poll with fewer than two choices filled in. The preview draws it once two are.",
+    });
+  }
+  if (input.pollPictures) {
+    out.push({
+      id: "poll-pictures",
+      severity: "fix",
+      title: "Every choice needs a picture",
+      detail: "X won't post an image poll until each choice has a picture. Add the rest, or remove them all for a text poll.",
+      // Past 280 the poll isn't drawn, so there is nothing to point at.
+      marks: poll === "shown" ? [{ el: "attachment" }] : [],
+    });
+  }
+
+  if (!trimmed) {
+    // Composing @postcheck_test test 57c (2026-10-08): with the poll filled in and no text, X's Post
+    // button stayed off until the question was typed.
+    if (poll) {
+      out.push({
+        id: "poll-no-text",
+        severity: "fix",
+        title: "Write the question",
+        detail: "X won't post a poll without text above it. Type the question in the post.",
+      });
+    }
+    return out.sort((a, b) => RANK[a.severity] - RANK[b.severity]);
+  }
 
   const hashtags = entities.filter((e) => e.type === "hashtag");
   const urls = entities.filter((e) => e.type === "url");
@@ -118,10 +166,12 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     });
   }
 
+
   if (urls.length > 0) {
     const cu = quoteUrl(entities) ?? cardUrl(entities)!;
     const trailing = isTrailing(text, cu);
-    if (urls.length > 1 && !cu.isStatus) {
+    // With a photo or a poll there is no card at all, so the one-card tip would contradict theirs.
+    if (urls.length > 1 && !cu.isStatus && !hasMedia && poll !== "shown") {
       out.push({
         id: "multiple-urls",
         severity: "note",
@@ -140,6 +190,17 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         detail: `With media on the post X shows the media and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
         marks: [{ at: cu.start }],
       });
+    } else if (poll === "shown" && !cu.isStatus) {
+      // @postcheck_test test 95: the poll and the link text, no card.
+      out.push({
+        id: "poll-beats-card",
+        severity: "note",
+        title: "Poll attached, so no card",
+        detail: `With a poll on the post X shows the poll and never a link card, and the link stays as text: "${cu.display}". Even at the very end of the post it stays visible.`,
+        marks: [{ at: cu.start }],
+      });
+    } else if (poll === "shown") {
+      // A post link with a poll: drawn like a photo (no quote, link text kept), which no capture shows.
     } else if (cu.isStatus) {
       out.push({
         id: "status-link",
