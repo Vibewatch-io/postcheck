@@ -111,7 +111,7 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
     // 1px border + 99 thumbnail + 1px divider + 15 = the text's 116dp. The captures' border and divider are
     // device-pixel hairlines (0.33 and 0.67dp), so the thumbnail reads 99.3dp there.
     return (
-      <div data-card="" style={{ ...frame, height: 100, display: "flex" }}>
+      <div data-card="" style={{ ...frame, borderRadius: 8, height: 100, display: "flex" }}>
         <div data-card-thumb="" style={{ width: 99, flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", color: theme.secondary }}>
           {card.image ? (
             /* eslint-disable-next-line @next/next/no-img-element */
