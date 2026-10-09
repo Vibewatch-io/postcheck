@@ -138,7 +138,8 @@ function NameRow({ name, handle, badge, time, theme, handleFirst = false }: { na
  * iOS timeline, from iPhone 15 Pro captures of tests 42 and 43 at 393pt: 322pt wide (screen − 71:
  * it starts at the text column and runs 6pt past its right edge), radius 12 (fit to the capture),
  * 20pt avatar, text 6pt under it with a 19pt line pitch, links blue, 5 lines then "…".
- * The iOS post screen and Android have no capture: assumed iOS-like and web-like respectively.
+ * Android, from a Pixel 3 capture of test 44 at 360 dp: web-like (the text column's width, links in the text
+ * colour, the photo whole at 16:9). The iOS post screen has no capture: assumed iOS-like.
  */
 function quoteLook(device: Device) {
   if (device.kind === "phone" && device.platform === "ios") {
@@ -205,6 +206,8 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
               width={look.width - 26}
               font={device.font}
               pane={device.pane}
+              // The quoted text wraps by the same app's rules (assumed: no Android quote capture has a hyphen or a long link).
+              platform={device.platform}
               linkColor={look.appLinks ? theme.link : theme.text}
               maxLines={5}
             />
@@ -498,10 +501,13 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const name = identity.name || "Your name";
   const square = identity.badge === "gold" || identity.badge === "gray";
   const bodyWidth = device.textWidth;
+  // The Android app keeps a trailing link to a post as text above its quote ("…text post x.com/" |
+  // "Postcheck_test…", @postcheck_test tests 40–44); iOS and x.com drop it. A trailing card link it hides like them.
+  const hiddenUrl = device.platform === "android" && quote ? null : hiddenUrlStart;
   const viewport = device.kind === "phone" ? device.width : 1200;
   // The iOS timeline cell, where the app's card is measured; the iOS post screen has no capture.
   const ios = device.kind === "phone" && device.platform === "ios" && device.view !== "post";
-  const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrlStart));
+  const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrl));
 
   // The wrapper has no box of its own (display: contents), so layout is untouched; tip marks find
   // the attachment through it.
@@ -540,13 +546,14 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       tokens={tokens}
       showMoreAt={showMore ? tokens.length : -1}
       onShowMore={onShowMore}
-      hiddenUrlStart={hiddenUrlStart}
+      hiddenUrlStart={hiddenUrl}
       theme={theme}
       fontSize={device.fontSize}
       lineHeight={device.lineHeight}
       width={bodyWidth}
       font={device.font}
       pane={device.pane}
+      platform={device.platform}
       styles={styles}
     />
   );

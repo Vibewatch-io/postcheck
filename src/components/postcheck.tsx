@@ -534,7 +534,7 @@ export function Postcheck() {
     // windows the preview stacks under the composer and the page scrolls.
     <div ref={rowRef} className={`mx-auto flex min-h-0 w-full flex-1 ${narrow ? "flex-col items-center gap-6 pb-6" : "items-stretch gap-6"}`} style={{ maxWidth: ROW_MAX }}>
       <ThemeToggle themeId={themeId} onChange={(t) => { setThemeChosen(true); setThemeId(t); }} />
-      <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} devices={probeDevices} onMeasure={setLineSets} styles={styles} />
+      <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} quoteShown={quote !== null} expanded={expanded} devices={probeDevices} onMeasure={setLineSets} styles={styles} />
 
       {/* Left half: the composer centred vertically, like the preview, with the tips hanging in the
           space below it. The two spacers split the free height evenly, but the tips' block never

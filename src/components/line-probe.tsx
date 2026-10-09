@@ -11,6 +11,10 @@ interface Props {
   tokens: Token[];
   showMore: boolean;
   hiddenUrlStart: number | null;
+  /** The hidden link is a quote's: the Android app keeps its text (see XPost). */
+  quoteShown?: boolean;
+  /** Devices whose row is expanded in the preview: an expanded Android row shows its styling, so it is measured with it. */
+  expanded?: Record<string, boolean>;
   devices: Device[];
   onMeasure: (lines: DeviceLines[]) => void;
   styles?: StyleRun[];
@@ -91,7 +95,7 @@ export function measureLines(root: HTMLElement, lineHeight: number): { lines: Li
  * once Chirp finishes loading) the word spans are read back to find where each
  * line actually breaks, so advice can name the dangling word on each device.
  */
-export function LineProbes({ tokens, showMore, hiddenUrlStart, devices, onMeasure, styles }: Props) {
+export function LineProbes({ tokens, showMore, hiddenUrlStart, quoteShown = false, expanded, devices, onMeasure, styles }: Props) {
   const refs = useRef<Array<HTMLDivElement | null>>([]);
   const cb = useRef(onMeasure);
   useLayoutEffect(() => {
@@ -113,7 +117,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, devices, onMeasur
     const fonts = document.fonts;
     fonts.addEventListener("loadingdone", run);
     return () => fonts.removeEventListener("loadingdone", run);
-  }, [tokens, showMore, hiddenUrlStart, devices, styles]);
+  }, [tokens, showMore, hiddenUrlStart, quoteShown, expanded, devices, styles]);
 
   return (
     <div aria-hidden style={{ position: "absolute", left: -99999, top: 0, visibility: "hidden", pointerEvents: "none" }}>
@@ -126,7 +130,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, devices, onMeasur
         >
           {/* The app never appends the web's 280-cut "Show more": a long post under 10 lines shows whole
               there, so counting the token would push a full last line onto a 10th row (test 94). */}
-          <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={d.lineHeight} width={d.textWidth} font={d.font} pane={d.pane} styles={rowHidesStyles(d) ? [] : styles} />
+          <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={d.platform === "android" && quoteShown ? null : hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={d.lineHeight} width={d.textWidth} font={d.font} pane={d.pane} platform={d.platform} styles={rowHidesStyles(d, d.platform === "android" && Boolean(expanded?.[d.id])) ? [] : styles} />
           <span data-token style={{ position: "absolute", whiteSpace: "pre", fontFamily: fontStack(d.font), fontSize: d.fontSize, lineHeight: `${d.lineHeight}px`, letterSpacing: `var(--ls-${d.pane})` }}>
             {" Show more"}
           </span>
