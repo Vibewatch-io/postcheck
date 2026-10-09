@@ -1,5 +1,5 @@
 {
- "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 420 so the app lays out at 411.4x776 dp, the width a real 1080 px Pixel 10 reports (scripts/android/README.md); @Postcheck_test search-result cells captured 2026-10-08. At this width the app sets the body at 16/21.33 (devices.ts). Lines: each body's characters from the app's own text node (uiautomator), split where macOS Vision OCR of the screenshot puts the row breaks; the last line of a showMore post is the line before the token. By eye: 31 and 74 (their text node was empty), 72 and 77 (scripts the OCR can't read). 73 (Thai) not found by search. 03 read after tapping Show original. 47b and 47c are the reply cells, not the lookalike link quotes the same search lists. Search cells, not the profile timeline (test 12 identical in both on 2026-10-05). Polls had closed (results view). Polls (57, 57b, 57c, 90–97) recaptured 2026-10-09 for their geometry, in the author's results view (57c was still open); 57c's voter view read the same day as @marshallmixing, added to the phone's X app: each entry's `poll` says what was read; 96's quote shows no \"Show this poll\" line (`quotePollLine`). Screenshots and dumps in .captures/android-pixel3/polls/. Link cards (tests 07, 20–31, 121; 2026-10-08 screenshots): `card.box` from the border pixels, 8dp under the last line's text box, so 7 under its line box (6.9 at 411.4); a large card's height is not recorded; a small card is 100dp high with a 99.3dp thumbnail (`thumb`) between hairlines.",
+ "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 420 so the app lays out at 411.4x776 dp, the width a real 1080 px Pixel 10 reports (scripts/android/README.md); @Postcheck_test search-result cells captured 2026-10-08. At this width the app sets the body at 16/21.33 (devices.ts). Lines: each body's characters from the app's own text node (uiautomator), split where macOS Vision OCR of the screenshot puts the row breaks; the last line of a showMore post is the line before the token. By eye: 31 and 74 (their text node was empty), 72 and 77 (scripts the OCR can't read). 73 (Thai) not found by search. 03 read after tapping Show original. 47b and 47c are the reply cells, not the lookalike link quotes the same search lists. Search cells, not the profile timeline (test 12 identical in both on 2026-10-05). Polls had closed (results view). Polls (57, 57b, 57c, 90–97) recaptured 2026-10-09 for their geometry, in the author's results view (57c was still open); 57c's voter view read the same day as @marshallmixing, added to the phone's X app, and 57d (an open text poll, posted that day) in both views, dark and light: each entry's `poll` says what was read; 96's quote shows no \"Show this poll\" line (`quotePollLine`). Screenshots and dumps in .captures/android-pixel3/polls/. Link cards (tests 07, 20–31, 121; 2026-10-08 screenshots): `card.box` from the border pixels, 8dp under the last line's text box, so 7 under its line box (6.9 at 411.4); a large card's height is not recorded; a small card is 100dp high with a 99.3dp thumbnail (`thumb`) between hairlines.",
  "device": "pixel-10",
  "platform": "android",
  "posts": [
@@ -675,6 +675,32 @@
      "Two"
     ],
     "source": "voter view read as @marshallmixing (added to the Pixel 3's X app 2026-10-09), 412 dp, 2.625 px per dp, no anti-aliasing: a carousel 6 dp in from the text column, pictures 228.57 dp square (0.7 of the box) with a 1 dp border and radius about 8, 232.76 dp apart, each with a 36 dp pill 8 dp under it (radius about 8, 1 dp blue border, the label bold blue at the body's size), no Next button; pictureShare is the picture's width over the poll's (193 / 276 at 360, 228.57 / 326.86 at 411.4); picTop below the body's last baseline; footerBelowPill from the pill's bottom to the footer's baseline. Shares and gaps, not sizes, as the Pixel 10 is drawn 412 wide and the capture is 411.4. X showed this reader Three, Four, One, Two (swiped through: tiles 7, 8, 5, 6), as x.com did, while the iPhone showed him One to Four; the tool draws the posted order, so `shownOrder` is checked as a set of labels, not an order. The author's results view (2026-10-09): a vertical list of 40 dp pictures on a 44.19 dp pitch, footer \"0 vote • 6 days 7 hours left\""
+   }
+  },
+  {
+   "id": "2108612114852225168",
+   "lines": [
+    "Test 57d: text poll, open for 7 days"
+   ],
+   "showMore": false,
+   "poll": {
+    "view": "voter",
+    "inset": [
+     6.1,
+     6.1
+    ],
+    "labelCentre": 29.9,
+    "pitch": 40.38,
+    "pillHeight": 36.19,
+    "footerBaseline": 192.76,
+    "footer": "0 vote • 6 days 23 hours left",
+    "shownOrder": [
+     "Two",
+     "Three",
+     "Four",
+     "One"
+    ],
+    "source": "voter view of a text poll, read as @marshallmixing on the Pixel 3's X app (dark theme), 2026-10-09, 2.625 px per dp, no anti-aliasing on the pill edges: each choice a fully rounded pill (the corner reaches the side at half its height) with a 1 dp #1D9BF0 border, 36.19 dp (95 px) tall on a 40.38 dp (106 px) pitch (4.19 dp apart), as wide as the box (6 dp in from each side of the text column); the label bold #1D9BF0 at the body's size (its cap height the body's: 11.43 dp), centred; the footer's baseline 23.62 dp under the last pill. labelCentre and footerBaseline from the body's last baseline (screenshot ink: the bottom of the T, the footer's 0). The same box as the author's results view (captured the same day as @Postcheck_test: the same label rows, the footer node at the same bounds). Light theme (Display → Day, 2026-10-09, both accounts): the same blue pills and labels, footer #536471, body #0F1419. X showed this reader Two, Three, Four, One (posted One to Four), so `shownOrder` is checked as a set of labels"
    }
   },
   {

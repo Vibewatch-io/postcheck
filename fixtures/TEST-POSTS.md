@@ -238,12 +238,15 @@ different layout from its results view); recapture it from another account, not 
 | 95 | `Poll with a link https://github.com/vercel/next.js` · `Card` / `No card` | Poll vs link card. |
 | 96 | `Quote of a poll <ID 57>` | How a quoted poll renders. |
 | 97 | 12 lines (`one` … `twelve`) · `Fold` / `No fold` | The app's 9-line fold with a poll under the text. |
+| 57d | `Test 57d: text poll, open for 7 days` · `One` / `Two` / `Three` / `Four`, 7 days | The voter view of an open text poll on Android (read from another account), and both views in the Android light theme. Posted 2026-10-09 (2108612114852225168). |
 
 Posted 2026-10-05 (batch 6). 91 lost its third choice in the composer and was re-posted as 91b. On 2026-10-09
 57c was captured on the iPhone from @marshallmixing (voter view) and every poll here plus 57, 57b and 57c on the
 Pixel 3 at 360 and 411.4 dp (the author's results view: the phone is signed in as @Postcheck_test); later that
 day 57c's voter view on the Pixel as @marshallmixing, and its whole iPhone carousel swiped through by the owner. 94 posted twice
-(94b with the choices typed by hand): both times X stored the long post with no poll.
+(94b with the choices typed by hand): both times X stored the long post with no poll. 57d (posted 2026-10-09,
+open until 2026-10-16) was read on the Pixel 3 at both widths as @marshallmixing (voter view) and @Postcheck_test (results
+view), in dark and then light (X's Display set to Day for the pass, then back to System), with 57c's two views in light.
 
 ```text
 94
@@ -322,7 +325,7 @@ Posts 42–45 (native quotes), 52–55 (multiple photos, GIF), 56 (video badge),
 66 (price charts), group 10's thread and repost chrome, group 11's media sizes and
 120–122 (player and app cards) test layouts the tool doesn't render today. The post states (101–103, 105 on 104's post, 110, 111, 131; 104's edit has no timeline marker to draw)
 are drawn and checked from `fixtures/post-states.json`. Capture them anyway: they are the spec for building those features, and the
-harness can check line breaks around them before the media itself is drawn. Polls (57, 57b, 57c and group 9) are
+harness can check line breaks around them before the media itself is drawn. Polls (57, 57b, 57c, 57d and group 9) are
 drawn since 2026-10-08, in the voter view; `verify` checks them.
 
 ## After capturing

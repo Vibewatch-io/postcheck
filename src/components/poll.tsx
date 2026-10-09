@@ -28,12 +28,12 @@ import { NextArrowIcon } from "./icons";
  * it, outlined and labelled in blue like a text poll's; footer "6d left" 7pt under the pills, and the
  * action row 12.5pt further down than under media (the cell's height).
  * Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the poll sits 6dp in from each side of the text
- * column, its top 11.7dp under the text's last baseline, in both the author's results view and an image
- * poll's voter view (57c from @marshallmixing). A text choice row is on a 40dp pitch with the label (the
- * body's size) centred in it (results view; the voter view's rows are inferred from it, as x.com's two
- * views share one box), 36dp assumed for the pill (the image poll's pill); the footer ("0 vote • 6 days
- * 7 hours left", 13dp, 13.7 at 411.4) has its baseline 22.3dp under the last row or pill. The text
- * pill's look is assumed (drawn as x.com's, fully rounded; the image poll's pill has radius 8).
+ * column, its top 11.7dp under the text's last baseline, in the author's results view and in the voter
+ * view (57c and 57d from @marshallmixing). A text poll's voter view keeps the results view's box: each
+ * choice a fully rounded 36dp pill (1dp blue border, the label bold blue at the body's size, centred) on
+ * a 40dp pitch; the footer ("0 vote • 6 days 7 hours left", 13dp, 13.7 at 411.4) has its baseline 22.3dp
+ * under the last row or pill. Light theme (57c and 57d, 2026-10-09): x.com's light palette, the pills
+ * and labels the same blue.
  * The iOS post screen draws the poll across its text column (assumed). A click on a choice does nothing: on X it votes, so it must
  * not fold or expand the post the way a click elsewhere on the cell does.
  */
@@ -49,12 +49,13 @@ const IMAGE_POLL = {
  * Android's poll box, from the author's results view (tests 57–97 on a Pixel 3, 2026-10-09): `inset` from
  * each side of the text column; `top` moves the poll from the cell's 12dp gap to 11.7dp under the text's
  * last baseline; `pitch` per text choice, 40dp at 360 and 106px (40.38dp) at 411.4, where the body is
- * 16/21.33; the text pill is assumed 4 short of it (36dp, the image poll's pill); `footerTop` puts the
+ * 16/21.33; a text poll's voter pill is 4 short of it (57d: 36dp, 95px = 36.2dp at 411.4); `footerTop` puts the
  * footer's baseline 22.3dp under the last row (at 411.4, 23.6 under the image poll's pills and 23.5 under
  * the results view's rows: drawn at 23.6, within 1 of both). `picture`: an image poll's voter view (57c read as @marshallmixing, dark theme) is a
  * carousel of squares 0.7 of the box wide (193dp at 360, 228.6 at 411.4), radius 8, 4dp apart, each
  * with a 36dp pill 8dp under it, radius 8, outlined in blue with the label bold blue at the body's size;
- * no Next button. The light theme's colours and the pill's side padding are x.com's (assumed).
+ * no Next button. In light the picture border is #CFD9DE (#2F3336 in dark), the card border's, and the
+ * pill stays blue (measured); the empty picture's fill and the pill's side padding are x.com's (assumed).
  */
 const ANDROID = { inset: 6, top: -5.33, pitch: 40, widePitch: 40.38, footerTop: 10, wideFooterTop: 11, picture: 0.7 } as const;
 
