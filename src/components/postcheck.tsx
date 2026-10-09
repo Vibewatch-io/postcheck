@@ -473,9 +473,12 @@ export function Postcheck() {
     };
   }, [editor, draft.text]);
 
-  const over = length.weighted > MAX_WEIGHTED_LENGTH;
+  // A checked author is assumed to post past 280 (see buildAdvice's `verified`), so the counter
+  // doesn't warn them: it keeps counting against the 280 fold.
+  const capped = identity.badge === "none";
+  const over = capped && length.weighted > MAX_WEIGHTED_LENGTH;
   const ratio = Math.min(1, length.weighted / MAX_WEIGHTED_LENGTH);
-  const ringColor = over ? "#F97316" : length.weighted > 260 ? "#F5A623" : "#00C4A1";
+  const ringColor = over ? "#F97316" : capped && length.weighted > 260 ? "#F5A623" : "#00C4A1";
 
   // Two halves: composer and tips on the left, the preview centred on the right.
   const rowRef = useRef<HTMLDivElement>(null);
