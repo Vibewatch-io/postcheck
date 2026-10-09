@@ -27,14 +27,14 @@ import { NextArrowIcon } from "./icons";
  * poll's top, 221pt apart (57c reads 220.4, 57b 222), each with its choice in a 27pt pill 7pt under
  * it, outlined and labelled in blue like a text poll's; footer "6d left" 7pt under the pills, and the
  * action row 12.5pt further down than under media (the cell's height).
- * Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp) was captured only in the author's results view.
- * Its geometry is drawn for the voter view too, as the web's two views share one box: the poll sits
- * 6dp in from each side of the text column, its top 11.7dp under the text's last baseline; a text
- * choice row on a 40dp pitch with the label (the body's size) centred in it, 36dp assumed for the
- * pill as the web's and the iPhone's leave 4 between rows; the footer ("0 vote • 6 days 7 hours
- * left", 13dp, 13.7 at 411.4) has its baseline 22.3dp under the last row. The pill's look and an
- * image poll's voter view (drawn as the web's carousel) are assumed. The iOS post screen draws the
- * poll across its text column (assumed). A click on a choice does nothing: on X it votes, so it must
+ * Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the poll sits 6dp in from each side of the text
+ * column, its top 11.7dp under the text's last baseline, in both the author's results view and an image
+ * poll's voter view (57c from @marshallmixing). A text choice row is on a 40dp pitch with the label (the
+ * body's size) centred in it (results view; the voter view's rows are inferred from it, as x.com's two
+ * views share one box), 36dp assumed for the pill (the image poll's pill); the footer ("0 vote • 6 days
+ * 7 hours left", 13dp, 13.7 at 411.4) has its baseline 22.3dp under the last row or pill. The text
+ * pill's look is assumed (drawn as x.com's, fully rounded; the image poll's pill has radius 8).
+ * The iOS post screen draws the poll across its text column (assumed). A click on a choice does nothing: on X it votes, so it must
  * not fold or expand the post the way a click elsewhere on the cell does.
  */
 const stop = (e: MouseEvent) => e.stopPropagation();
@@ -49,10 +49,14 @@ const IMAGE_POLL = {
  * Android's poll box, from the author's results view (tests 57–97 on a Pixel 3, 2026-10-09): `inset` from
  * each side of the text column; `top` moves the poll from the cell's 12dp gap to 11.7dp under the text's
  * last baseline; `pitch` per text choice, 40dp at 360 and 106px (40.38dp) at 411.4, where the body is
- * 16/21.33; the pill is assumed 4 short of it, as on the web and the iPhone; `footerTop` puts the
- * footer's baseline 22.3dp under the last row.
+ * 16/21.33; the text pill is assumed 4 short of it (36dp, the image poll's pill); `footerTop` puts the
+ * footer's baseline 22.3dp under the last row (at 411.4, 23.6 under the image poll's pills and 23.5 under
+ * the results view's rows: drawn at 23.6, within 1 of both). `picture`: an image poll's voter view (57c read as @marshallmixing, dark theme) is a
+ * carousel of squares 0.7 of the box wide (193dp at 360, 228.6 at 411.4), radius 8, 4dp apart, each
+ * with a 36dp pill 8dp under it, radius 8, outlined in blue with the label bold blue at the body's size;
+ * no Next button. The light theme's colours and the pill's side padding are x.com's (assumed).
  */
-const ANDROID = { inset: 6, top: -5.33, pitch: 40, widePitch: 40.38, footerTop: 10 } as const;
+const ANDROID = { inset: 6, top: -5.33, pitch: 40, widePitch: 40.38, footerTop: 10, wideFooterTop: 11, picture: 0.7 } as const;
 
 /** `afterText`: the poll follows the post's text (Android's lift is measured from the text's baseline). */
 export function PollCard({ poll, device, theme, afterText = true }: { poll: Poll; device: Device; theme: XTheme; afterText?: boolean }) {
@@ -63,8 +67,8 @@ export function PollCard({ poll, device, theme, afterText = true }: { poll: Poll
   const width = ios ? (device.view === "post" ? device.textWidth : device.width - 71) : android ? device.textWidth - 2 * ANDROID.inset : device.textWidth;
   const text: CSSProperties = { fontFamily: fontStack(device.font), letterSpacing: `var(--ls-${device.pane})` };
   const look = IMAGE_POLL[theme.id];
-  // The iPhone outlines an image poll's choices in blue like a text poll's (57c); x.com's are neutral.
-  const neutral = images && !ios;
+  // The iPhone and Android outline an image poll's choices in blue like a text poll's (57c); x.com's are neutral.
+  const neutral = images && !ios && !android;
   const pill = (label: string, height: number, size: number, line: number, extra?: CSSProperties) => (
     <div
       data-poll-choice=""
@@ -81,12 +85,12 @@ export function PollCard({ poll, device, theme, afterText = true }: { poll: Poll
     </div>
   );
   // Swiped sideways like X's ScrollSnap list, with no scrollbar; PNG export keeps the scroll position.
-  const carousel = (item: number, gap: number, pillTop: number, pillHeight: number, size: number, line: number, radius = 8) => (
+  const carousel = (item: number, gap: number, pillTop: number, pillHeight: number, size: number, line: number, radius = 8, pillLook?: CSSProperties) => (
     <div data-poll-carousel="" style={{ display: "flex", gap, overflowX: "auto", overflowY: "hidden", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
       {choices.map((c, i) => (
         <div key={i} data-poll-row="" style={{ width: item, flex: "none", scrollSnapAlign: "start" }}>
           {picture(c.image, item, radius)}
-          {pill(c.label, pillHeight, size, line, { marginTop: pillTop })}
+          {pill(c.label, pillHeight, size, line, { marginTop: pillTop, ...pillLook })}
         </div>
       ))}
     </div>
@@ -118,7 +122,7 @@ export function PollCard({ poll, device, theme, afterText = true }: { poll: Poll
 
   if (android) {
     const footer = (
-      <div data-poll-footer="" style={{ ...text, marginTop: ANDROID.footerTop, fontSize: device.fontSize === 16 ? 13.7 : 13, lineHeight: "16px", color: theme.secondary }}>
+      <div data-poll-footer="" style={{ ...text, marginTop: device.fontSize === 16 ? ANDROID.wideFooterTop : ANDROID.footerTop, fontSize: device.fontSize === 16 ? 13.7 : 13, lineHeight: "16px", color: theme.secondary }}>
         0 vote • {timeLeft(poll.minutes, "app")}
       </div>
     );
@@ -127,8 +131,9 @@ export function PollCard({ poll, device, theme, afterText = true }: { poll: Poll
     const pitch = device.fontSize === 16 ? ANDROID.widePitch : ANDROID.pitch;
     if (images) {
       return (
-        <div data-poll="" onClick={stop} style={{ ...box, position: "relative", paddingTop: 12 }}>
-          <WithNextButton count={choices.length}>{carousel(240, 12, 8, 32, 15, 20)}</WithNextButton>
+        // No Next button; the pictures start at the box's top.
+        <div data-poll="" onClick={stop} style={box}>
+          {carousel(Math.round(width * ANDROID.picture * 100) / 100, 4, 8, 36, device.fontSize, 20, 8, { borderRadius: 8 })}
           {footer}
         </div>
       );

@@ -80,6 +80,11 @@ Recorded in QUIRKS.md (Android rows) with `fixtures/app/galaxy-s25.json` and `fi
   after a "/"; the Show more token wraps like two words, so "Show" can end a line with "more" on the next (tests 05, 94, 116).
 - **Links.** A trailing link to a post stays as text above the quote (x.com and the iPhone hide it).
 - **Styling.** The timeline row shows no Premium bold or italic (tests 70, 70b), like the iPhone's.
-- **Polls** (author's results view only: the phone is signed in as @Postcheck_test). The poll sits 6 dp in from
-  each side of the text column; text choices on a 40 dp pitch, image choices as a vertical list of 40 dp pictures;
-  footer "0 vote • …" at 13 dp; a quoted poll has no "Show this poll" line (tests 57–97, 2026-10-09).
+- **Polls.** The poll sits 6 dp in from each side of the text column. The author's results view: text choices
+  on a 40 dp pitch, image choices as a vertical list of 40 dp pictures. A reader's view of an image poll
+  (@marshallmixing, added to the phone's X app and switched to with the drawer's account icon): a carousel of
+  pictures 0.7 of the poll's width with blue 36 dp pills, in a turned order (Three, Four, One, Two for 57c).
+  Footer "0 vote • …" at 13 dp in both views. In the author's view, a quoted poll has no "Show this poll" line
+  (tests 57–97, 2026-10-09).
+  Swipe a carousel with `adb shell input swipe 750 830 300 830 350` on the pictures (a slow swipe snaps back,
+  a fast one flings past the end into the search tabs); never tap a choice: that votes.
