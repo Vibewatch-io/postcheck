@@ -69,11 +69,14 @@ const phone = (
   // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
   // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 60dp to width − 12dp, so
   // column = width − 72; four lines of test 05 match x.com's untracked web Chirp at 15px to within ink side
-  // bearings, and the line pitch is 20dp (scripts/android/README.md).
+  // bearings, with a 20dp pitch below 400 dp (scripts/android/README.md; the wide-screen size is below).
   textWidth: platform === "ios" ? width - 71 : width - 72,
   pane: platform === "ios" ? "app" : "web",
-  fontSize: 15,
-  lineHeight: platform === "ios" ? 19.28 : 20,
+  // Android sets the body at 16/21.33 on a wide screen: the same lines measure 6.4% wider at 411.4 dp than at
+  // 360 and 392 dp, and the pitch is 56px at 2.625 px/dp (@postcheck_test tests 01–08 on a Pixel 3). The
+  // switch lies between 392 and 411.4 dp; 400 (Android's sw400dp resource bucket) is inferred.
+  fontSize: platform === "android" && width >= 400 ? 16 : 15,
+  lineHeight: platform === "ios" ? 19.28 : width >= 400 ? 64 / 3 : 20,
   pixelRatio: 3,
   radius,
   island,
@@ -113,10 +116,12 @@ export function postScreenTracking(d: Device): CSSProperties | undefined {
 /**
  * The iOS app's timeline row draws a Premium-styled post with no bold or italic at all, short or
  * folded; the styling shows once a long row is expanded with Show more, and on the post screen
- * (@postcheck_test tests 70 and 70b, iPhone 15 Pro). Likely an X bug, but the preview shows it as it is.
+ * (@postcheck_test tests 70 and 70b, iPhone 15 Pro). The Android row drops it too, short or cut at 280
+ * (tests 70 and 70b on a Pixel 3; its expanded row is assumed to match the iPhone's). Likely an X bug,
+ * but the preview shows it as it is.
  */
 export function rowHidesStyles(d: Device, expanded = false): boolean {
-  return d.pane === "app" && d.view === "timeline" && !expanded;
+  return (d.pane === "app" || d.platform === "android") && d.view === "timeline" && !expanded;
 }
 
 /**

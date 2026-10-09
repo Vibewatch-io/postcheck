@@ -1,6 +1,6 @@
 {
- "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 480 so the app lays out at 360x679 dp (scripts/android/README.md); @Postcheck_test search-result cells. Tests 05-08 and 11-13 captured 2026-10-05 by hand; the whole corpus recaptured 2026-10-08 (the seven earlier posts came out identical). Lines: each body's characters from the app's own text node (uiautomator), split where macOS Vision OCR of the screenshot puts the row breaks; the last line of a showMore post is the line before the token. By eye: 31 and 74 (their text node was empty), 72 and 77 (scripts the OCR can't read). 73 (Thai) not found by search. 03 read after tapping Show original. 47b and 47c are the reply cells, not the lookalike link quotes the same search lists. Search cells, not the profile timeline (test 12 identical in both on 2026-10-05). Polls had closed (results view). 95 is a known gap (no polls in the tool).",
- "device": "galaxy-s25",
+ "source": "X Android app 12.31.0 on a Pixel 3 (Android 12) over adb, density overridden to 420 so the app lays out at 411.4x776 dp, the width a real 1080 px Pixel 10 reports (scripts/android/README.md); @Postcheck_test search-result cells captured 2026-10-08. At this width the app sets the body at 16/21.33 (devices.ts). Lines: each body's characters from the app's own text node (uiautomator), split where macOS Vision OCR of the screenshot puts the row breaks; the last line of a showMore post is the line before the token. By eye: 31 and 74 (their text node was empty), 72 and 77 (scripts the OCR can't read). 73 (Thai) not found by search. 03 read after tapping Show original. 47b and 47c are the reply cells, not the lookalike link quotes the same search lists. Search cells, not the profile timeline (test 12 identical in both on 2026-10-05). Polls had closed (results view). 95 is a known gap (no polls in the tool).",
+ "device": "pixel-10",
  "platform": "android",
  "posts": [
   {
@@ -8,77 +8,74 @@
    "lines": [
     "Length test A: this post is exactly 280",
     "weighted characters and ends on a whole",
-    "word. the quick brown fox jumps over a",
-    "lazy dog the quick brown fox jumps over a",
-    "lazy dog the quick brown fox jumps over a",
-    "lazy dog the quick brown fox jumps over a",
-    "lazy dog the quick brown fox jumps."
+    "word. the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps."
    ],
    "showMore": false
   },
   {
    "id": "2100298643605709117",
    "lines": [
-    "CJK test: 日本語のテキストは一文字が二",
-    "文字分として数えられます。日本語のテキ",
-    "ストは一文字が二文字分として数えられま",
-    "す。日本語のテキストは一文字が二文字分",
-    "として数えられます。日本語のテキストは",
-    "一文字が二文字分として数えられます。日",
-    "本語のテキストは一文字が二文字分として",
-    "数えられます。"
+    "CJK test: 日本語のテキストは一文字が二文字分",
+    "として数えられます。日本語のテキストは一文",
+    "字が二文字分として数えられます。日本語のテ",
+    "キストは一文字が二文字分として数えられま",
+    "す。日本語のテキストは一文字が二文字分とし",
+    "て数えられます。日本語のテキストは一文字が",
+    "二文字分として数えられます。"
    ],
    "showMore": false
   },
   {
    "id": "2100298868282077295",
    "lines": [
-    "Emoji test: family emoji count as two 👨‍👩‍👧‍👦",
-    "flags too 🇺🇸 skin tones 👍🏽 and this line",
-    "runs right up to the limit ok ok ok ok ok ok",
-    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
-    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
-    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
-    "ok ok ok ok ok ok ok ok 🚀"
+    "Emoji test: family emoji count as two 👨‍👩‍👧‍👦 flags",
+    "too 🇺🇸 skin tones 👍🏽 and this line runs right up",
+    "to the limit ok ok ok ok ok ok ok ok ok ok ok ok",
+    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
+    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok",
+    "ok ok ok ok ok ok ok ok ok ok ok ok ok ok 🚀"
    ],
    "showMore": false
   },
   {
    "id": "2100299215364931868",
    "lines": [
-    "Long test 05: the word before Show more",
-    "ends exactly on character 280. the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog"
+    "Long test 05: the word before Show more ends",
+    "exactly on character 280. the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog"
    ],
    "showMore": true
   },
   {
    "id": "2100299387255902230",
    "lines": [
-    "Long test 06: character 280 falls in the",
-    "middle of a long word here. the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a"
+    "Long test 06: character 280 falls in the middle",
+    "of a long word here. the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a"
    ],
    "showMore": true
   },
   {
    "id": "2100299521561706589",
    "lines": [
-    "Long test 08: an emoji starts on character",
-    "280 and ends on 281. the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog"
+    "Long test 08: an emoji starts on character 280",
+    "and ends on 281. the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a",
+    "lazy dog the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog"
    ],
    "showMore": true
   },
@@ -178,9 +175,9 @@
    "id": "2100300464600633836",
    "lines": [
     "Long word test 15:",
-    "Supercalifragilisticexpialidocious-and-th",
-    "en-some-more-letters sits in the middle",
-    "of this sentence to see where it wraps."
+    "Supercalifragilisticexpialidocious-and-then-s",
+    "ome-more-letters sits in the middle of this",
+    "sentence to see where it wraps."
    ],
    "showMore": false
   },
@@ -188,19 +185,18 @@
    "id": "2100300597098688990",
    "lines": [
     "Hyphen test 16: state-of-the-art",
-    "quantum-resistant peer-to-peer",
-    "end-to-end well-known long-term",
-    "real-time high-quality cross-platform",
-    "open-source user-friendly up-to-date"
+    "quantum-resistant peer-to-peer end-to-end",
+    "well-known long-term real-time high-quality",
+    "cross-platform open-source user-friendly",
+    "up-to-date"
    ],
    "showMore": false
   },
   {
    "id": "2100300746269008191",
    "lines": [
-    "Spacing test 17:  two spaces,   three",
-    "spaces,    four spaces, and a trailing",
-    "space."
+    "Spacing test 17:  two spaces,   three spaces,",
+    "four spaces, and a trailing space."
    ],
    "showMore": false
   },
@@ -227,8 +223,8 @@
   {
    "id": "2100651232109142223",
    "lines": [
-    "Large card, link github.com/vercel/next.js",
-    "in the middle of the sentence"
+    "Large card, link github.com/vercel/next.js in",
+    "the middle of the sentence"
    ],
    "showMore": false
   },
@@ -295,24 +291,24 @@
   {
    "id": "2100652452194459838",
    "lines": [
-    "Bare domain vibewatch.io and example.ai",
-    "and file.zip"
+    "Bare domain vibewatch.io and example.ai and",
+    "file.zip"
    ],
    "showMore": false
   },
   {
    "id": "2100652600748327317",
    "lines": [
-    "Punctuation (vibewatch.io). And",
-    "vibewatch.io, then \"example.com\""
+    "Punctuation (vibewatch.io). And vibewatch.io,",
+    "then \"example.com\""
    ],
    "showMore": false
   },
   {
    "id": "2100652733972074764",
    "lines": [
-    "Email user@vibewatch.io is not a mention",
-    "or a link"
+    "Email user@vibewatch.io is not a mention or a",
+    "link"
    ],
    "showMore": false
   },
@@ -327,8 +323,8 @@
   {
    "id": "2100661699259089326",
    "lines": [
-    "Link to a post x.com/Postcheck_test… in",
-    "the middle"
+    "Link to a post x.com/Postcheck_test… in the",
+    "middle"
    ],
    "showMore": false
   },
@@ -363,8 +359,8 @@
   {
    "id": "2100663298148762063",
    "lines": [
-    "Reply test 47: a reply to post 01 from the",
-    "same account"
+    "Reply test 47: a reply to post 01 from the same",
+    "account"
    ],
    "showMore": false
   },
@@ -401,8 +397,8 @@
   {
    "id": "2100668421813960865",
    "lines": [
-    "Native quote with a link vibewatch.io",
-    "x.com/Postcheck_test…"
+    "Native quote with a link vibewatch.io x.com/",
+    "Postcheck_test…"
    ],
    "showMore": false
   },
@@ -473,8 +469,7 @@
   {
    "id": "2102790843342221559",
    "lines": [
-    "Test 57b: poll with an image on each",
-    "choice"
+    "Test 57b: poll with an image on each choice"
    ],
    "showMore": false
   },
@@ -503,32 +498,31 @@
   {
    "id": "2105319468801065017",
    "lines": [
-    "Hashtags #postcheck #test_underscore",
-    "#123 #日本語 #émoji and #end."
+    "Hashtags #postcheck #test_underscore #123",
+    "#日本語 #émoji and #end."
    ],
    "showMore": false
   },
   {
    "id": "2105319781729743202",
    "lines": [
-    "Cashtags $BTC $STX $QWERTYU $1 and",
-    "$btc"
+    "Cashtags $BTC $STX $QWERTYU $1 and $btc"
    ],
    "showMore": false
   },
   {
    "id": "2105319812817936467",
    "lines": [
-    "Mentions @Vibewatch_io,",
-    "@marshallmixing's and @Vibewatch_io."
+    "Mentions @Vibewatch_io, @marshallmixing's",
+    "and @Vibewatch_io."
    ],
    "showMore": false
   },
   {
    "id": "2105319842027131225",
    "lines": [
-    "A 16-character handle",
-    "@zzpostchecknone1 does not link"
+    "A 16-character handle @zzpostchecknone1",
+    "does not link"
    ],
    "showMore": false
   },
@@ -550,22 +544,21 @@
   {
    "id": "2107204293661204490",
    "lines": [
-    "Length test B: text plus one link, where",
-    "every link counts as 23 characters no",
-    "matter how long it is. and so on and so on",
-    "and so on and so on and so on and so on",
-    "and so on and so on and so on and so on",
-    "and so on and so on and so on and so on",
-    "and so on and."
+    "Length test B: text plus one link, where every",
+    "link counts as 23 characters no matter how",
+    "long it is. and so on and so on and so on and",
+    "so on and so on and so on and so on and so",
+    "on and so on and so on and so on and so on",
+    "and so on and so on and so on and."
    ],
    "showMore": false
   },
   {
    "id": "2107204327194726878",
    "lines": [
-    "Long cashtags $ABCDEFGH",
-    "$ABCDEFGHIJ $ABCDEFGHIJKLMNO",
-    "$QWERTYU.A $QWERTY.AB"
+    "Long cashtags $ABCDEFGH $ABCDEFGHIJ",
+    "$ABCDEFGHIJKLMNO $QWERTYU.A",
+    "$QWERTY.AB"
    ],
    "showMore": false
   },
@@ -611,8 +604,7 @@
   {
    "id": "2107204600222888285",
    "lines": [
-    "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच",
-    "करता है"
+    "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच करता है"
    ],
    "showMore": false
   },
@@ -693,26 +685,26 @@
   {
    "id": "2107205701617832412",
    "lines": [
-    "Long poll test 94: a post over 280",
-    "characters with a poll under it, to see",
-    "where Show more lands. the quick brown",
-    "fox jumps over a lazy dog the quick brown",
-    "fox jumps over a lazy dog the quick brown",
-    "fox jumps over a lazy dog the quick brown",
-    "fox jumps over a lazy dog the quick"
+    "Long poll test 94: a post over 280 characters",
+    "with a poll under it, to see where Show more",
+    "lands. the quick brown fox jumps over a lazy",
+    "dog the quick brown fox jumps over a lazy dog",
+    "the quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a lazy dog the",
+    "quick"
    ],
    "showMore": true
   },
   {
    "id": "2107206287096459642",
    "lines": [
-    "Long poll test 94, take two: a post over",
-    "280 characters with a poll under it, to see",
-    "where Show more lands. the quick brown",
-    "fox jumps over a lazy dog the quick brown",
-    "fox jumps over a lazy dog the quick brown",
-    "fox jumps over a lazy dog the quick brown",
-    "fox jumps over a lazy dog the"
+    "Long poll test 94, take two: a post over 280",
+    "characters with a poll under it, to see where",
+    "Show more lands. the quick brown fox jumps",
+    "over a lazy dog the quick brown fox jumps over",
+    "a lazy dog the quick brown fox jumps over a",
+    "lazy dog the quick brown fox jumps over a lazy",
+    "dog the"
    ],
    "showMore": true
   },
@@ -769,8 +761,7 @@
   {
    "id": "2107204699669795237",
    "lines": [
-    "App card apps.apple.com/app/",
-    "id333903271"
+    "App card apps.apple.com/app/id333903271"
    ],
    "showMore": false
   },
@@ -812,8 +803,7 @@
   {
    "id": "2107674404880863418",
    "lines": [
-    "Reply settings: only @Vibewatch_io can",
-    "reply"
+    "Reply settings: only @Vibewatch_io can reply"
    ],
    "showMore": false
   },
@@ -835,12 +825,12 @@
    "id": "2107674949947130122",
    "lines": [
     "Long styled test 70b: a post over 280",
-    "characters with one bold and one italic",
-    "word, to see if the app timeline keeps the",
-    "styling. the quick brown fox jumps over a",
-    "lazy dog the quick brown fox jumps over a",
-    "lazy dog the quick brown fox jumps over a",
-    "lazy dog the quick brown fox"
+    "characters with one bold and one italic word,",
+    "to see if the app timeline keeps the styling. the",
+    "quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a lazy dog the",
+    "quick brown fox jumps over a lazy dog the",
+    "quick brown fox"
    ],
    "showMore": true,
    "compose": "Long styled test 70b: a post over 280 characters with one bold and one italic word, to see if the app timeline keeps the styling. the **quick** brown fox jumps over a __lazy__ dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline."
@@ -848,8 +838,8 @@
   {
    "id": "2107675007178719627",
    "lines": [
-    "App card, direct apps.apple.com/us/app/",
-    "x/id333…"
+    "App card, direct apps.apple.com/us/app/x/",
+    "id333…"
    ],
    "showMore": false
   },
@@ -906,20 +896,19 @@
    "id": "2107679528940454347",
    "lines": [
     "Long media test 116: a post over 280",
-    "characters with a tall photo under it, to",
-    "see where Show more lands. the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the quick",
-    "brown fox jumps over a lazy dog the"
+    "characters with a tall photo under it, to see",
+    "where Show more lands. the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the quick brown fox",
+    "jumps over a lazy dog the"
    ],
    "showMore": true
   },
   {
    "id": "2107689539150221418",
    "lines": [
-    "Test 117: one very tall, narrow photo",
-    "(87x1200)"
+    "Test 117: one very tall, narrow photo (87x1200)"
    ],
    "showMore": false
   },

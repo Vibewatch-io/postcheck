@@ -44,6 +44,8 @@
 :root { --ls-web: 0px; --ls-app: -0.18px; --ls-app-post: -0.32px; }
 html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.057px; --ls-app-post: -0.196px; }
 html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; --ls-app-post: 0px; }
+/* The Android app's no-break-after-hyphen (post-body.tsx): a word joiner after the hyphen, outside the DOM text. */
+.nb-hyphen::after { content: "\2060"; }
 
 /* On a phone the preview becomes that phone once the page knows its width (useThisPhone); until then
    it stays hidden, so the server-rendered listed phone never flashes first. */
