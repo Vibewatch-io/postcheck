@@ -91,7 +91,7 @@ const COLOURED = (deviceLast) => `(() => {
  */
 const STAGE_SCALE = `const k = art.getBoundingClientRect().width / art.offsetWidth || 1; const px = (v) => Math.round(v / k);`;
 
-/** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text) and a small card's thumbnail. */
+/** The link card's box ([x, y, w, h]: x from the text column's left, y from the bottom of the body text), a small card's thumbnail, a large card's pill, its text and picture. */
 const CARD_BOX = (deviceLast) => `(() => {
   const arts = [...document.querySelectorAll('article')];
   const art = ${deviceLast} ? arts[arts.length - 1] : arts[0]; ${STAGE_SCALE}
@@ -100,7 +100,9 @@ const CARD_BOX = (deviceLast) => `(() => {
   const t = c.querySelector('[data-card-thumb]')?.getBoundingClientRect();
   // The card's own text in reading order (a small card's title and domain, a large card's pill) and whether it shows a picture.
   const texts = [...c.querySelectorAll('div')].filter((d) => !d.children.length && d.textContent && !d.closest('[data-card-thumb]')).map((d) => d.textContent);
-  return { box: [px(b.left - (body?.left ?? b.left)), px(b.top - (body?.bottom ?? b.top)), px(b.width), px(b.height)], thumb: t ? [px(t.width), px(t.height)] : null, texts, image: !!c.querySelector('img') };
+  // A large card's title pill: its x from the card's left, gap above the card's bottom, width and height.
+  const p = c.querySelector('[data-card-pill]')?.getBoundingClientRect();
+  return { box: [px(b.left - (body?.left ?? b.left)), px(b.top - (body?.bottom ?? b.top)), px(b.width), px(b.height)], thumb: t ? [px(t.width), px(t.height)] : null, pill: p ? [px(p.left - b.left), px(b.bottom - p.bottom), px(p.width), px(p.height)] : null, texts, image: !!c.querySelector('img') };
 })()`;
 /** The quote embed's box, and its avatar's, text's, photo's and "Show this poll" line's, relative to the embed. */
 const QUOTE_BOX = (deviceLast) => `(() => {
@@ -372,7 +374,8 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
 
 /**
  * The link card against the phone capture's: its box to 1pt (a null in the box is not checked), a small card's thumbnail,
- * a small card's text in order (title then domain, no description) and whether it shows a picture. `want` null: X drew no card.
+ * a large card's title pill, the card's text (a small card's title then domain, no description; a large card's pill title)
+ * and whether it shows a picture. `want` null: X drew no card.
  */
 async function cardDiff(label, deviceLast, id, want) {
   const got = await page.evaluate(CARD_BOX(deviceLast));
@@ -383,9 +386,10 @@ async function cardDiff(label, deviceLast, id, want) {
   else {
     if (!near(got.box, want.box)) problems.push(`box X ${want.box} / tool ${got.box}`);
     if (want.thumb && !near(got.thumb, want.thumb)) problems.push(`thumbnail X ${want.thumb} / tool ${got.thumb}`);
-    // Large cards' recorded titles are the headline inside the picture, not the pill's: only a small card's text is compared.
-    const texts = [want.title, want.domain];
-    if (want.layout === "small" && want.title && JSON.stringify(got.texts) !== JSON.stringify(texts)) problems.push(`text X ${JSON.stringify(texts)} / tool ${JSON.stringify(got.texts)}`);
+    if (want.pill && !near(got.pill, want.pill)) problems.push(`pill X ${want.pill} / tool ${got.pill}`);
+    // A large card's text is its pill, the page title in full (the pill clamps it with "…"; textContent keeps it whole).
+    const texts = want.layout === "small" ? [want.title, want.domain] : [want.title];
+    if (want.title && JSON.stringify(got.texts) !== JSON.stringify(texts)) problems.push(`text X ${JSON.stringify(texts)} / tool ${JSON.stringify(got.texts)}`);
     if (want.hasImage !== undefined && got.image !== want.hasImage) problems.push(`picture X ${want.hasImage} / tool ${got.image}`);
   }
   if (problems.length) {

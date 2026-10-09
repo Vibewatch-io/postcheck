@@ -19,7 +19,7 @@ interface Props {
   ios: boolean;
   /**
    * The Android app, with the body's size and line height: no card fill (tests 20–31), and its own small
-   * card (tests 22, 24 and 121 at 360 and 411.4 dp, 2026-10-08). Null elsewhere.
+   * card (tests 22, 24 and 121) and large card (tests 07, 20–21, 25–27, 29–31) at 360 and 411.4 dp, 2026-10-08. Null elsewhere.
    */
   android: { fontSize: number; lineHeight: number } | null;
 }
@@ -49,7 +49,12 @@ const clamp = (lines: number): React.CSSProperties => ({
  * no fill; a 100dp square thumbnail, then a divider in the row separator's colour; title (up to 2
  * lines seen) over the domain, both at the body's size, from 116dp to the card's right edge with no end
  * padding (the captured breaks need 167.4–174.3 at 360 and ≥ 218.4 at 411.4), centred vertically; no
- * description. Its large card keeps the earlier layout, unmeasured; Android's colours: theme.ts.
+ * description. Its large card (tests 07, 20–21, 25–27, 29–31, same captures): radius 12, the image filling a
+ * 1.91:1 box; the pill 8dp from the card's left and at most 8dp from its right (it hugs a title that fits; a long
+ * one is cut with "…") and 6dp from its
+ * bottom, radius 8, black at 70%, 4dp sides, white text; "From domain" in the secondary colour, its text 8dp in
+ * and its ink 4.3–4.6dp under the card. The pill and line grow with the ≥400dp layout: text 13.2 → 13.7dp (fitted
+ * to the captured ink widths against Chirp), pill 19.33 → 20.57dp high. Android's colours: theme.ts.
  */
 export function LinkCard({ card, theme, width, viewport, font: fontKind, web, ios, android }: Props) {
   const font = { fontFamily: fontStack(fontKind), fontSize: 15, lineHeight: "20px" } as const;
@@ -71,28 +76,32 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
   }
 
   if (card.layout === "large" && card.image) {
+    // Android's two layouts (body 15 below 400dp, 16 from there): the pill's and the "From" line's text size, the
+    // pill's height and the line's top margin (it puts the ink 4.33 and 4.57dp under the card on a 16px line).
+    const droid = android && (android.fontSize >= 16 ? { size: 13.7, pill: 20.57, top: 2 } : { size: 13.2, pill: 19.33, top: 1.6 });
     return (
       <div style={{ width }}>
-        <div data-card="" style={{ ...frame, position: "relative", aspectRatio: "1.91 / 1" }}>
+        <div data-card="" style={{ ...frame, ...(droid ? { borderRadius: 12 } : {}), position: "relative", aspectRatio: "1.91 / 1" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={card.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           <div
+            data-card-pill=""
             style={{
               position: "absolute",
-              // iOS: 8pt and 24pt from the card's outer edges; offsets here start inside its 1px border.
-              left: ios ? 7 : 12,
-              bottom: ios ? 7 : 12,
-              maxWidth: ios ? "calc(100% - 30px)" : "calc(100% - 24px)",
+              // iOS: 8pt and 24pt from the card's outer edges; Android: 8dp, 8dp and 6dp. Offsets here start inside its 1px border.
+              left: ios || droid ? 7 : 12,
+              bottom: ios ? 7 : droid ? 5 : 12,
+              maxWidth: ios ? "calc(100% - 30px)" : droid ? "calc(100% - 14px)" : "calc(100% - 24px)",
               boxSizing: "border-box",
-              height: ios ? 18 : 20,
+              height: ios ? 18 : droid ? droid.pill : 20,
               padding: web ? "0 8px" : "0 4px",
-              borderRadius: 4,
-              backgroundColor: ios ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.77)",
+              borderRadius: droid ? 8 : 4,
+              backgroundColor: ios ? "rgba(0,0,0,0.5)" : droid ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.77)",
               color: "#fff",
               fontFamily: fontStack(fontKind),
-              fontSize: 13,
-              letterSpacing: ios ? "var(--ls-app)" : undefined,
-              lineHeight: ios ? "18px" : "20px",
+              fontSize: droid ? droid.size : 13,
+              letterSpacing: ios ? "var(--ls-app)" : droid ? "var(--ls-web)" : undefined,
+              lineHeight: ios ? "18px" : droid ? `${droid.pill}px` : "20px",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -101,7 +110,18 @@ export function LinkCard({ card, theme, width, viewport, font: fontKind, web, io
             {card.title}
           </div>
         </div>
-        <div style={{ ...font, ...(web || ios ? { fontSize: 13, lineHeight: "16px" } : {}), paddingLeft: ios ? 12 : 0, color: theme.secondary, marginTop: 4, ...clamp(1) }}>From {card.host}</div>
+        <div
+          style={{
+            ...font,
+            ...(web || ios ? { fontSize: 13, lineHeight: "16px" } : droid ? { fontSize: droid.size, lineHeight: "16px", letterSpacing: "var(--ls-web)" } : {}),
+            paddingLeft: ios ? 12 : droid ? 8 : 0,
+            color: theme.secondary,
+            marginTop: droid ? droid.top : 4,
+            ...clamp(1),
+          }}
+        >
+          From {card.host}
+        </div>
       </div>
     );
   }
