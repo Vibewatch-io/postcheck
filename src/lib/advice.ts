@@ -63,7 +63,7 @@ export interface AdviceInput {
    */
   verified?: boolean;
   /** Set when the app's line clamp would fold the post. */
-  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId?: string } | null;
+  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId: string } | null;
   /** An image is attached: X shows it instead of any link card. */
   hasMedia?: boolean;
   /** What is attached, in order. */
