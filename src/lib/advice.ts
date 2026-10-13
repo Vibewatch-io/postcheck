@@ -290,12 +290,13 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     });
   }
 
-  if (typed !== typed.trim()) {
+  // Leading only: a space or new line at the end is usually just the next word or paragraph not typed yet.
+  if (/^\s/.test(typed) && typed.trim() !== "") {
     out.push({
       id: "outer-whitespace",
       severity: "note",
-      title: "Leading or trailing whitespace",
-      detail: "X trims space and blank lines from both ends before posting. The preview shows the trimmed version.",
+      title: "Leading space is removed",
+      detail: "X trims space and blank lines from the start of a post. The preview shows the trimmed version.",
     });
   }
 

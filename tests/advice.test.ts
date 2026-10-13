@@ -188,3 +188,17 @@ test("a poll with no text asks for the question and keeps its own tips", () => {
   assert.deepEqual(ids.sort(), ["poll-no-text", "poll-pictures"]);
   assert.deepEqual(buildAdvice({ text: "", entities: [], length: weightedLength("", []), card: undefined, lineSets: [] }), []);
 });
+
+// A space or new line at the end is the next word or paragraph not typed yet: no note while typing.
+test("only leading whitespace gets the trim note", () => {
+  const ids = (typed: string) => {
+    const text = typed.trim();
+    const entities = extractEntities(text);
+    return buildAdvice({ text, typed, entities, length: weightedLength(text, entities), card: undefined, lineSets: [] }).map((a) => a.id);
+  };
+  assert.ok(!ids("Hello there ").includes("outer-whitespace"));
+  assert.ok(!ids("Hello there\n\n").includes("outer-whitespace"));
+  assert.ok(!ids("  ").includes("outer-whitespace"));
+  assert.ok(ids(" Hello there").includes("outer-whitespace"));
+  assert.ok(ids("\n\nHello there").includes("outer-whitespace"));
+});
