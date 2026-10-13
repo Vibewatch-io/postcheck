@@ -72,7 +72,7 @@ Links, post numbers and usernames are never stored. Each travels in the body of 
 
 **Share** copies a link that holds the preview itself: the text, its styling, the name, handle and check, the device and theme, and JPEG copies of your photo and attached media shrunk in the browser (a GIF or video travels as its first frame; the media steps down in size until the link fits under 38,000 characters, or is left out). Attached videos are read in your browser for their size, length and first frame and never sent anywhere. It is all compressed into the part of the link after `#`, which browsers never send to a server, so nothing is uploaded or stored and there is nothing for us to delete. Anyone who has the link can see the preview. Opening a shared post that contains a link fetches its card through `/api/unfurl`, or its quoted post through `/api/quote`, the same as typing it would.
 
-The only analytics is Vercel Web Analytics, a cookieless page-view counter with no cross-site tracking. It is there because the fallback font's licence requires a monthly unique-visitor count (see Fonts), and it does nothing outside Vercel. It records the page address without the `#` part, so a share link's contents never reach it.
+The only analytics is [Umami](https://umami.is), self-hosted by Vibewatch at `umami.vibewatch.io`: a cookieless page-view counter with no cross-site tracking. It is there because the fallback font's licence requires a monthly unique-visitor count (see Fonts). It records the page address without the `#` part or the query, so a share link's contents never reach it.
 
 **Check it yourself.** Open your browser's developer tools on the Network tab and type a post. Apart from loading the page (its own files, X's font and the page-view count), nothing goes out until the post has a link or you look up a username, and then only the requests above, all to this site's `/api/` routes. The code behind each one is in `src/app/api/`, and the repo's [Deployments](../../deployments/Production) page shows which commit the live site is running. The "Tell us" link under the preview puts the view, theme and font you had in the address of the GitHub form it opens; never the post. Security reports go through [SECURITY.md](SECURITY.md).
 
@@ -105,6 +105,7 @@ Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
 
 - `NEXT_PUBLIC_SITE_URL` if the site lives somewhere other than `postcheck.vibewatch.io`, so Open Graph URLs resolve.
 - A linked **private Vercel Blob store** holding `GT-America-Standard-Regular.woff2` and `GT-America-Standard-Bold.woff2` at its root (or under the folder named by `FONT_BLOB_PREFIX`), only if you hold your own GT America web licence. Without it the fallback is the system font, which is fine.
+- `NEXT_PUBLIC_UMAMI_SRC` (the tracker's `script.js` URL) and `NEXT_PUBLIC_UMAMI_WEBSITE_ID` for page-view counts in your own [Umami](https://umami.is). Without both, no analytics script loads; on Vercel, set them for Production only so previews stay out of the count. The tag relies on the tracker honouring `data-exclude-hash` and `data-exclude-search` (Umami 2.16 or later; the one at `umami.vibewatch.io` does).
 - **Rate limits** on `/api/unfurl`, `/api/quote` and `/api/profile` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
 
 ## Working on it

@@ -32,8 +32,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${syne.variable} ${geist.variable} font-sans`}>
         {children}
-        {/* Vercel Web Analytics: cookieless page-view counts. The GT America web licence requires a
-            monthly unique-visitor count; this is the whole reason it is here. No-op outside Vercel. */}
+        {/* Umami: cookieless page-view counts. The GT America web licence requires a monthly
+            unique-visitor count; this is the whole reason it is here. */}
         <Analytics />
       </body>
     </html>
