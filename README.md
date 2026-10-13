@@ -105,7 +105,7 @@ Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
 
 - `NEXT_PUBLIC_SITE_URL` if the site lives somewhere other than `postcheck.vibewatch.io`, so Open Graph URLs resolve.
 - A linked **private Vercel Blob store** holding `GT-America-Standard-Regular.woff2` and `GT-America-Standard-Bold.woff2` at its root (or under the folder named by `FONT_BLOB_PREFIX`), only if you hold your own GT America web licence. Without it the fallback is the system font, which is fine.
-- `NEXT_PUBLIC_UMAMI_SRC` (the tracker's `script.js` URL) and `NEXT_PUBLIC_UMAMI_WEBSITE_ID` for page-view counts in your own [Umami](https://umami.is). Without both, no analytics script loads; on Vercel, set them for Production only so previews stay out of the count. The tag relies on the tracker honouring `data-exclude-hash` and `data-exclude-search` (the one at `umami.vibewatch.io` does).
+- `NEXT_PUBLIC_UMAMI_SRC` (the tracker's `script.js` URL) and `NEXT_PUBLIC_UMAMI_WEBSITE_ID` for page-view counts in your own [Umami](https://umami.is). Without both, no analytics script loads; on Vercel, set them for Production only so previews stay out of the count. The tag relies on the tracker honouring `data-exclude-hash` and `data-exclude-search` (Umami 2.16 or later; the one at `umami.vibewatch.io` does).
 - **Rate limits** on `/api/unfurl`, `/api/quote` and `/api/profile` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
 
 ## Working on it

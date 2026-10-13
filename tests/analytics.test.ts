@@ -9,6 +9,9 @@ test("the Umami tag drops the fragment and query, and loads only when configured
   process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = "id";
   assert.equal(Analytics(), null);
   process.env.NEXT_PUBLIC_UMAMI_SRC = "https://umami.example/script.js";
+  delete process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  assert.equal(Analytics(), null);
+  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID = "id";
   const props = Analytics()?.props as Record<string, string>;
   assert.equal(props["data-exclude-hash"], "true");
   assert.equal(props["data-exclude-search"], "true");
