@@ -239,12 +239,6 @@ export function jpegSize(b: Uint8Array): { width: number; height: number } | nul
   return null;
 }
 
-/** A page address as analytics may record it: without the fragment, which holds a share link's post. */
-export function withoutFragment(url: string): string {
-  const hash = url.indexOf("#");
-  return hash === -1 ? url : url.slice(0, hash);
-}
-
 async function inflateCapped(bytes: Uint8Array, cap: number): Promise<string | null> {
   try {
     const reader = new Blob([bytes as BlobPart]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();

@@ -27,7 +27,6 @@
     "@tiptap/extensions": "3.31.4",
     "@tiptap/pm": "3.31.4",
     "@tiptap/react": "3.31.4",
-    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.8.0",
     "html-to-image": "1.11.13",
     "next": "^16.3.8",
