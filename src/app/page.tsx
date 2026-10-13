@@ -44,7 +44,7 @@ export default function Page() {
       <footer className="mt-3 flex flex-none flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-brand-warm-border pt-2 text-xs text-brand-warm-secondary">
         <span>
           A free tool from the team at{" "}
-          <a href="https://vibewatch.io?utm_source=postcheck" className="font-medium text-brand-teal-dark hover:underline">
+          <a href="https://vibewatch.io/?utm_source=postcheck&utm_medium=microsite&utm_campaign=ecosystem-index&utm_content=postcheck-footer-cta" className="font-medium text-brand-teal-dark hover:underline">
             Vibewatch
           </a>
           .
