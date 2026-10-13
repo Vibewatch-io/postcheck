@@ -101,6 +101,7 @@ Long test 08: an emoji starts on character 280 and ends on 281. the quick brown 
 | 15 | A 60-character unbroken word: `Supercalifragilisticexpialidocious-and-then-some-more-letters` mid-sentence | Where an unbreakable token wraps; app never breaks at hyphens. |
 | 16 | Several hyphenated words positioned to land at a line end on 393pt (`state-of-the-art`, `quantum-resistant`) | Web breaks at the hyphen, app doesn't. |
 | 17 | `word  word   word` (double and triple spaces), a tab, and leading/trailing spaces | Whitespace collapsing and trimming. |
+| 17b | Two blank lines and two spaces, then `Test 17b: leading whitespace` (press Return twice and Space twice before typing) | Does X trim leading blank lines and spaces? Test 17 as posted started with its text, so only the trailing trim is proven. Note whether the composer keeps them and what X stores. Settles QUIRKS open question 7 and the "Outer whitespace trimmed" row (Assumed). Not posted yet. |
 
 ## 3. Links and cards
 

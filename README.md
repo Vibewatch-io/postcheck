@@ -55,7 +55,7 @@ Each tip's colour says how much it matters: red for something X will do to the p
 - A single word dangling on the last line of a paragraph on the selected phone or web view, measured from the rendered DOM
 - Link mid-text vs link last (visible URL text vs card only), several links, links to X posts
 - Pages with no Open Graph tags (no card, URL stays visible)
-- Hashtag piles (X's spam classifier has a hashtag-abuse category), handles too long to link, walls of text, stacked blank lines, outer whitespace
+- Hashtag piles (X's spam classifier has a hashtag-abuse category), handles too long to link, walls of text, stacked blank lines, leading whitespace
 
 Line breaks are measured, not estimated: every word is wrapped in a span, the body is rendered invisibly at each device width, and the span positions say which words share a line.
 
