@@ -1,0 +1,17 @@
+{
+  "id_str": "2113019521326084321",
+  "text": "Long quote test 40b: a link to a post sits after character 280, at the very end. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over",
+  "display_text_range": [
+    0,
+    279
+  ],
+  "note_tweet": true,
+  "full_text": "Long quote test 40b: a link to a post sits after character 280, at the very end. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline. https://x.com/Postcheck_test/status/2100298548843872339",
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

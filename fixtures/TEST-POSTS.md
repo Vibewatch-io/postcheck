@@ -101,7 +101,7 @@ Long test 08: an emoji starts on character 280 and ends on 281. the quick brown 
 | 15 | A 60-character unbroken word: `Supercalifragilisticexpialidocious-and-then-some-more-letters` mid-sentence | Where an unbreakable token wraps; app never breaks at hyphens. |
 | 16 | Several hyphenated words positioned to land at a line end on 393pt (`state-of-the-art`, `quantum-resistant`) | Web breaks at the hyphen, app doesn't. |
 | 17 | `word  word   word` (double and triple spaces), a tab, and leading/trailing spaces | Whitespace collapsing and trimming. |
-| 17b | Two blank lines and two spaces, then `Test 17b: leading whitespace` (press Return twice and Space twice before typing) | Does X trim leading blank lines and spaces? Test 17 as posted started with its text, so only the trailing trim is proven. Note whether the composer keeps them and what X stores. Settles QUIRKS open question 7 and the "Outer whitespace trimmed" row (Assumed). Not posted yet. |
+| 17b | Two blank lines and two spaces, then `Test 17b: leading whitespace` (press Return twice and Space twice before typing) | Does X trim leading blank lines and spaces? Test 17 as posted started with its text, so only the trailing trim is proven. Note whether the composer keeps them and what X stores. Settles QUIRKS open question 7 and the "Outer whitespace trimmed" row (Assumed). Posted 2026-10-21 in batch 10 (2113019457715228807): the composer kept both blank lines and both spaces, and X stored `Test 17b: leading whitespace`. |
 
 ## 3. Links and cards
 
@@ -336,6 +336,9 @@ matter.
 40b
 Long quote test 40b: a link to a post sits after character 280, at the very end. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline. https://x.com/Postcheck_test/status/2100298548843872339
 ```
+
+Posted 2026-10-21: 17b 2113019457715228807, 40b 2113019521326084321 (stored as a long post quoting 01),
+42b 2113019564380549631 (quoting 05). 56b waits for the video to be dragged in. Captures are not taken yet.
 
 56b's file is too big to commit; make it locally (a still blue frame with silent audio, a few MB) and drag
 it from Finder into the composer:

@@ -1,0 +1,16 @@
+{
+  "id_str": "2113019457715228807",
+  "text": "Test 17b: leading whitespace",
+  "display_text_range": [
+    0,
+    28
+  ],
+  "note_tweet": false,
+  "entities": {},
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}
