@@ -328,7 +328,7 @@ matter.
 | # | Text | Tests |
 |---|---|---|
 | 17b | see group 2 | Leading blank lines and spaces: kept or trimmed? Settles QUIRKS open question 7. |
-| 40b **P** | see block (406 weighted; the post link starts at character 384, after the cut at 279) | A post link past the 280 cut, at the end: is the quote embed still drawn under the cut text, and is the URL hidden once expanded? The iPhone folds by lines instead, and Android keeps a trailing post link as text (QUIRKS). |
+| 40b **P** | see block (406 weighted; the post link starts at character 384; the 280 budget runs out mid-word, so the visible text ends at character 279) | A post link past the 280 cut, at the end: is the quote embed still drawn under the cut text, and is the URL hidden once expanded? The iPhone folds by lines instead, and Android keeps a trailing post link as text (QUIRKS). |
 | 42b | `Test 42b: quote of a long post https://x.com/Postcheck_test/status/2100299215364931868` (test 05) | Quote of a post over 280: does the embed show the 280 cut, or the whole text clamped at 5 lines (web) and 5 lines then "…" (iPhone)? Is there a Show more inside the embed? |
 | 56b **P** | `Test 56b: a video over an hour long` with `t56b-long.mp4` (1:00:05) | The duration badge from an hour (`1:00:05` on x.com, assumed `h:mm:ss`); the iPhone shows only a mute icon on a short video (56), Android's badge unmeasured. Only Premium uploads past 2:20. |
 
@@ -352,7 +352,7 @@ Capture the duration badge before autoplay starts (it counts down, then disappea
 Before cancelling, also capture these existing posts while they are certainly whole:
 
 - The iPhone 17 Pro list (`.captures/iphone-17-capture-list.md`): six of its posts are @Postcheck_test long posts (05–08, 94, 94b).
-- ~~Android (Pixel 3, 360 and 412 dp): 70b's row expanded with Show more, and its post screen, plus 05's post screen.~~
+- ~~Android (Pixel 3, 360 and 411.4 dp, `dp 412`): 70b's row expanded with Show more, and its post screen, plus 05's post screen.~~
   Done 2026-10-21 (`.captures/android-pixel3/2026-10-21/`): styling shows once expanded and on the post screen;
   a styled expanded row runs at a tighter pitch (QUIRKS, Android rows).
 - After cancelling, open 05, 70b and 104 on x.com once: are they still whole, styled and marked edited? Note the answer here. The check also leaves every @Postcheck_test post, so later captures show none.
