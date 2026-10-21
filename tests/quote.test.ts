@@ -80,6 +80,9 @@ test("a quoted long post shows only what its own cell shows before Show more", (
   assert.equal(quotedText("Short post"), "Short post");
   const mid = `${"a ".repeat(139)}extraordinarily long`;
   assert.equal(quotedText(mid), "a ".repeat(139).trimEnd());
+  // A quoted quote's own post link sits outside the 280: 270 characters of text plus the link stay whole.
+  const quoteOfQuote = `${"b".repeat(270)} https://x.com/Postcheck_test/status/2100298548843872339`;
+  assert.equal(quotedText(quoteOfQuote), quoteOfQuote);
 });
 
 test("a quoted photo and poll come through; images only from X's CDN, within their caps", async () => {

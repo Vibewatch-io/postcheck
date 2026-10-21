@@ -3,6 +3,8 @@
  * client draws inside the quote embed. Shared by the route and the preview.
  */
 
+import { extractEntities, isTrailing, quoteUrl, showMoreCut, weightedLength } from "./entities";
+
 /** Blue: Premium. Gold: verified organization. Gray: government. */
 export type QuoteBadge = "none" | "blue" | "gold" | "gray";
 
@@ -33,18 +35,22 @@ export type QuoteResult = { status: "ok"; quote: QuoteData } | { status: "unavai
 export type QuoteState = "loading" | (QuoteResult & { at: number });
 
 /** One rule decides both whether a link is a post link and which post it names. */
-import { extractEntities, showMoreCut, weightedLength } from "./entities";
-
 export { statusId } from "./entities";
 
 /**
  * What a quote embed shows of the quoted post: a long post only up to its own Show more cut, with
  * no Show more inside the embed (x.com and the Android app, @postcheck_test test 42b quoting test 05:
  * the first 280 characters, then the 5-line clamp). FxTwitter answers with the whole text. The iOS
- * app is assumed to cut the same way.
+ * app is assumed to cut the same way. A quoted post that is itself a quote carries its own post link
+ * at the end of FxTwitter's text, outside X's 280 (twitter-text's `attachment_url`, assumed): it isn't
+ * counted, so the embed keeps it as text (test 107) unless the text before it is long by itself.
  */
 export function quotedText(text: string): string {
-  return text.slice(0, showMoreCut(text, weightedLength(text, extractEntities(text)).limitIndex));
+  const entities = extractEntities(text);
+  const inner = quoteUrl(entities);
+  const own = inner && isTrailing(text, inner) ? text.slice(0, inner.start).trimEnd() : text;
+  if (weightedLength(own, extractEntities(own)).limitIndex >= own.length) return text;
+  return text.slice(0, showMoreCut(text, weightedLength(text, entities).limitIndex));
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
