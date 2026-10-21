@@ -1,0 +1,62 @@
+{
+ "code": 200,
+ "message": "OK",
+ "tweet": {
+  "url": "https://x.com/Postcheck_test/status/2100299215364931868",
+  "id": "2100299215364931868",
+  "text": "Long test 05: the word before Show more ends exactly on character 280. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+  "raw_text": {
+   "text": "Long test 05: the word before Show more ends exactly on character 280. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline.",
+   "display_text_range": [
+    0,
+    372
+   ],
+   "facets": []
+  },
+  "author": {
+   "screen_name": "Postcheck_test",
+   "url": "https://x.com/Postcheck_test",
+   "id": "2100294004965539840",
+   "name": "Postcheck",
+   "description": "http://postcheck.vibewatch.io",
+   "raw_description": {
+    "text": "https://t.co/qMH2ShtbVx",
+    "facets": [
+     {
+      "type": "url",
+      "indices": [
+       0,
+       23
+      ],
+      "original": "https://t.co/qMH2ShtbVx",
+      "replacement": "http://postcheck.vibewatch.io",
+      "display": "postcheck.vibewatch.io"
+     }
+    ]
+   },
+   "location": "",
+   "banner_url": "",
+   "avatar_url": "https://pbs.twimg.com/profile_images/2107957547357581312/vSK-M7TR_200x200.jpg",
+   "joined": "Wed Sep 16 18:42:26 +0000 2026",
+   "protected": false,
+   "website": null,
+   "verification": {
+    "verified": true,
+    "verified_at": null,
+    "type": "individual"
+   },
+   "avatar_color": null
+  },
+  "created_at": "Wed Sep 16 19:02:09 +0000 2026",
+  "created_timestamp": 1789585329,
+  "is_note_tweet": true,
+  "community_note": null,
+  "lang": "en",
+  "replying_to": null,
+  "replying_to_status": null,
+  "twitter_card": "tweet",
+  "color": null,
+  "provider": "twitter",
+  "reposted_by": null
+ }
+}

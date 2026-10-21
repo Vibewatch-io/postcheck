@@ -330,7 +330,7 @@ matter.
 | 17b | see group 2 | Leading blank lines and spaces: kept or trimmed? Settles QUIRKS open question 7. |
 | 40b **P** | see block (406 weighted; the post link starts at character 384; the 280 budget runs out mid-word, so the visible text ends at character 279) | A post link past the 280 cut, at the end: is the quote embed still drawn under the cut text, and is the URL hidden once expanded? The iPhone folds by lines instead, and Android keeps a trailing post link as text (QUIRKS). |
 | 42b | `Test 42b: quote of a long post https://x.com/Postcheck_test/status/2100299215364931868` (test 05) | Quote of a post over 280: does the embed show the 280 cut, or the whole text clamped at 5 lines (web) and 5 lines then "…" (iPhone)? Is there a Show more inside the embed? |
-| 56b **P** | `Test 56b: a video over an hour long` with `t56b-long.mp4` (1:00:05) | The duration badge from an hour (`1:00:05` on x.com, assumed `h:mm:ss`); the iPhone shows only a mute icon on a short video (56), Android's badge unmeasured. Only Premium uploads past 2:20. |
+| 56b **P** | `Test 56b: a video over an hour long` with `t56b-long.mp4` (1:00:05). **Not posted** (X's processing failed twice; see below) | The duration badge from an hour (`h:mm:ss`, read on someone else's post instead); the iPhone shows only a mute icon on a short video (56), Android's badge unmeasured. Only Premium uploads past 2:20. |
 
 ```text
 40b
@@ -338,7 +338,9 @@ Long quote test 40b: a link to a post sits after character 280, at the very end.
 ```
 
 Posted 2026-10-21: 17b 2113019457715228807, 40b 2113019521326084321 (stored as a long post quoting 01),
-42b 2113019564380549631 (quoting 05). 56b waits for the video to be dragged in. Captures are not taken yet.
+42b 2113019564380549631 (quoting 05). 56b was not posted: two hour-long uploads (`t56b-long.mp4`, and `t56b-long-v2.mp4` re-encoded at High profile with a keyframe every 2 s) both ended in "Something went wrong" after 6–10 minutes of Processing. The badge format was read instead on someone else's post: x.com shows `1:35:30` on @TuckerCarlson 2112227472238383207 (1:35:35, counting down), so `h:mm:ss` holds.
+
+Captured 2026-10-21: x.com (17b, 40b, 42b in `fixtures/web/postcheck_test.json`) and the Pixel 3 at 360 and 411.4 dp (`.captures/android-pixel3/2026-10-21/b10c-*`, not transcribed: the Android cell moved its body from 60 to 64 dp since 2026-10-08, QUIRKS "Android timeline cell"). Results: 17b shows no leading blank line anywhere; 40b is cut at 279 with the quote embed under it; 42b's embed shows test 05 cut at 280 (the tool now cuts it too). The iPhone is still to capture.
 
 56b's file is too big to commit; make it locally (a still blue frame with silent audio, a few MB) and drag
 it from Finder into the composer:

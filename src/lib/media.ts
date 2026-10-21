@@ -198,7 +198,7 @@ export function overflows(layout: MediaLayout): boolean {
   return last.x + last.w > layout.column;
 }
 
-/** x.com's video badge: the length as m:ss ("0:06"); h:mm:ss from an hour (assumed, no capture). */
+/** x.com's video badge: the length as m:ss ("0:06"); h:mm:ss from an hour ("1:35:30", read on someone else's post, QUIRKS.md). */
 export function videoTime(ms: number): string {
   const s = Math.max(0, Math.round(ms / 1000));
   const two = (n: number) => String(n).padStart(2, "0");

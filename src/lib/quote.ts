@@ -33,7 +33,19 @@ export type QuoteResult = { status: "ok"; quote: QuoteData } | { status: "unavai
 export type QuoteState = "loading" | (QuoteResult & { at: number });
 
 /** One rule decides both whether a link is a post link and which post it names. */
+import { extractEntities, showMoreCut, weightedLength } from "./entities";
+
 export { statusId } from "./entities";
+
+/**
+ * What a quote embed shows of the quoted post: a long post only up to its own Show more cut, with
+ * no Show more inside the embed (x.com and the Android app, @postcheck_test test 42b quoting test 05:
+ * the first 280 characters, then the 5-line clamp). FxTwitter answers with the whole text. The iOS
+ * app is assumed to cut the same way.
+ */
+export function quotedText(text: string): string {
+  return text.slice(0, showMoreCut(text, weightedLength(text, extractEntities(text)).limitIndex));
+}
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
