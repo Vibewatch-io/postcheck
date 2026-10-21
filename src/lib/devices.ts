@@ -117,7 +117,7 @@ export function postScreenTracking(d: Device): CSSProperties | undefined {
  * The iOS app's timeline row draws a Premium-styled post with no bold or italic at all, short or
  * folded; the styling shows once a long row is expanded with Show more, and on the post screen
  * (@postcheck_test tests 70 and 70b, iPhone 15 Pro). The Android row drops it too, short or cut at 280
- * (tests 70 and 70b on a Pixel 3; its expanded row is assumed to match the iPhone's). Likely an X bug,
+ * (tests 70 and 70b on a Pixel 3; expanded, it shows the styling, at a tighter pitch not modelled here). Likely an X bug,
  * but the preview shows it as it is.
  */
 export function rowHidesStyles(d: Device, expanded = false): boolean {
