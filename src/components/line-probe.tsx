@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { postScreenTracking, rowHidesStyles, type Device } from "@/lib/devices";
+import { bodyLineHeight, postScreenTracking, rowHidesStyles, type Device } from "@/lib/devices";
 import type { StyleRun, Token } from "@/lib/entities";
 import { THEMES, fontStack } from "@/lib/theme";
 import type { DeviceLines, LineInfo } from "@/lib/advice";
@@ -90,6 +90,11 @@ export function measureLines(root: HTMLElement, lineHeight: number): { lines: Li
   return { lines: rows, total };
 }
 
+/** The styling a probe draws: none on a timeline row that hides it (the Android row shows it once expanded). */
+function shownStyles(d: Device, expanded: Props["expanded"], styles: Props["styles"]): StyleRun[] {
+  return rowHidesStyles(d, d.platform === "android" && Boolean(expanded?.[d.id])) ? [] : styles ?? [];
+}
+
 /**
  * Invisible copies of the body at every device width. After layout (and again
  * once Chirp finishes loading) the word spans are read back to find where each
@@ -107,7 +112,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, quoteShown = fals
       cb.current(
         devices.map((d, i) => {
           const el = refs.current[i]?.firstElementChild as HTMLElement | null;
-          const m = el ? measureLines(el, d.lineHeight) : { lines: [], total: 0 };
+          const m = el ? measureLines(el, bodyLineHeight(d, shownStyles(d, expanded, styles).length > 0)) : { lines: [], total: 0 };
           const token = refs.current[i]?.querySelector<HTMLElement>("[data-token]");
           return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view: d.view, lines: m.lines, total: m.total, tokenWidth: token?.getBoundingClientRect().width ?? 0 };
         }),
@@ -131,7 +136,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, quoteShown = fals
         >
           {/* The app never appends the web's 280-cut "Show more": a long post under 10 lines shows whole
               there, so counting the token would push a full last line onto a 10th row (test 94). */}
-          <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={d.platform === "android" && quoteShown ? null : hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={d.lineHeight} width={d.textWidth} font={d.font} pane={d.pane} platform={d.platform} styles={rowHidesStyles(d, d.platform === "android" && Boolean(expanded?.[d.id])) ? [] : styles} />
+          <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={d.platform === "android" && quoteShown ? null : hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={bodyLineHeight(d, shownStyles(d, expanded, styles).length > 0)} width={d.textWidth} font={d.font} pane={d.pane} platform={d.platform} styles={shownStyles(d, expanded, styles)} />
           <span data-token style={{ position: "absolute", whiteSpace: "pre", fontFamily: fontStack(d.font), fontSize: d.fontSize, lineHeight: `${d.lineHeight}px`, letterSpacing: `var(--ls-${d.pane})` }}>
             {" Show more"}
           </span>

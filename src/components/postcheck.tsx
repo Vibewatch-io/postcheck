@@ -253,7 +253,7 @@ export function Postcheck() {
   const probeTokens = useMemo(() => tokenize(post, entities, styleCuts), [post, entities, styleCuts]);
   const showMore280 = cut280 < post.length;
 
-  // The iOS app additionally folds long-by-lines posts (see devices.ts APP_MAX_LINES).
+  // The apps additionally fold long-by-lines posts (see devices.ts APP_MAX_LINES).
   const clampFor = useCallback(
     (d: Device) => {
       if (!d.maxLines) return null;
@@ -264,7 +264,7 @@ export function Postcheck() {
       // The last text line at or above the limit carries the token.
       let r = d.maxLines - 1;
       while (r > 0 && set.lines[r].spans.length === 0) r -= 1;
-      const limit = appFoldCut(post, row.end, { spans: set.lines[r].spans, tokenWidth: set.tokenWidth, textWidth: d.textWidth });
+      const limit = appFoldCut(post, row.end, { spans: set.lines[r].spans, tokenWidth: set.tokenWidth, textWidth: d.textWidth }, d.platform === "ios");
       const lastWord = post.slice(0, limit).split(/\s+/).pop() ?? "";
       return { cut: limit, total: set.total, maxLines: d.maxLines, lastWord };
     },
@@ -279,7 +279,8 @@ export function Postcheck() {
       // The iOS app folds by rendered lines only: a long post shows its first 9 lines, not X's 280 cut
       // (Write/status/1646674962055565319 on an iPhone 15 Pro). Under 10 lines it shows everything it has.
       // A long post under 10 lines shows whole, with no Show more (@postcheck_test tests 05, 06, 08 on an iPhone 15 Pro).
-      // The Android app cuts at 280 exactly like the web and never folds by lines (tests 05–08, 11–13 on Android 12).
+      // The Android app cuts at 280 exactly like the web (tests 05–08) and, since 2026-10-21, also folds past
+      // 9 lines (tests 12, 13, 97): whichever comes first.
       if (d.kind === "phone" && d.platform === "ios") {
         const cut = clamp ? clamp.cut : post.length;
         const ents = entities.filter((e) => e.end <= cut);

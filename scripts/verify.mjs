@@ -356,7 +356,9 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   // so a break inside a word still counts; a post both sides fold or cut may end at a different character).
   // Show more must agree: a fold one side draws and the other doesn't is never a font tolerance.
   let edgeNote = null;
-  const [ej, aj] = [exp.join(""), act.join("")].map((t) => t.replace(/\s+/g, ""));
+  let failNote = "";
+  // Compare the whole text, URL-only lines included: a wrap can move a link onto a line of its own (test 30 on the GT tier).
+  const [ej, aj] = [expected.join(""), got.join("")].map((t) => t.replace(/\s+/g, ""));
   const sameText = expMore === gotMore && (ej === aj || (expMore && (ej.startsWith(aj) || aj.startsWith(ej))));
   const longer = exp[bad]?.length > act[bad]?.length ? exp[bad] : act[bad];
   const shorter = longer === exp[bad] ? act[bad] : exp[bad];
@@ -365,9 +367,10 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
     if (nearEdge(fit)) edgeNote = fitNote(fit, "body");
     // The folded line: the app's character-level cut landing one or two characters away is the same sub-pixel question.
     else if (expMore && bad === exp.length - 1 && longer.length - shorter.length <= 2) edgeNote = `fold cut ${longer.length - shorter.length} char(s) off`;
+    else failNote = `  (${fitNote(fit, "body")})`;
   }
   if (edgeNote) { edge++; console.log(`  edge ${label} ${id}  (${edgeNote})`); }
-  else { fail++; console.log(`  FAIL ${label} ${id}`); }
+  else { fail++; console.log(`  FAIL ${label} ${id}${failNote}`); }
   if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode, Ref } from "react";
-import { postScreenTracking, type Device } from "@/lib/devices";
+import { bodyLineHeight, postScreenTracking, type Device } from "@/lib/devices";
 import type { XTheme } from "@/lib/theme";
 import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
@@ -518,6 +518,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const ios = device.kind === "phone" && device.platform === "ios" && device.view !== "post";
   const android = device.kind === "phone" && device.platform === "android";
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrl));
+  const lineHeight = bodyLineHeight(device, Boolean(styles?.length));
 
   // The wrapper has no box of its own (display: contents), so layout is untouched; verify finds
   // the attachment through it.
@@ -532,8 +533,8 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   ) : card ? (
     // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31 and 47: 322.4–322.8 wide at 393).
     // Android: either card's top 8dp under the last line's text box (Chirp's 1.2em), not 12 under its line box (tests 20–31).
-    <div style={android && hasBody ? { marginTop: 8 - (device.lineHeight - 1.2 * device.fontSize) / 2 - 12 } : undefined}>
-      <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={android ? { fontSize: device.fontSize, lineHeight: device.lineHeight } : null} />
+    <div style={android && hasBody ? { marginTop: 8 - (lineHeight - 1.2 * device.fontSize) / 2 - 12 } : undefined}>
+      <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={android ? { fontSize: device.fontSize, lineHeight } : null} />
     </div>
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;
@@ -562,7 +563,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       hiddenUrlStart={hiddenUrl}
       theme={theme}
       fontSize={device.fontSize}
-      lineHeight={device.lineHeight}
+      lineHeight={lineHeight}
       width={bodyWidth}
       font={device.font}
       pane={device.pane}
@@ -607,6 +608,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   }
 
   const isPhone = device.kind === "phone";
+  const avatarSize = android ? 48 : isPhone ? 44 : 40;
   return (
     <article
       // Focusable when it toggles, as X's own timeline cells are. It stays an article (a button role
@@ -628,11 +630,11 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       style={{
         cursor: toggle ? "pointer" : undefined,
         // App cell measured on iPhone 15 Pro captures: 12px inset, 44px avatar, 8px gap.
-        // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
+        // Android (Pixel 3 captures, 2026-10-21): 8px inset, 48px avatar, 8px gap, 12px right (devices.ts textWidth).
         // A pinned post's "Pinned" row takes the top 8px of the inset, then 16 + 4 (x.com and iOS: +16).
         // One shorthand only: a longhand beside it would survive React's style diff on a device switch.
         // iOS: the body, media and action row share one 322pt column on a 393pt screen (screen − 71), so 7 right.
-        padding: `${state.pinned ? 8 : 12}px ${isPhone ? (android ? "12px 12px" : `7px ${IOS_CELL.bottom}px 12px`) : "16px 12px"}`,
+        padding: `${state.pinned ? 8 : 12}px ${isPhone ? (android ? "12px 12px 8px" : `7px ${IOS_CELL.bottom}px 12px`) : "16px 12px"}`,
         backgroundColor: theme.bg,
         width: device.width,
         boxSizing: "border-box",
@@ -642,9 +644,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         ...font,
       }}
     >
-      {state.pinned && <PinnedRow device={device} theme={theme} avatar={isPhone && !android ? 44 : 40} />}
+      {state.pinned && <PinnedRow device={device} theme={theme} avatar={avatarSize} />}
       <div style={{ display: "flex", gap: 8 }}>
-        <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
+        <Avatar src={identity.avatar} size={avatarSize} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20, marginTop: ios ? IOS_CELL.nameTop : undefined }}>
             <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} app={device.pane === "app"} />

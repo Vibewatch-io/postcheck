@@ -136,6 +136,17 @@ test("only an unexpanded app timeline row hides styling", async () => {
   assert.equal(rowHidesStyles(web), false);
 });
 
+test("a styled Android row runs at 1.2em; every other body keeps its device's pitch", async () => {
+  const { DEVICES, bodyLineHeight } = await import("../src/lib/devices");
+  const s25 = DEVICES.find((d) => d.id === "galaxy-s25")!;
+  const p10 = DEVICES.find((d) => d.id === "pixel-10")!;
+  const ios = DEVICES.find((d) => d.platform === "ios" && d.view === "timeline")!;
+  assert.equal(bodyLineHeight(s25, true), 18);
+  assert.ok(Math.abs(bodyLineHeight(p10, true) - 19.2) < 1e-9);
+  assert.equal(bodyLineHeight(s25, false), 20);
+  assert.equal(bodyLineHeight(ios, true), ios.lineHeight);
+});
+
 // The carousel tip names the previews where the media runs past the column: four squares do on
 // both; four narrow strips fit whole (in x.com's carousel, in the iPhone's row), and get the note
 // that their x.com sizing comes from one capture instead.

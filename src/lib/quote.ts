@@ -3,7 +3,7 @@
  * client draws inside the quote embed. Shared by the route and the preview.
  */
 
-import { extractEntities, isTrailing, quoteUrl, showMoreCut, weightedLength } from "./entities";
+import { MAX_WEIGHTED_LENGTH, extractEntities, isTrailing, quoteUrl, showMoreCut, weightedLength } from "./entities";
 
 /** Blue: Premium. Gold: verified organization. Gray: government. */
 export type QuoteBadge = "none" | "blue" | "gold" | "gray";
@@ -45,11 +45,13 @@ export { statusId } from "./entities";
  * at the end of FxTwitter's text, outside X's 280 (twitter-text's `attachment_url`, assumed): it isn't
  * counted, so the embed keeps it as text (test 107) unless the text before it is long by itself.
  */
-export function quotedText(text: string): string {
+export function quotedText(raw: string): string {
+  // weightedLength counts the NFC form, so cut that form: its indexes then line up.
+  const text = raw.normalize("NFC");
   const entities = extractEntities(text);
   const inner = quoteUrl(entities);
   const own = inner && isTrailing(text, inner) ? text.slice(0, inner.start).trimEnd() : text;
-  if (weightedLength(own, extractEntities(own)).limitIndex >= own.length) return text;
+  if (weightedLength(own, extractEntities(own)).weighted <= MAX_WEIGHTED_LENGTH) return text;
   return text.slice(0, showMoreCut(text, weightedLength(text, entities).limitIndex));
 }
 
