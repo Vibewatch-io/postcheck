@@ -128,8 +128,8 @@ export function rowHidesStyles(d: Device, expanded = false): boolean {
 
 /**
  * The body's line pitch. An Android timeline row that draws Premium styling (only once expanded:
- * rowHidesStyles) runs at the font's own 1.2em, 18dp at 360 and 19.05 at 411.4, not the cell's 20 and
- * 21.33 (@postcheck_test test 70b against the unstyled 05, both expanded, Pixel 3, 2026-10-21).
+ * rowHidesStyles) runs at the font's own 1.2em, not the cell's 20 and 21.33: modelled as 18dp at 360 (measured 18)
+ * and 19.2 at 411.4 (measured 19.05) (@postcheck_test test 70b against the unstyled 05, both expanded, Pixel 3, 2026-10-21).
  */
 export function bodyLineHeight(d: Device, styled: boolean): number {
   return d.platform === "android" && d.view === "timeline" && styled ? 1.2 * d.fontSize : d.lineHeight;

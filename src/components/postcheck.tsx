@@ -247,6 +247,8 @@ export function Postcheck() {
   const hasAttachment = quote !== null || (card !== null && card !== "loading");
   const attachmentEntity = quote ?? cardEntity;
   const hiddenUrlStart = attachmentEntity && hasAttachment && isTrailing(post, attachmentEntity) ? attachmentEntity.start : null;
+  // The iPhone keeps a long post's trailing post link as text above its quote (test 40b); a post within 280 loses it (test 40).
+  const longQuote = quote !== null && length.weighted > MAX_WEIGHTED_LENGTH;
 
   // Probe text: the whole post, measured at every device width (the iOS app folds by
   // rendered lines regardless of the 280 cut, so line 9 may lie past it).
@@ -560,7 +562,7 @@ export function Postcheck() {
     // windows the preview stacks under the composer and the page scrolls.
     <div ref={rowRef} className={`mx-auto flex min-h-0 w-full flex-1 ${narrow ? "flex-col items-center gap-6 pb-6" : "items-stretch gap-6"}`} style={{ maxWidth: ROW_MAX }}>
       <ThemeToggle themeId={themeId} onChange={(t) => { setThemeChosen(true); setThemeId(t); }} />
-      <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} quoteShown={quote !== null} expanded={expanded} devices={probeDevices} onMeasure={setLineSets} styles={styles} />
+      <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} quoteShown={quote !== null} longQuote={longQuote} expanded={expanded} devices={probeDevices} onMeasure={setLineSets} styles={styles} />
 
       {/* Left half: the composer centred vertically, like the preview, with the tips hanging in the
           space below it. The two spacers split the free height evenly, but the tips' block never
@@ -699,7 +701,7 @@ export function Postcheck() {
           </div>
         }
         app={(maxHeight) => {
-          const cell = <XPost device={phoneDevice} theme={phoneTheme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} state={postState} />;
+          const cell = <XPost device={phoneDevice} theme={phoneTheme} identity={identity} tokens={phoneRender.tokens} showMore={phoneRender.showMore} onShowMore={() => expand(phoneDevice)} toggle={toggleFor(phoneDevice, phoneRender.showMore)} hiddenUrlStart={longQuote && phoneDevice.platform === "ios" ? null : hiddenUrlStart} card={card} quote={quoteProp} media={media} poll={pollOnPost} styles={rowHidesStyles(phoneDevice, Boolean(expanded[phoneDevice.id])) ? [] : styles} state={postState} />;
           // This phone: the timeline cell edge to edge, as the visitor's X app draws it.
           return phoneDevice.frameless ? (
             <div style={{ width: phoneDevice.width, backgroundColor: phoneTheme.bg, borderTop: `1px solid ${phoneTheme.border}`, borderBottom: `1px solid ${phoneTheme.border}` }}>{cell}</div>

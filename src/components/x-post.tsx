@@ -145,7 +145,8 @@ function NameRow({ name, handle, badge, time, theme, app = false }: { name: stri
  * -webkit-line-clamp).
  * iOS timeline, from iPhone 15 Pro captures of tests 42 and 43 at 393pt: 322pt wide (screen − 71,
  * the text's own column), radius 12 (fit to the capture),
- * 20pt avatar, text 6pt under it with a 19pt line pitch, links blue, 5 lines then "…".
+ * 20pt avatar, text 6pt under it with a 19pt line pitch, links blue, 4 lines then "…" (5 until X changed it:
+ * tests 40, 42, 45, 40b and 42b on 2026-10-21; the post screen's embed is assumed to follow).
  * Android, from a Pixel 3 capture of test 44 at 360 dp: web-like (the text column's width, links in the text
  * colour, the photo whole at 16:9). The iOS post screen has no capture: assumed iOS-like.
  */
@@ -153,9 +154,9 @@ function quoteLook(device: Device) {
   if (device.kind === "phone" && device.platform === "ios") {
     const width = device.view === "post" ? device.textWidth : device.width - 71;
     // One landscape sample (test 44): a 1600×900 photo shows 321×171, cropped wider than 16:9.
-    return { width, radius: 12, avatar: 20, textGap: 6, lineHeight: 19, appLinks: true, photoRatio: 171 / 321 };
+    return { width, radius: 12, avatar: 20, textGap: 6, lineHeight: 19, appLinks: true, photoRatio: 171 / 321, maxLines: 4 };
   }
-  return { width: device.textWidth, radius: 16, avatar: 24, textGap: 4, lineHeight: 20, appLinks: false, photoRatio: null };
+  return { width: device.textWidth, radius: 16, avatar: 24, textGap: 4, lineHeight: 20, appLinks: false, photoRatio: null, maxLines: 5 };
 }
 
 /**
@@ -218,7 +219,7 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
               // The quoted text wraps by the same app's rules (assumed: no Android quote capture has a hyphen or a long link).
               platform={device.platform}
               linkColor={look.appLinks ? theme.link : theme.text}
-              maxLines={5}
+              maxLines={look.maxLines}
             />
           </div>
         )}
@@ -534,7 +535,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
     // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31 and 47: 322.4–322.8 wide at 393).
     // Android: either card's top 8dp under the last line's text box (Chirp's 1.2em), not 12 under its line box (tests 20–31).
     <div style={android && hasBody ? { marginTop: 8 - (lineHeight - 1.2 * device.fontSize) / 2 - 12 } : undefined}>
-      <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={android ? { fontSize: device.fontSize, lineHeight } : null} />
+      <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={android ? { fontSize: device.fontSize, lineHeight: device.lineHeight } : null} />
     </div>
   ) : null;
   const attachment = attached && <div data-attachment="" style={{ display: "contents" }}>{attached}</div>;

@@ -6,7 +6,7 @@
 // (searching ~300 times in a day got the account "Oops, something went wrong" on 2026-10-21; `--search`
 // uses search cells instead), find its body node in the uiautomator dump (the app's own characters), screenshot it, and split those characters where macOS Vision OCR
 // (ocr.swift) puts the row breaks. Writes { id: { lines, showMore, bounds, flags } } and keeps the
-// screenshots in .captures/android-pixel3/<today>/. A flagged post needs a look by eye. Navigation only.
+// screenshots in .captures/android-pixel3/<today>-recapture/ (UTC date). A flagged post needs a look by eye. Navigation only.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -99,7 +99,7 @@ function split(text, rows) {
     while (i < words.length) {
       const row = rows[r++];
       if (!row) { flags.push("ran out of OCR rows"); lines.push(join(words.slice(i))); break; }
-      const want = compact(row.text).length;
+      const want = [...compact(row.text)].length; // code points, like the words below
       let best = i + 1, bestErr = Infinity, len = 0;
       for (let k = i; k < words.length; k++) {
         len += [...words[k].t].length;
@@ -137,7 +137,8 @@ for (const p of posts) {
   if (!cands.length) {
     // Keep the screen for a look by eye (some posts' text node is empty, and X auto-translates some).
     sh("cap", "_recap"); execFileSync("mv", [join(here, "_recap.png"), join(capDir, `${p.id}-nomatch.png`)]);
-    out[p.id] = { query: q, flags: ["no matching body node"] }; console.log(p.id, "nomatch", q); writeFileSync(outPath, JSON.stringify(out, null, 1)); continue;
+    // A rerun that misses keeps an earlier capture: it only adds the flag.
+    out[p.id] = out[p.id]?.lines ? { ...out[p.id], flags: [...(out[p.id].flags ?? []), "no matching body node on a rerun"] } : { query: q, flags: ["no matching body node"] }; console.log(p.id, "nomatch", q); writeFileSync(outPath, JSON.stringify(out, null, 1)); continue;
   }
   cands.sort((a, b) => ratio(nfc(b.text), want) - ratio(nfc(a.text), want));
   const node = cands[0];

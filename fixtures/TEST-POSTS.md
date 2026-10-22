@@ -340,7 +340,7 @@ Long quote test 40b: a link to a post sits after character 280, at the very end.
 Posted 2026-10-21: 17b 2113019457715228807, 40b 2113019521326084321 (stored as a long post quoting 01),
 42b 2113019564380549631 (quoting 05). 56b was not posted: two hour-long uploads (`t56b-long.mp4`, and `t56b-long-v2.mp4` re-encoded at High profile with a keyframe every 2 s) both ended in "Something went wrong" after 6–10 minutes of Processing. The badge format was read instead on someone else's post: x.com shows `1:35:30` on @TuckerCarlson 2112227472238383207 (1:35:35, counting down), so `h:mm:ss` holds.
 
-Captured 2026-10-21: x.com (17b, 40b, 42b in `fixtures/web/postcheck_test.json`) and the Pixel 3 at 360 and 411.4 dp (`.captures/android-pixel3/2026-10-21/b10c-*`, not transcribed: the Android cell moved its body from 60 to 64 dp since 2026-10-08, QUIRKS "Android timeline cell"). Results: 17b shows no leading blank line anywhere; 40b is cut at 279 with the quote embed under it; 42b's embed shows test 05 cut at 280 (the tool now cuts it too). The iPhone is still to capture.
+Captured 2026-10-21: x.com (17b, 40b, 42b in `fixtures/web/postcheck_test.json`) and the Pixel 3 at 360 and 411.4 dp (`.captures/android-pixel3/2026-10-21/b10c-*`, not transcribed: the Android cell moved its body from 60 to 64 dp since 2026-10-08, QUIRKS "Android timeline cell"). Results: 17b shows no leading blank line anywhere; 40b is cut at 279 with the quote embed under it; 42b's embed shows test 05 cut at 280 (the tool now cuts it too). iPhone 15 Pro, the same day: 40b whole in 9 lines with its post link kept as text, 42b's embed at 4 lines (the iOS quote clamp went from 5 to 4; tests 40, 42 and 45 agree), 17b plain; tests 01, 05, 06, 12, 13 and 20 unchanged.
 
 56b's file is too big to commit; make it locally (a still blue frame with silent audio, a few MB) and drag
 it from Finder into the composer:
@@ -357,7 +357,7 @@ Before cancelling, also capture these existing posts while they are certainly wh
 - ~~Android (Pixel 3, 360 and 411.4 dp, `dp 412`): 70b's row expanded with Show more, and its post screen, plus 05's post screen.~~
   Done 2026-10-21 (`.captures/android-pixel3/2026-10-21/`): styling shows once expanded and on the post screen;
   a styled expanded row runs at a tighter pitch (QUIRKS, Android rows).
-- After cancelling, open 05, 70b and 104 on x.com once: are they still whole, styled and marked edited? Note the answer here. The check also leaves every @Postcheck_test post, so later captures show none.
+- Premium was cancelled on 2026-10-21 and stays active until 2026-11-16. After that date, open 05, 70b and 104 on x.com once: are they still whole, styled and marked edited? Note the answer here. The check also leaves every @Postcheck_test post, so later captures show none.
 
 ---
 
