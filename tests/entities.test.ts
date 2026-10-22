@@ -134,6 +134,14 @@ test("app fold drops the last character of the last shown line, then trims", () 
   assert.equal(b.slice(0, appFoldCut(b, b.indexOf("\n"))), "Weekly reports now use each day's closing token price");
 });
 
+test("the Android fold keeps the last shown line whole (test 12: \"nine Show more\")", () => {
+  const t = "eight\nnine\nten";
+  assert.equal(t.slice(0, appFoldCut(t, t.indexOf("\nten"), undefined, false)), "eight\nnine");
+  const spans = [{ start: 6, end: 10, left: 0, right: 30 }];
+  assert.equal(t.slice(0, appFoldCut(t, t.indexOf("\nten"), { spans, tokenWidth: 80, textWidth: 284 }, false)), "eight\nnine");
+  assert.equal(t.slice(0, appFoldCut(t, t.indexOf("\nten"), { spans, tokenWidth: 80, textWidth: 284 })), "eight\nnin");
+});
+
 test("app fold keeps the longest prefix that fits beside Show more, then eats one more character", () => {
   const spansFor = (t: string, lineText: string, perChar: number) => {
     const out: Array<{ start: number; end: number; left: number; right: number }> = [];

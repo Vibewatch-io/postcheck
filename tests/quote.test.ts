@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AVATAR_CAP, PHOTO_CAP, lookupProfile, lookupQuote, twimgUrl } from "../src/lib/server/fxtwitter";
 import { fetchImageAsDataUrl, guardedFetch, type GuardFetch } from "../src/lib/server/fetch-guard";
-import { quoteTime, statusId } from "../src/lib/quote";
+import { quotedText, quoteTime, statusId } from "../src/lib/quote";
 import { extractEntities, quoteUrl } from "../src/lib/entities";
 import { POST } from "../src/app/api/quote/route";
 
@@ -68,6 +68,24 @@ test("the quoted text is the post as typed, for every recorded quote", async () 
     // A redirect from the fixed host is refused, never followed.
     assert.equal(calls[0].init?.redirect, "error");
   }
+});
+
+test("a quoted long post shows only what its own cell shows before Show more", () => {
+  // Test 05 (372 characters): x.com's embed of it in test 42b holds exactly X's stored 280-character text.
+  const full = JSON.parse(fx("2100299215364931868")).tweet.text as string;
+  const stored = JSON.parse(readFileSync(join(fixtures, "posts", "2100299215364931868.json"), "utf8")).text as string;
+  assert.ok(full.length > 280);
+  assert.equal(quotedText(full), stored);
+  // A post within 280 is untouched; a cut that falls mid-word backs up to the space, as in the post's own cell.
+  assert.equal(quotedText("Short post"), "Short post");
+  const mid = `${"a ".repeat(139)}extraordinarily long`;
+  assert.equal(quotedText(mid), "a ".repeat(139).trimEnd());
+  // A quoted quote's own post link sits outside the 280: 270 characters of text plus the link stay whole.
+  const quoteOfQuote = `${"b".repeat(270)} https://x.com/Postcheck_test/status/2100298548843872339`;
+  assert.equal(quotedText(quoteOfQuote), quoteOfQuote);
+  // Decomposed accents count as one character each (X counts the NFC form): 200 of them fit whole.
+  const decomposed = "e\u0301".repeat(200);
+  assert.equal(quotedText(decomposed), decomposed.normalize("NFC"));
 });
 
 test("a quoted photo and poll come through; images only from X's CDN, within their caps", async () => {

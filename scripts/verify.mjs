@@ -328,7 +328,9 @@ async function load(id, p = {}) {
   const text = typedText(fx);
   return compose(fx.full_text ? fx.full_text.trimEnd() : fx.note_tweet ? text + LONG_POST_TAIL : text, { ...mediaOf(fx), poll: pollFor(fx, p) });
 }
-async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool) {
+// gapMore pins the tool's own Show more where a gap is a fold one side draws and the other doesn't (a line at the edge
+// pushing a post past 9 lines); by default the pin requires Show more to agree.
+async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool, gapMore = expMore) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
   const exp = expected.filter((l) => !isUrlLine(l) && l !== "").map(norm);
   const act = got.filter((l) => !isUrlLine(l)).map(norm);
@@ -340,11 +342,11 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   // run, and as a failure if anything else about the post changes. Checked before the edge
   // tolerance so a drifting gap post can't pass as a font coin flip.
   if (knownGap) {
-    const pinned = Array.isArray(gapTool) && gapTool.map(norm).join("\n") === act.join("\n") && expMore === gotMore;
+    const pinned = Array.isArray(gapTool) && gapTool.map(norm).join("\n") === act.join("\n") && gapMore === gotMore;
     if (pinned) { gap++; console.log(`  gap  ${label} ${id}  (${knownGap})`); }
     else {
       fail++;
-      const why = !Array.isArray(gapTool) ? "marked gap has no gapTool pin" : expMore !== gotMore ? "marked gap, but Show more drifted" : "marked gap, but the tool no longer draws its pinned gapTool lines";
+      const why = !Array.isArray(gapTool) ? "marked gap has no gapTool pin" : gapMore !== gotMore ? "marked gap, but Show more drifted" : "marked gap, but the tool no longer draws its pinned gapTool lines";
       console.log(`  FAIL ${label} ${id}  (${why})`);
     }
     if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
@@ -356,7 +358,9 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   // so a break inside a word still counts; a post both sides fold or cut may end at a different character).
   // Show more must agree: a fold one side draws and the other doesn't is never a font tolerance.
   let edgeNote = null;
-  const [ej, aj] = [exp.join(""), act.join("")].map((t) => t.replace(/\s+/g, ""));
+  let failNote = "";
+  // Compare the whole text, URL-only lines included: a wrap can move a link onto a line of its own (test 30 on the GT tier).
+  const [ej, aj] = [expected.join(""), got.join("")].map((t) => t.replace(/\s+/g, ""));
   const sameText = expMore === gotMore && (ej === aj || (expMore && (ej.startsWith(aj) || aj.startsWith(ej))));
   const longer = exp[bad]?.length > act[bad]?.length ? exp[bad] : act[bad];
   const shorter = longer === exp[bad] ? act[bad] : exp[bad];
@@ -365,9 +369,10 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
     if (nearEdge(fit)) edgeNote = fitNote(fit, "body");
     // The folded line: the app's character-level cut landing one or two characters away is the same sub-pixel question.
     else if (expMore && bad === exp.length - 1 && longer.length - shorter.length <= 2) edgeNote = `fold cut ${longer.length - shorter.length} char(s) off`;
+    else failNote = `  (${fitNote(fit, "body")})`;
   }
   if (edgeNote) { edge++; console.log(`  edge ${label} ${id}  (${edgeNote})`); }
-  else { fail++; console.log(`  FAIL ${label} ${id}`); }
+  else { fail++; console.log(`  FAIL ${label} ${id}${failNote}`); }
   if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
   if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
 }
@@ -622,7 +627,7 @@ for (const f of readdirSync("fixtures/app")) {
     // A stuck lookup is its own failure; diffing the half-drawn post would count it twice.
     if (!(await (p.compose ? compose(p.compose) : load(p.id, p)))) continue;
     const got = await page.evaluate(ROWS("true"));
-    await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
+    await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool, p.gapMore);
     if (p.card?.box) await cardDiff("app ", true, p.id, p.card);
     else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);

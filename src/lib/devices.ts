@@ -39,11 +39,12 @@ export interface Device {
 // 518px for timeline text. The post page runs the text under the header at
 // full 566px. Phone numbers come from device captures (see phone() below).
 /**
- * The iOS app folds a post behind "Show more" past this many rendered lines, even
- * under 280 characters; the web shows all of it. The Android app has no line fold:
- * it cuts at 280 like the web (@postcheck_test tests 05–08 and 11–13 on Android 12). Three iPhone samples from
- * Vibewatch_io: 8 lines → no fold; 10 and 12 lines → 9 shown. Exactly 9 lines
- * do not fold (@postcheck_test test 11); 10 fold after line 9 (test 12). See QUIRKS.md.
+ * The apps fold a post behind "Show more" past this many rendered lines, even under
+ * 280 characters; the web shows all of it. Three iPhone samples from Vibewatch_io:
+ * 8 lines → no fold; 10 and 12 lines → 9 shown. Exactly 9 lines do not fold
+ * (@postcheck_test test 11); 10 fold after line 9 (test 12). The Android app folds
+ * too since 2026-10-21 (X 12.31.0 late that day, and 12.36.1: tests 12, 13 and 97),
+ * on top of its 280 cut, keeping line 9 whole; until then it only cut at 280. See QUIRKS.md.
  */
 export const APP_MAX_LINES = 9;
 
@@ -67,10 +68,11 @@ const phone = (
   // this pair reproduces the captures as well as the old 316 / −0.32px one did (QUIRKS.md).
   // The iOS body runs at a 19.28pt pitch, not 20: seven one-letter lines of test 13 step 19.27–19.29 in
   // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
-  // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 60dp to width − 12dp, so
-  // column = width − 72; four lines of test 05 match x.com's untracked web Chirp at 15px to within ink side
-  // bearings, with a 20dp pitch below 400 dp (scripts/android/README.md; the wide-screen size is below).
-  textWidth: platform === "ios" ? width - 71 : width - 72,
+  // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 64dp to width − 12dp, so
+  // column = width − 76 (since 2026-10-21; it was 60dp and width − 72 on 2026-10-08, same app version);
+  // its lines match x.com's untracked web Chirp at 15px, with a 20dp pitch below 400 dp
+  // (scripts/android/README.md; the wide-screen size is below).
+  textWidth: platform === "ios" ? width - 71 : width - 76,
   pane: platform === "ios" ? "app" : "web",
   // Android sets the body at 16/21.33 on a wide screen: the same lines measure 6.4% wider at 411.4 dp than at
   // 360 and 392 dp, and the pitch is 56px at 2.625 px/dp (@postcheck_test tests 01–08 on a Pixel 3). The
@@ -80,7 +82,7 @@ const phone = (
   pixelRatio: 3,
   radius,
   island,
-  maxLines: platform === "ios" ? APP_MAX_LINES : undefined,
+  maxLines: APP_MAX_LINES,
   platform,
   view: "timeline",
   font: "web",
@@ -117,11 +119,20 @@ export function postScreenTracking(d: Device): CSSProperties | undefined {
  * The iOS app's timeline row draws a Premium-styled post with no bold or italic at all, short or
  * folded; the styling shows once a long row is expanded with Show more, and on the post screen
  * (@postcheck_test tests 70 and 70b, iPhone 15 Pro). The Android row drops it too, short or cut at 280
- * (tests 70 and 70b on a Pixel 3; its expanded row is assumed to match the iPhone's). Likely an X bug,
- * but the preview shows it as it is.
+ * (tests 70 and 70b on a Pixel 3); expanded, it shows the styling at a tighter pitch (bodyLineHeight).
+ * Likely an X bug, but the preview shows it as it is.
  */
 export function rowHidesStyles(d: Device, expanded = false): boolean {
   return (d.pane === "app" || d.platform === "android") && d.view === "timeline" && !expanded;
+}
+
+/**
+ * The body's line pitch. An Android timeline row that draws Premium styling (only once expanded:
+ * rowHidesStyles) runs at the font's own 1.2em, not the cell's 20 and 21.33: modelled as 18dp at 360 (measured 18)
+ * and 19.2 at 411.4 (measured 19.05) (@postcheck_test test 70b against the unstyled 05, both expanded, Pixel 3, 2026-10-21).
+ */
+export function bodyLineHeight(d: Device, styled: boolean): number {
+  return d.platform === "android" && d.view === "timeline" && styled ? 1.2 * d.fontSize : d.lineHeight;
 }
 
 /**

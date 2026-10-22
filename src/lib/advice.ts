@@ -63,7 +63,7 @@ export interface AdviceInput {
    */
   verified?: boolean;
   /** Set when the app's line clamp would fold the post. */
-  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId: string } | null;
+  appClamp?: { maxLines: number; total: number; lastWord: string; deviceLabel: string; deviceId: string; platform?: "ios" | "android" } | null;
   /** An image is attached: X shows it instead of any link card. */
   hasMedia?: boolean;
   /** What is attached, in order. */
@@ -205,7 +205,10 @@ export function buildAdvice(input: AdviceInput): Advice[] {
         id: "status-link",
         severity: "note",
         title: "Link to an X post",
-        detail: trailing
+        // A long post keeps the link on the iPhone too (test 40b).
+        detail: trailing && input.length.weighted > MAX_WEIGHTED_LENGTH
+          ? `A link to a post becomes a quote post. x.com drops the URL text because it's last, but on a post this long the iPhone and Android apps both still print it.${urls.length > 1 ? " The quote replaces any link card." : ""}`
+          : trailing
           ? `A link to a post becomes a quote post, and because it's last, x.com and the iPhone app drop the URL text. The Android app still prints it.${urls.length > 1 ? " The quote replaces any link card." : ""}`
           : `A link to a post becomes a quote post. Move it to the end and x.com and the iPhone app drop the URL text too. The Android app keeps it either way.${urls.length > 1 ? " The quote replaces any link card." : ""}`,
       });
@@ -384,7 +387,7 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     out.push({
       id: "app-clamp",
       severity: "tip",
-      title: `Collapses in the iOS app after ${clamped.maxLines} lines`,
+      title: `Collapses in the ${clamped.platform === "android" ? "Android" : "iOS"} app after ${clamped.maxLines} lines`,
       detail: `The web shows all ${clamped.total} lines, but on ${clamped.deviceLabel} the app folds this behind Show more after "${clamped.lastWord}". Anything below that only shows after a tap.`,
     });
   }

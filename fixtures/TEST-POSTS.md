@@ -101,7 +101,7 @@ Long test 08: an emoji starts on character 280 and ends on 281. the quick brown 
 | 15 | A 60-character unbroken word: `Supercalifragilisticexpialidocious-and-then-some-more-letters` mid-sentence | Where an unbreakable token wraps; app never breaks at hyphens. |
 | 16 | Several hyphenated words positioned to land at a line end on 393pt (`state-of-the-art`, `quantum-resistant`) | Web breaks at the hyphen, app doesn't. |
 | 17 | `word  word   word` (double and triple spaces), a tab, and leading/trailing spaces | Whitespace collapsing and trimming. |
-| 17b | Two blank lines and two spaces, then `Test 17b: leading whitespace` (press Return twice and Space twice before typing) | Does X trim leading blank lines and spaces? Test 17 as posted started with its text, so only the trailing trim is proven. Note whether the composer keeps them and what X stores. Settles QUIRKS open question 7 and the "Outer whitespace trimmed" row (Assumed). Not posted yet. |
+| 17b | Two blank lines and two spaces, then `Test 17b: leading whitespace` (press Return twice and Space twice before typing) | Leading whitespace: X trims it. Posted 2026-10-21 in batch 10 (2113019457715228807): the composer kept both blank lines and both spaces, and X stored `Test 17b: leading whitespace` (test 17 only proved the trailing trim). Settled QUIRKS open question 7 and the "Outer whitespace trimmed" row (now Verified, X data; the render is still to capture). |
 
 ## 3. Links and cards
 
@@ -317,6 +317,47 @@ Posted 2026-10-06 (batch 7), texts `Test 110: …` to `Test 115: …` as in 51�
 | 131 | `Paid partnership test` with the paid-partnership label on | Disclosure label. |
 
 131 posted 2026-10-06 (composer → content disclosure → Paid partnership; the same sheet offers "Made with AI"). 130 posted 2026-10-07 by Brandon from his phone (the Browser pane denies geolocation, so its location button is disabled): the web timeline shows no location, the post page adds "from Stanford, CA".
+
+## 14. Batch 10: before Premium ends
+
+The last batch before @Postcheck_test's Premium is cancelled. 40b and 56b need Premium; 17b and 42b
+don't, but 42b quotes a long post, and whether X keeps long posts and their styling whole once Premium
+lapses is unknown. 40b quotes test 01 and 42b quotes test 05, both already posted, so the order doesn't
+matter.
+
+| # | Text | Tests |
+|---|---|---|
+| 17b | see group 2 | Leading blank lines and spaces: kept or trimmed? Settles QUIRKS open question 7. |
+| 40b **P** | see block (406 weighted; the post link starts at character 384; the 280 budget runs out mid-word, so the visible text ends at character 279) | A post link past the 280 cut, at the end: is the quote embed still drawn under the cut text, and is the URL hidden once expanded? The iPhone folds by lines instead, and Android keeps a trailing post link as text (QUIRKS). |
+| 42b | `Test 42b: quote of a long post https://x.com/Postcheck_test/status/2100299215364931868` (test 05) | Quote of a post over 280: does the embed show the 280 cut, or the whole text clamped at 5 lines (web) and 5 lines then "…" (iPhone)? Is there a Show more inside the embed? |
+| 56b **P** | `Test 56b: a video over an hour long` with `t56b-long.mp4` (1:00:05). **Not posted** (X's processing failed twice; see below) | The duration badge from an hour (`h:mm:ss`, read on someone else's post instead); the iPhone shows only a mute icon on a short video (56), Android's badge unmeasured. Only Premium uploads past 2:20. |
+
+```text
+40b
+Long quote test 40b: a link to a post sits after character 280, at the very end. the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog the quick brown fox jumps over a lazy dog and this sentence keeps going past the cut so the post needs Show more on the web timeline. https://x.com/Postcheck_test/status/2100298548843872339
+```
+
+Posted 2026-10-21: 17b 2113019457715228807, 40b 2113019521326084321 (stored as a long post quoting 01),
+42b 2113019564380549631 (quoting 05). 56b was not posted: two hour-long uploads (`t56b-long.mp4`, and `t56b-long-v2.mp4` re-encoded at High profile with a keyframe every 2 s) both ended in "Something went wrong" after 6–10 minutes of Processing. The badge format was read instead on someone else's post: x.com shows `1:35:30` on @TuckerCarlson 2112227472238383207 (1:35:35, counting down), so `h:mm:ss` holds.
+
+Captured 2026-10-21: x.com (17b, 40b, 42b in `fixtures/web/postcheck_test.json`) and the Pixel 3 at 360 and 411.4 dp (`.captures/android-pixel3/2026-10-21/b10c-*`, not transcribed: the Android cell moved its body from 60 to 64 dp since 2026-10-08, QUIRKS "Android timeline cell"). Results: 17b shows no leading blank line anywhere; 40b is cut at 279 with the quote embed under it; 42b's embed shows test 05 cut at 280 (the tool now cuts it too). iPhone 15 Pro, the same day: 40b whole in 9 lines with its post link kept as text, 42b's embed at 4 lines (the iOS quote clamp went from 5 to 4; tests 40, 42 and 45 agree), 17b plain; tests 01, 05, 06, 12, 13 and 20 unchanged.
+
+56b's file is too big to commit; make it locally (a still blue frame with silent audio, a few MB) and drag
+it from Finder into the composer:
+
+```bash
+mkdir -p ~/Downloads/postcheck-media && ffmpeg -f lavfi -i "color=c=0x1D9BF0:size=1280x720:rate=30" -f lavfi -i "anullsrc=r=44100:cl=stereo" -t 3605 -c:v libx264 -preset veryfast -tune stillimage -pix_fmt yuv420p -c:a aac -b:a 32k ~/Downloads/postcheck-media/t56b-long.mp4
+```
+
+Capture the duration badge before autoplay starts (it counts down, then disappears).
+
+Before cancelling, also capture these existing posts while they are certainly whole:
+
+- The iPhone 17 Pro list (`.captures/iphone-17-capture-list.md`): six of its posts are @Postcheck_test long posts (05–08, 94, 94b).
+- ~~Android (Pixel 3, 360 and 411.4 dp, `dp 412`): 70b's row expanded with Show more, and its post screen, plus 05's post screen.~~
+  Done 2026-10-21 (`.captures/android-pixel3/2026-10-21/`): styling shows once expanded and on the post screen;
+  a styled expanded row runs at a tighter pitch (QUIRKS, Android rows).
+- Premium was cancelled on 2026-10-21 and stays active until 2026-11-16. After that date, open 05, 70b and 104 on x.com once: are they still whole, styled and marked edited? Note the answer here. The check also leaves every @Postcheck_test post, so later captures show none.
 
 ---
 

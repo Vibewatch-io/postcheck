@@ -437,16 +437,21 @@ export function tokenize(text: string, entities: Entity[], boundaries: number[] 
  * span (`link`) is one unit: the cut lands before it or after it, never inside
  * its display text, and the extra character is not eaten from it (assumed; no
  * capture has a link at the fold).
+ *
+ * `eat` is the iPhone's extra character. The Android app keeps the line whole ("nine Show more",
+ * tests 12, 13 and 97 on 2026-10-21); where its token doesn't fit beside a full line 9 it is assumed
+ * to drop whole characters the same way, without the extra one (no capture has a full line 9).
  */
 export function appFoldCut(
   text: string,
   lineEnd: number,
   fit?: { spans: Array<{ start: number; end: number; left: number; right: number; link?: boolean }>; tokenWidth: number; textWidth: number },
+  eat = true,
 ): number {
   const trimmedEnd = text.slice(0, lineEnd).trimEnd().length;
   if (!fit || fit.spans.length === 0) {
     const cps = [...text.slice(0, trimmedEnd)];
-    cps.pop();
+    if (eat) cps.pop();
     return cps.join("").trimEnd().length;
   }
   const { spans, tokenWidth, textWidth } = fit;
@@ -466,7 +471,7 @@ export function appFoldCut(
   }
   let k = candidates.length - 1;
   while (k >= 0 && (candidates[k].cut > trimmedEnd || candidates[k].right + tokenWidth > textWidth)) k -= 1;
-  if (k >= 0 && !candidates[k].link) k -= 1; // the app always eats one more character
+  if (eat && k >= 0 && !candidates[k].link) k -= 1; // the iPhone always eats one more character
   const cut = k >= 0 ? candidates[k].cut : spans[0].start;
   return text.slice(0, cut).trimEnd().length;
 }

@@ -1,0 +1,28 @@
+{
+  "id_str": "2113019564380549631",
+  "text": "Test 42b: quote of a long post https://t.co/6LDF9XDrCs",
+  "display_text_range": [
+    0,
+    54
+  ],
+  "note_tweet": false,
+  "entities": {
+    "urls": [
+      {
+        "display_url": "x.com/Postcheck_test…",
+        "expanded_url": "https://x.com/Postcheck_test/status/2100299215364931868",
+        "indices": [
+          31,
+          54
+        ],
+        "url": "https://t.co/6LDF9XDrCs"
+      }
+    ]
+  },
+  "card": null,
+  "photos": 0,
+  "user": {
+    "name": "Postcheck",
+    "screen_name": "Postcheck_test"
+  }
+}

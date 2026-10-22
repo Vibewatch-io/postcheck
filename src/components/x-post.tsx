@@ -1,12 +1,12 @@
 "use client";
 
 import type { CSSProperties, ReactNode, Ref } from "react";
-import { postScreenTracking, type Device } from "@/lib/devices";
+import { bodyLineHeight, postScreenTracking, type Device } from "@/lib/devices";
 import type { XTheme } from "@/lib/theme";
 import { fontStack } from "@/lib/theme";
 import type { CardData } from "@/lib/card";
 import { Entity, Token, extractEntities, isTrailing, quoteUrl, tokenize, type StyleRun } from "@/lib/entities";
-import { quoteTime, type QuoteState } from "@/lib/quote";
+import { quotedText, quoteTime, type QuoteState } from "@/lib/quote";
 import { NO_POST_STATE, tagLine, type PostState } from "@/lib/post-state";
 import { mediaColumn, mediaLayout, videoTime, type MediaItem } from "@/lib/media";
 import { PostBody } from "./post-body";
@@ -145,7 +145,8 @@ function NameRow({ name, handle, badge, time, theme, app = false }: { name: stri
  * -webkit-line-clamp).
  * iOS timeline, from iPhone 15 Pro captures of tests 42 and 43 at 393pt: 322pt wide (screen − 71,
  * the text's own column), radius 12 (fit to the capture),
- * 20pt avatar, text 6pt under it with a 19pt line pitch, links blue, 5 lines then "…".
+ * 20pt avatar, text 6pt under it with a 19pt line pitch, links blue, 4 lines then "…" (5 until X changed it:
+ * tests 40, 42, 45, 40b and 42b on 2026-10-21; the post screen's embed is assumed to follow).
  * Android, from a Pixel 3 capture of test 44 at 360 dp: web-like (the text column's width, links in the text
  * colour, the photo whole at 16:9). The iOS post screen has no capture: assumed iOS-like.
  */
@@ -153,9 +154,9 @@ function quoteLook(device: Device) {
   if (device.kind === "phone" && device.platform === "ios") {
     const width = device.view === "post" ? device.textWidth : device.width - 71;
     // One landscape sample (test 44): a 1600×900 photo shows 321×171, cropped wider than 16:9.
-    return { width, radius: 12, avatar: 20, textGap: 6, lineHeight: 19, appLinks: true, photoRatio: 171 / 321 };
+    return { width, radius: 12, avatar: 20, textGap: 6, lineHeight: 19, appLinks: true, photoRatio: 171 / 321, maxLines: 4 };
   }
-  return { width: device.textWidth, radius: 16, avatar: 24, textGap: 4, lineHeight: 20, appLinks: false, photoRatio: null };
+  return { width: device.textWidth, radius: 16, avatar: 24, textGap: 4, lineHeight: 20, appLinks: false, photoRatio: null, maxLines: 5 };
 }
 
 /**
@@ -188,8 +189,9 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
   const q = state.quote;
   // A quoted post that is itself a quote keeps its post link as visible text: X draws no quote
   // inside a quote. The iOS app prints that link twice (@postcheck_test test 107, one capture).
-  const inner = quoteUrl(extractEntities(q.text));
-  const text = device.pane === "app" && inner && isTrailing(q.text, inner) ? `${q.text} ${q.text.slice(inner.start, inner.end)}` : q.text;
+  const shown = quotedText(q.text);
+  const inner = quoteUrl(extractEntities(shown));
+  const text = device.pane === "app" && inner && isTrailing(shown, inner) ? `${shown} ${shown.slice(inner.start, inner.end)}` : shown;
   const tokens = tokenize(text, extractEntities(text), []);
   const hasText = tokens.some((t) => t.kind !== "space" && t.kind !== "newline");
   const photoWidth = look.width - 2;
@@ -217,7 +219,7 @@ function QuoteEmbed({ entity, state, device, theme }: { entity: Entity; state: Q
               // The quoted text wraps by the same app's rules (assumed: no Android quote capture has a hyphen or a long link).
               platform={device.platform}
               linkColor={look.appLinks ? theme.link : theme.text}
-              maxLines={5}
+              maxLines={look.maxLines}
             />
           </div>
         )}
@@ -517,6 +519,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   const ios = device.kind === "phone" && device.platform === "ios" && device.view !== "post";
   const android = device.kind === "phone" && device.platform === "android";
   const hasBody = tokens.some((t) => t.kind !== "space" && t.kind !== "newline" && !(t.kind === "entity" && t.entity.start === hiddenUrl));
+  const lineHeight = bodyLineHeight(device, Boolean(styles?.length));
 
   // The wrapper has no box of its own (display: contents), so layout is untouched; verify finds
   // the attachment through it.
@@ -531,7 +534,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   ) : card ? (
     // iOS timeline: the media column, like the quote embed (iPhone captures of tests 07, 20–31 and 47: 322.4–322.8 wide at 393).
     // Android: either card's top 8dp under the last line's text box (Chirp's 1.2em), not 12 under its line box (tests 20–31).
-    <div style={android && hasBody ? { marginTop: 8 - (device.lineHeight - 1.2 * device.fontSize) / 2 - 12 } : undefined}>
+    <div style={android && hasBody ? { marginTop: 8 - (lineHeight - 1.2 * device.fontSize) / 2 - 12 } : undefined}>
       <LinkCard card={card} theme={theme} width={ios ? device.width - 71 : bodyWidth} viewport={viewport} font={device.font} web={device.kind !== "phone"} ios={ios} android={android ? { fontSize: device.fontSize, lineHeight: device.lineHeight } : null} />
     </div>
   ) : null;
@@ -561,7 +564,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       hiddenUrlStart={hiddenUrl}
       theme={theme}
       fontSize={device.fontSize}
-      lineHeight={device.lineHeight}
+      lineHeight={lineHeight}
       width={bodyWidth}
       font={device.font}
       pane={device.pane}
@@ -606,6 +609,7 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
   }
 
   const isPhone = device.kind === "phone";
+  const avatarSize = android ? 48 : isPhone ? 44 : 40;
   return (
     <article
       // Focusable when it toggles, as X's own timeline cells are. It stays an article (a button role
@@ -627,11 +631,11 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
       style={{
         cursor: toggle ? "pointer" : undefined,
         // App cell measured on iPhone 15 Pro captures: 12px inset, 44px avatar, 8px gap.
-        // Android (Pixel 3 capture): 12px inset, 40px avatar, 8px gap, 12px right (devices.ts textWidth).
+        // Android (Pixel 3 captures, 2026-10-21): 8px inset, 48px avatar, 8px gap, 12px right (devices.ts textWidth).
         // A pinned post's "Pinned" row takes the top 8px of the inset, then 16 + 4 (x.com and iOS: +16).
         // One shorthand only: a longhand beside it would survive React's style diff on a device switch.
         // iOS: the body, media and action row share one 322pt column on a 393pt screen (screen − 71), so 7 right.
-        padding: `${state.pinned ? 8 : 12}px ${isPhone ? (android ? "12px 12px" : `7px ${IOS_CELL.bottom}px 12px`) : "16px 12px"}`,
+        padding: `${state.pinned ? 8 : 12}px ${isPhone ? (android ? "12px 12px 8px" : `7px ${IOS_CELL.bottom}px 12px`) : "16px 12px"}`,
         backgroundColor: theme.bg,
         width: device.width,
         boxSizing: "border-box",
@@ -641,9 +645,9 @@ export function XPost({ device, theme, identity, tokens, showMore, onShowMore, t
         ...font,
       }}
     >
-      {state.pinned && <PinnedRow device={device} theme={theme} avatar={isPhone && !android ? 44 : 40} />}
+      {state.pinned && <PinnedRow device={device} theme={theme} avatar={avatarSize} />}
       <div style={{ display: "flex", gap: 8 }}>
-        <Avatar src={identity.avatar} size={isPhone && !android ? 44 : 40} square={square} />
+        <Avatar src={identity.avatar} size={avatarSize} square={square} />
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, height: 20, marginTop: ios ? IOS_CELL.nameTop : undefined }}>
             <NameRow name={name} handle={handle} badge={identity.badge} time="1h" theme={theme} app={device.pane === "app"} />

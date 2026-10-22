@@ -70,11 +70,15 @@ compose, and never the floating + button.
 
 Recorded in QUIRKS.md (Android rows) with `fixtures/app/galaxy-s25.json` and `fixtures/app/pixel-10.json`, which `npm run verify` checks:
 
-- **No line fold.** The Android app shows a post under 280 whole however many lines it runs (tests 11,
-  12 and 13: 9, 10 and 30 lines). The iPhone app folds test 12 after line 9.
+- **A line fold since 2026-10-21.** The Android app now folds a post past 9 rendered lines, keeping line 9 whole
+  ("nine Show more"; tests 12, 13 and 97), on top of its 280 cut. Before that it had no line fold: a post under 280
+  showed whole however many lines it ran (tests 11, 12 and 13: 9, 10 and 30 lines on 2026-10-05 and 2026-10-08).
+  The iPhone folds after line 9 too but drops a character first ("nin Show more").
 - **The 280 cut, like x.com.** Long posts get Show more at the same character as the web (tests
   05–08).
-- **Cell geometry.** The body runs from 60 dp to width − 12 dp (column = width − 72) at x.com's web
+- **Cell geometry.** A 48 dp avatar at 8 dp, and the body from 64 dp to width − 12 dp (column = width − 76), as of
+  2026-10-21; by then it had changed from the 2026-10-08 layout (40 dp avatar at 12, body from 60 dp, width − 72)
+  under the same app version at x.com's web
   tracking, 15/20 at 360 and 392 dp and 16/21.33 at 411.4 dp (the switch, between 392 and 411.4, is assumed at 400).
 - **Wrapping.** No break after a hyphen (an over-long word breaks at the last character that fits); a link breaks
   after a "/"; the Show more token wraps like two words, so "Show" can end a line with "more" on the next (tests 05, 94, 116).
