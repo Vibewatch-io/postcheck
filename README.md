@@ -32,7 +32,7 @@ Everything below was read off x.com in September 2026.
 | Link text | Scheme and `www.` stripped, path truncated at 15 characters with an ellipsis | `displayUrl()` |
 | Cards | Small card: 1px border, 16px radius, square thumbnail. Large card: image with the title in a dark pill bottom-left and "From domain" beneath | `src/components/link-card.tsx` |
 | Media | Up to 4 photos, GIFs or videos. On x.com one item is 516px wide at its own shape, a portrait one capped at 510px high; two photos share a row; more, or any GIF or video among several, go into a sideways carousel 350px tall with the next item peeking in; badges read "GIF", the video's length and "ALT". The iPhone app has its own rules: a 322pt column, tall photos cropped to 186×402, photos in a row only while they'd be at least 120pt tall (otherwise a 219pt carousel), a "GIF" pill, a mute mark on videos and no ALT badge | `src/lib/media.ts` |
-| Hidden URL | When the card's link is the last thing in the post, the URL text disappears and only the card shows. A trailing link to a post goes the same way on x.com and in the iPhone app; the Android app keeps it as text above the quote | `cardUrl()`, `isTrailing()`, `XPost` |
+| Hidden URL | When the card's link is the last thing in the post, the URL text disappears and only the card shows. A trailing link to a post goes the same way on x.com, and in the iPhone app on a post within 280 characters; the iPhone keeps it on a longer post, and the Android app always keeps it as text above the quote | `cardUrl()`, `isTrailing()`, `XPost` |
 | Entities | @mentions (15 chars max), #hashtags (need a letter), $cashtags, bare domains with a real TLD | `extractEntities()` |
 
 What was inferred rather than read off a DOM, and how it was checked:
