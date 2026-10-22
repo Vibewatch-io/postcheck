@@ -310,7 +310,8 @@ export function Postcheck() {
   const quoteProp = useMemo(() => (quote ? { entity: quote, state: quoteState } : null), [quote, quoteState]);
   const webRender = useMemo(() => renderFor(webDevice), [renderFor, webDevice]);
   const phoneRender = useMemo(() => renderFor(phoneDevice), [renderFor, phoneDevice]);
-  const phoneClamp = clampFor(phoneDevice);
+  // Android cuts at 280 too: the fold tip is about the line fold only where it comes first.
+  const phoneClamp = ((c) => (c && (phoneDevice.platform === "ios" || c.cut < cut280) ? c : null))(clampFor(phoneDevice));
 
   // Fetch card metadata for the card URL once the link looks finished: something typed after it, or
   // a longer pause when it's the last thing in the post (where a half-typed link usually sits). Each
@@ -403,7 +404,7 @@ export function Postcheck() {
         lineSets,
         previews: [phoneDevice.id, webDevice.id],
         verified: identity.badge !== "none",
-        appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id } : null,
+        appClamp: phoneClamp ? { maxLines: phoneClamp.maxLines, total: phoneClamp.total, lastWord: phoneClamp.lastWord, deviceLabel: phoneDevice.tipLabel ?? phoneDevice.label, deviceId: phoneDevice.id, platform: phoneDevice.platform ?? "ios" } : null,
         hasMedia: media.length > 0,
         mediaKinds: media.map((m) => m.kind),
         mediaLayouts: [webDevice, phoneDevice].flatMap((d) => {

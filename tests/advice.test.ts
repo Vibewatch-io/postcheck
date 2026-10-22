@@ -123,6 +123,15 @@ test("the styling tip says the app timelines show no bold or italic", () => {
   assert.match(tip?.detail ?? "", /iPhone and Android apps' timelines, X shows the post with no bold or italic/);
 });
 
+test("the fold tip names the app it folds in", () => {
+  const text = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10";
+  const entities = extractEntities(text);
+  const tip = (platform: "ios" | "android") =>
+    buildAdvice({ text, entities, length: weightedLength(text, entities), card: undefined, lineSets: [], appClamp: { maxLines: 9, total: 10, lastWord: "9", deviceLabel: "Phone", deviceId: "p", platform } }).find((a) => a.id === "app-clamp");
+  assert.equal(tip("android")?.title, "Collapses in the Android app after 9 lines");
+  assert.equal(tip("ios")?.title, "Collapses in the iOS app after 9 lines");
+});
+
 test("only an unexpanded app timeline row hides styling", async () => {
   const { DEVICES, rowHidesStyles } = await import("../src/lib/devices");
   const ios = DEVICES.find((d) => d.platform === "ios" && d.view === "timeline")!;
