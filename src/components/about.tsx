@@ -2,8 +2,8 @@ import { REPO_URL } from "@/lib/site";
 
 /**
  * What the page says to someone who scrolls past the tool, and to search engines: the tool itself
- * renders almost no text a crawler can read. Every claim here is one the README already makes; keep
- * them in step. The FAQ also feeds the page's FAQPage structured data (page.tsx), so the two can't drift.
+ * renders almost no text a crawler can read. Every claim here is one the README or the code backs;
+ * keep them in step. The FAQ also feeds the page's FAQPage structured data (page.tsx), so the two can't drift.
  */
 export const FAQ: { q: string; a: string }[] = [
   {
@@ -12,11 +12,11 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Is Postcheck free?",
-    a: "Yes. There is no sign-up and no paid tier, and the code is open source under the MIT licence.",
+    a: "Yes. There is no sign-up, and the code is open source under the MIT licence.",
   },
   {
     q: "Does Postcheck store my post?",
-    a: "No. Previews are made in your browser, and the text you type stays there unless you share it. Only the first link (to fetch its card), the number of a post you quote, and a username you look up go to our server, and none of them are stored.",
+    a: "No. Previews are made in your browser, and the text you type stays there unless you share it. Only the first link, the number of a post you quote, and a username you look up go to our server, which fetches the link's card and asks FxTwitter for the post or profile. None of them are stored.",
   },
   {
     q: "Does it show the link card X will attach?",
