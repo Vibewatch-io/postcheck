@@ -1,8 +1,8 @@
+import { About, FAQ } from "@/components/about";
 import { Postcheck } from "@/components/postcheck";
 import { DESCRIPTION, REPO_URL, SITE_URL, TAGLINE, TITLE } from "@/lib/site";
 
-const JSON_LD = {
-  "@context": "https://schema.org",
+const APP = {
   "@type": "WebApplication",
   name: TITLE,
   url: SITE_URL,
@@ -15,21 +15,31 @@ const JSON_LD = {
   sameAs: [REPO_URL],
 };
 
+/** The FAQ the page prints under the tool (about.tsx), as structured data. */
+const FAQ_PAGE = {
+  "@type": "FAQPage",
+  mainEntity: FAQ.map(({ q, a }) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+};
+
+const JSON_LD = { "@context": "https://schema.org", "@graph": [APP, FAQ_PAGE] };
+
 export default function Page() {
   return (
-    // Wide windows lock the page to the window so everything fits without scrolling; narrower ones
-    // stack the preview under the composer (postcheck.tsx) and scroll.
+    // Wide windows lock the tool to the window so it all fits on the first screen; narrower ones stack
+    // the preview under the composer (postcheck.tsx) and scroll. The About section sits below the fold.
     <>
-    {/* Structured data: tells search engines this is a free web app, and who makes it. */}
+    {/* Structured data: tells search engines this is a free web app, who makes it, and its FAQ. */}
     <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
     <div className="mx-auto flex min-h-screen max-w-[1640px] flex-col px-4 py-3 sm:px-5 min-[1224px]:h-screen min-[1224px]:overflow-hidden">
       <header className="mb-3 flex flex-none flex-wrap items-center justify-between gap-x-6 gap-y-1">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-0">
-          <h1 className="font-syne text-2xl font-bold tracking-tight text-brand-warm-dark">
+        {/* The tagline sits inside the h1 so the page's main heading says what the tool does. */}
+        <h1 className="flex flex-wrap items-baseline gap-x-4 gap-y-0">
+          <span className="font-syne text-2xl font-bold tracking-tight text-brand-warm-dark">
             Post<span className="text-brand-teal">check</span>
-          </h1>
-          <p className="text-sm text-brand-warm-gray">{TAGLINE}</p>
-        </div>
+          </span>
+          <span className="sr-only">: </span>
+          <span className="text-sm font-normal text-brand-warm-gray">{TAGLINE}</span>
+        </h1>
         {/* The preview's controls live up here so the phone gets the full height of the window. */}
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           <div id="preview-controls" className="contents" />
@@ -57,6 +67,7 @@ export default function Page() {
         </span>
       </footer>
     </div>
+    <About />
     </>
   );
 }

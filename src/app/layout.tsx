@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Schibsted_Grotesk, Syne } from "next/font/google";
 import { Analytics } from "@/components/analytics";
-import { DESCRIPTION, SITE_URL, TAGLINE, TITLE, X_HANDLE } from "@/lib/site";
+import { DESCRIPTION, SEARCH_TITLE, SITE_URL, TITLE, X_HANDLE } from "@/lib/site";
 import "./globals.css";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", weight: ["600", "700"] });
@@ -9,9 +9,9 @@ const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap"
 const schibsted = Schibsted_Grotesk({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-schibsted", display: "swap" });
 
 export const metadata: Metadata = {
-  // Search results and the browser tab carry the tagline; social cards keep the short name, which
-  // X prints in the pill over the image.
-  title: `${TITLE}: ${TAGLINE}`,
+  // Search results and the browser tab lead with the search phrase; social cards keep the short name,
+  // which X prints in the pill over the image.
+  title: SEARCH_TITLE,
   description: DESCRIPTION,
   applicationName: TITLE,
   alternates: { canonical: "/" },
