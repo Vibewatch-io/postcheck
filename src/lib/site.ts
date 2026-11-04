@@ -14,4 +14,4 @@ export const X_HANDLE = "@vibewatch_io";
 export const REPO_URL = "https://github.com/Vibewatch-io/postcheck";
 /** The "Looks different on X" issue form (.github/ISSUE_TEMPLATE/render-mismatch.yml). */
 export const MISMATCH_FORM = `${REPO_URL}/issues/new?template=render-mismatch.yml`;
-export const DESCRIPTION = "Free X (Twitter) post previewer. See your tweet at true size on iPhone, Android and x.com: character count, Show more cuts, link cards. Nothing is stored.";
+export const DESCRIPTION = "Free X (Twitter) post previewer. See your tweet on iPhone, Android and x.com: character count, Show more cuts, link cards. Nothing is stored.";

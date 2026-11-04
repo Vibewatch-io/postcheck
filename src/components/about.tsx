@@ -43,8 +43,8 @@ export function About() {
         Preview your X post before you post it
       </h2>
       <p className="mt-3">
-        Postcheck is a free previewer for X (Twitter) posts. It draws your draft at true size, with the column widths and line breaks of
-        x.com and the X apps, so you see where the lines fall and what gets cut before anyone else does. Its rendering rules come
+        Postcheck is a free previewer for X (Twitter) posts. It draws your draft at true size, using column widths and line-break rules
+        measured on x.com and in the X apps, so you see where the lines fall and what gets cut before anyone else does. Its rendering rules come
         from real posts captured on x.com, an iPhone and an Android phone.
       </p>
 
