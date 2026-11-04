@@ -1,6 +1,6 @@
 # Postcheck
 
-**See your post exactly as X will show it.**
+**Preview your post exactly as X will show it.**
 
 Postcheck shows you how an X post will look once it's published, on the web timeline, the post page and on phones, and points out the formatting quirks and ranking rules that change how it performs. Look up your username and draft on the left, with tips under the draft. The true-size preview sits on the right. Share a link or export a PNG.
 
