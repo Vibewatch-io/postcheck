@@ -5,9 +5,8 @@ import { DESCRIPTION, SITE_URL, TAGLINE, TITLE, X_HANDLE } from "@/lib/site";
 import "./globals.css";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", weight: ["600", "700"] });
-// Body face: Schibsted Grotesk, variable 400–900 (nothing here sets a weight below 400). Roman
-// only: nothing sets CSS italic (the composer's italic is Unicode letters), so no italic file.
-const schibsted = Schibsted_Grotesk({ subsets: ["latin"], variable: "--font-schibsted", display: "swap" });
+// Body face: Schibsted Grotesk, variable 400–900 (nothing here sets a weight below 400).
+const schibsted = Schibsted_Grotesk({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-schibsted", display: "swap" });
 
 export const metadata: Metadata = {
   // Search results and the browser tab carry the tagline; social cards keep the short name, which
