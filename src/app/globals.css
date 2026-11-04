@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* Fonts are inline: next/font sets --font-syne and --font-geist on <body>, so a
+/* Fonts are inline: next/font sets --font-syne and --font-schibsted on <body>, so a
    :root-level alias would not resolve. */
 @theme inline {
   --font-syne: var(--font-syne), sans-serif;
-  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-sans: var(--font-schibsted), system-ui, sans-serif;
 }
 
 @theme {
