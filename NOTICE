@@ -17,7 +17,8 @@ doesn't cover them:
 - The X posts in fixtures/ and the captures of how X drew them. The posts
   belong to their authors; they're here as test evidence.
 - Fonts. Chirp is X's and loads from X's CDN at runtime. GT America is licensed
-  to Vibewatch alone and is never in this repository. Geist is under the SIL
-  Open Font License (src/app/GeistVF.LICENSE.txt).
+  to Vibewatch alone and is never in this repository. Schibsted Grotesk and
+  Syne, the interface fonts, are under the SIL Open Font License and come
+  from Google Fonts at build time.
 - The names Postcheck and Vibewatch and their logos. A fork should go by its
   own name.

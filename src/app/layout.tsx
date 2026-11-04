@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Syne } from "next/font/google";
-import localFont from "next/font/local";
+import { Schibsted_Grotesk, Syne } from "next/font/google";
 import { Analytics } from "@/components/analytics";
 import { DESCRIPTION, SITE_URL, TAGLINE, TITLE, X_HANDLE } from "@/lib/site";
 import "./globals.css";
 
 const syne = Syne({ subsets: ["latin"], variable: "--font-syne", display: "swap", weight: ["600", "700"] });
-const geist = localFont({ src: "./GeistVF.woff", variable: "--font-geist", weight: "100 900", display: "swap" });
+// Body face: Schibsted Grotesk, variable 400–900 (nothing here sets a weight below 400).
+const schibsted = Schibsted_Grotesk({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-schibsted", display: "swap" });
 
 export const metadata: Metadata = {
   // Search results and the browser tab carry the tagline; social cards keep the short name, which
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preload" as="font" type="font/woff2" href="https://abs.twimg.com/fonts/v2/chirp-regular-web.woff2" crossOrigin="anonymous" />
         <link rel="preload" as="font" type="font/woff2" href="https://abs.twimg.com/fonts/v2/chirp-bold-web.woff2" crossOrigin="anonymous" />
       </head>
-      <body className={`${syne.variable} ${geist.variable} font-sans`}>
+      <body className={`${syne.variable} ${schibsted.variable} font-sans`}>
         {children}
         {/* Umami: cookieless page-view counts. The GT America web licence requires a monthly
             unique-visitor count; this is the whole reason it is here. */}

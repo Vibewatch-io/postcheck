@@ -84,7 +84,7 @@ Previews render in Chirp from X's CDN, never bundled. If that fails, the page de
 - A fork without the files gets the system font. A banner says which tier is active, and `npm run verify -- --no-chirp` tests the degraded path.
 - PNG export is disabled while GT America is active, because the licence forbids saving the font into images.
 
-The UI chrome uses Geist (Vercel, SIL Open Font License; text in `src/app/GeistVF.LICENSE.txt`) and Syne, both self-hosted by Next.js at build time. No font request goes to Google.
+The UI chrome uses Schibsted Grotesk and Syne (both SIL Open Font License, from Google Fonts), self-hosted by Next.js at build time. No font request goes to Google.
 
 ## Card, quote and profile lookups
 
