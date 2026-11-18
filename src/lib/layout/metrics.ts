@@ -119,11 +119,26 @@ export interface Measured {
 
 const graphemes = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
+/** Widths of short runs (a cell is one grapheme), per style: posts repeat their characters. */
+const memo = new Map<string, Measured>();
+
 /**
  * Width of `text` set in one style, in px. Kerning applies between neighbours set in the same Chirp
  * face; a character from another face or a fallback font breaks the run, as it does in the browser.
  */
 export function measure(text: string, style: RunStyle): Measured {
+  if (text.length > 8) return measureRun(text, style);
+  const key = `${style.font}${style.bold ? 7 : 4}${style.size}|${style.letterSpacing}|${text}`;
+  let m = memo.get(key);
+  if (!m) {
+    if (memo.size > 50_000) memo.clear();
+    m = measureRun(text, style);
+    memo.set(key, m);
+  }
+  return m;
+}
+
+function measureRun(text: string, style: RunStyle): Measured {
   // The `calt` ligature (the literal "[CHIRPBIRDICON]" becomes X's bird) is one glyph. Chrome turns
   // ligatures off under letter-spacing, so the iOS pane sets the characters one by one (measured in
   // Chrome: 17.19px at 0, 122.63px at -0.18px).
@@ -191,8 +206,21 @@ function kernOf(f: Face, a: number, b: number): number {
   return l === undefined || r === undefined ? 0 : (f.values[l].get(r) ?? 0);
 }
 
+const kernMemo = new Map<string, number>();
+
 /** Kerning in px between the last character of one run and the first of the next, when both are in the same face. */
 export function kernBetween(a: string, b: string, style: RunStyle): number {
+  const key = `${style.font}${style.bold ? 7 : 4}${style.size}|${a.slice(-2)}|${b.slice(0, 2)}`;
+  let k = kernMemo.get(key);
+  if (k === undefined) {
+    if (kernMemo.size > 50_000) kernMemo.clear();
+    k = kernPair(a, b, style);
+    kernMemo.set(key, k);
+  }
+  return k;
+}
+
+function kernPair(a: string, b: string, style: RunStyle): number {
   const ca = Array.from(a).pop()?.codePointAt(0);
   const cb = b.codePointAt(0);
   if (ca === undefined || cb === undefined) return 0;

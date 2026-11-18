@@ -197,11 +197,12 @@ export function postOnly(): Response {
 }
 
 /**
- * Reads one string field from a small JSON request body. The lookups take their input in the body,
- * never the address, because addresses end up in request logs and caches and bodies don't.
+ * Reads a JSON request body of at most `cap` bytes. undefined when it is too big, breaks off, stalls
+ * past `timeoutMs` or isn't JSON. Input travels in the body, never the address, because addresses end
+ * up in request logs and caches and bodies don't.
  */
-export async function readLookupField(request: Request, field: string): Promise<string | null> {
-  if (Number(request.headers.get("content-length") || 0) > LOOKUP_BODY_CAP) return null;
+export async function readJsonBody(request: Request, cap: number, timeoutMs: number): Promise<unknown> {
+  if (Number(request.headers.get("content-length") || 0) > cap) return undefined;
   // A body that breaks off or stalls mid-upload is a bad request (400), not an unhandled error, and
   // never holds the function open: past the deadline the stream is cancelled, which ends the read.
   const body = request.body;
@@ -209,22 +210,28 @@ export async function readLookupField(request: Request, field: string): Promise<
   let bytes: Uint8Array;
   try {
     bytes = await Promise.race([
-      readCapped(request, LOOKUP_BODY_CAP + 1),
+      readCapped(request, cap + 1),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error("lookup body timed out")), LOOKUP_BODY_TIMEOUT_MS);
+        timer = setTimeout(() => reject(new Error("body timed out")), timeoutMs);
       }),
     ]);
   } catch {
     void body?.cancel().catch(() => {});
-    return null;
+    return undefined;
   } finally {
     clearTimeout(timer);
   }
-  if (bytes.byteLength > LOOKUP_BODY_CAP) return null;
+  if (bytes.byteLength > cap) return undefined;
   try {
-    const value = (JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown> | null)?.[field];
-    return typeof value === "string" ? value : null;
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
   } catch {
-    return null;
+    return undefined;
   }
+}
+
+/** Reads one string field from a small JSON lookup body (see readJsonBody). */
+export async function readLookupField(request: Request, field: string): Promise<string | null> {
+  const json = await readJsonBody(request, LOOKUP_BODY_CAP, LOOKUP_BODY_TIMEOUT_MS);
+  const value = json && typeof json === "object" ? (json as Record<string, unknown>)[field] : undefined;
+  return typeof value === "string" ? value : null;
 }
