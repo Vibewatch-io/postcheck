@@ -7,34 +7,50 @@
 // any line that holds one approximate: a reader's phone draws these in its own system fonts.
 //
 //   node scripts/fallback-metrics.mjs        (macOS: the fallbacks are Apple's system fonts)
-import { writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { platform } from "node:os";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
 if (platform() !== "darwin") {
   console.error("Run this on macOS: the widths are those of the fonts the preview falls back to there.");
   process.exit(2);
 }
-const OUT = "src/lib/layout/fallback-metrics.json";
+// Paths from this file, so the script works from any directory.
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
+const OUT = `${ROOT}src/lib/layout/fallback-metrics.json`;
 // Blocks that come up in posts and that Chirp leaves to fallback fonts.
 const RANGES = [
   [0x0370, 0x03ff], [0x0400, 0x052f], // Greek, Cyrillic (whatever Chirp lacks)
   [0x0590, 0x05ff], [0x0600, 0x06ff], [0x0750, 0x077f], // Hebrew, Arabic
   [0x0900, 0x097f], [0x0980, 0x09ff], [0x0e00, 0x0e7f], // Devanagari, Bengali, Thai
+  [0x0e80, 0x0eff], [0x1000, 0x109f], [0x1780, 0x17ff], // Lao, Myanmar, Khmer
   [0x1100, 0x11ff], [0x2000, 0x2bff], // Hangul Jamo, punctuation, symbols, arrows, dingbats
   [0x3000, 0x30ff], [0x3130, 0x318f], [0x3400, 0x4dbf], [0x4e00, 0x9fff], // CJK punctuation, kana, Han
   [0xac00, 0xd7a3], [0xff00, 0xffef], // Hangul syllables, fullwidth forms
   [0x1d400, 0x1d7ff], // mathematical alphanumerics (the "Unicode bold" X posts use)
 ];
-const STACK = 'TwitterChirpWeb, TwitterChirp, -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+// The preview's stack (theme.ts), GT America included: the site serves it, so a character Chirp lacks
+// and GT America has is drawn in GT America there. Its files are licensed to Vibewatch and never in the
+// repo; the script reads the local copy (.fonts/gt-america) and serves it only to its own headless page.
+const STACK = 'TwitterChirpWeb, TwitterChirp, GTAmerica, -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+const GT = `${ROOT}.fonts/gt-america/GT-America-Standard-Regular.woff2`;
+if (!existsSync(GT)) {
+  console.error(`Needs ${GT} (the licensed GT America files) so the fallback order matches the site's.`);
+  process.exit(2);
+}
+// Only Han and Hangul: the big blocks that alternate between two system fonts glyph by glyph.
+const ONE_WIDTH = [[0x3400, 0x4dbf], [0x4e00, 0x9fff], [0xac00, 0xd7a3]];
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
+await page.route("https://fonts.invalid/gt-regular.woff2", (route) => route.fulfill({ body: readFileSync(GT), contentType: "font/woff2", headers: { "access-control-allow-origin": "*" } }));
 await page.setContent(`<style>
+@font-face{font-family:GTAmerica;src:url("https://fonts.invalid/gt-regular.woff2") format("woff2")}
 @font-face{font-family:TwitterChirpWeb;src:url("https://abs.twimg.com/responsive-web/client-web/Chirp-Regular.80fda27a.woff2") format("woff2")}
 @font-face{font-family:TwitterChirp;src:url("https://abs.twimg.com/fonts/v2/chirp-regular-web.woff2") format("woff2")}
 body{font-family:${STACK};white-space:pre}</style>`);
-await page.evaluate(() => Promise.all([document.fonts.load("15px TwitterChirpWeb"), document.fonts.load("15px TwitterChirp")]));
+await page.evaluate(() => Promise.all([document.fonts.load("15px TwitterChirpWeb"), document.fonts.load("15px TwitterChirp"), document.fonts.load("15px GTAmerica")]));
 const SIZES = [15, 16, 17];
 const sizes = {};
 for (const size of SIZES) {
@@ -56,7 +72,7 @@ for (const size of SIZES) {
     // The big ideograph and syllable blocks alternate between two system fonts glyph by glyph (Han is
     // 15 or 15.3125px at 15px): one width per block, the commonest, keeps the table small. These scripts
     // are approximate anyway.
-    if (to - from > 2000) {
+    if (ONE_WIDTH.some(([a, b]) => a === from && b === to)) {
       const counts = new Map();
       for (const w of widths) counts.set(w, (counts.get(w) ?? 0) + 1);
       const mode = [...counts].sort((a, b) => b[1] - a[1])[0][0];

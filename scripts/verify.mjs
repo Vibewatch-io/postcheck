@@ -2,7 +2,8 @@
 // Rapid test → verify: renders every captured post in the tool (headless
 // Chromium) and diffs its line breaks and fold against what X actually
 // rendered — fixtures/web/*.json (x.com DOM captures) and fixtures/app/*.json
-// (iPhone captures). Usage: node scripts/verify.mjs [--port 3100] [--keep] [--no-chirp] [--record-unfurl]
+// (iPhone captures). Usage: npm run verify -- [--port 3100] [--keep] [--no-chirp] [--record-unfurl]
+// (it runs under tsx: the layout engine it also checks is TypeScript).
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { chromium, errors } from "playwright";
@@ -279,9 +280,9 @@ function nearEdge(fit) {
   return fit.chirp !== undefined && Math.abs(fit.chirp - fit.limit) <= 5 && Math.abs(fit.width - fit.chirp) <= 12;
 }
 const fitNote = (fit, what) => `${fit.width}px vs ${fit.limit}px ${what}${fit.chirp !== undefined ? `; ${fit.chirp}px in Chirp` : ""}`;
-/** Type a draft straight into the composer (**bold** / __italic__ markers become styling). False when a lookup is stuck (already counted as a failure). */
 /** The last draft typed into the composer, for the engine cross-check. */
 let lastDraft = null;
+/** Type a draft straight into the composer (**bold** / __italic__ markers become styling). False when a lookup is stuck (already counted as a failure). */
 async function compose(text, opts = {}) {
   lastDraft = { text, media: opts.media ?? (opts.photo ? [{ kind: "photo", width: 1600, height: 900 }] : undefined), poll: opts.poll?.choices };
   await page.evaluate(([t, o]) => window.__postcheck.setDraft(t, o), [text, opts]);
@@ -611,7 +612,7 @@ async function cellDiff(label, id, want) {
  * same device, must give the rows the preview drew. Card lookups are the replayed ones. Text the engine
  * sets in fallback fonts (CJK, Thai, Arabic…) is approximate and only reported. Matches count as passes.
  */
-function engineDiff(label, device, id, rows) {
+function engineDiff(label, device, id, rows, more) {
   // The engine lays text out in Chirp: on the GT America tier the preview isn't what it models.
   if (!lastDraft || tier !== "chirp") return;
   const { cardUrl } = linksOf(lastDraft);
@@ -619,10 +620,10 @@ function engineDiff(label, device, id, rows) {
   const r = checkPost(lastDraft, { card: recorded ?? "none", quote: "found" }, { devices: [device] }).devices[0];
   const want = rows.filter((l) => !isUrlLine(l)).map(norm);
   const got = r.lines.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
-  if (JSON.stringify(got) === JSON.stringify(want)) { pass++; return; }
+  if (JSON.stringify(got) === JSON.stringify(want) && r.showMore === more) { pass++; return; }
   const bad = want.findIndex((l, i) => l !== got[i]);
   const at = bad === -1 ? want.length : bad;
-  const detail = `line ${at + 1}\n         preview: ${want[at] ?? "(none)"}\n         engine:  ${got[at] ?? "(none)"}`;
+  const detail = bad === -1 && got.length === want.length ? `Show more: preview ${more} / engine ${r.showMore}` : `line ${at + 1}\n         preview: ${want[at] ?? "(none)"}\n         engine:  ${got[at] ?? "(none)"}`;
   if (r.approximate) { console.log(`  ~    ${label} engine ${id} on ${device} (fallback fonts): ${detail}`); return; }
   fail++;
   console.log(`  FAIL ${label} engine ${id} on ${device}: ${detail}`);
@@ -639,7 +640,7 @@ for (const f of readdirSync("fixtures/web")) {
     if (!(await (p.compose ? compose(p.compose) : load(p.id, p)))) continue;
     const got = await page.evaluate(ROWS("false"));
     await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
-    engineDiff("web ", fx.device || "web", p.id, got.rows);
+    engineDiff("web ", fx.device || "web", p.id, got.rows, got.more);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
     if (p.media) await mediaDiff("web ", false, p.id, p.media, true);
     if (p.blue) await colourDiff("web ", false, p.id, p.blue);
@@ -657,7 +658,7 @@ for (const f of readdirSync("fixtures/app")) {
     if (!(await (p.compose ? compose(p.compose) : load(p.id, p)))) continue;
     const got = await page.evaluate(ROWS("true"));
     await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool, p.gapMore);
-    engineDiff("app ", fx.device, p.id, got.rows);
+    engineDiff("app ", fx.device, p.id, got.rows, got.more);
     if (p.card?.box) await cardDiff("app ", true, p.id, p.card);
     else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);

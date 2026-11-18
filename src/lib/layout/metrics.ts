@@ -3,9 +3,9 @@
  * font's `kern` pair adjustment between neighbours, the default-on substitutions that change a width
  * (`ccmp` decompositions; the `calt` bird ligature where no letter-spacing turns it off), and CSS
  * letter-spacing after every character. The numbers come from X's own font files
- * (chirp-metrics.json, written by scripts/chirp-metrics.py): x.com's build for the web views and
- * Android, `fonts/v2` for the iOS app, as src/app/globals.css loads them. Checked against the browser:
- * the reference line verify.mjs measures comes out at 320.3px (web) and 313.0px (app), as Chrome draws it.
+ * (chirp-metrics.json, written by scripts/chirp-metrics.py): x.com's build, the one every preview sets
+ * its text in, as src/app/globals.css loads it. Checked against the browser: the reference line
+ * verify.mjs measures comes out at 320.3px, as Chrome draws it.
  *
  * Characters Chirp doesn't have are drawn by whatever font the reader's device falls back to, so their
  * widths can only be estimated: here they take the widths the preview's fallbacks give them in Chrome on
@@ -15,7 +15,7 @@
 import table from "./chirp-metrics.json";
 import fallbackTable from "./fallback-metrics.json";
 
-export type FontKey = "web-400" | "web-700" | "app-400" | "app-700";
+export type FontKey = "web-400" | "web-700";
 
 interface RawFace {
   upm: number;
@@ -23,6 +23,8 @@ interface RawFace {
   adv: number[];
   kern: { left: string[]; right: string[]; values: Array<Array<[number, number]>> };
   decompose: Record<string, string>;
+  /** Characters `ccmp` decomposes into glyphs no character maps to: their summed advance. */
+  advance?: Record<string, number>;
   ligatures: Array<{ text: string; adv: number }>;
 }
 
@@ -33,6 +35,7 @@ interface Face {
   right: Map<number, number>;
   values: Array<Map<number, number>>;
   decompose: Map<number, number[]>;
+  advance: Map<number, number>;
   ligatures: Array<{ cps: number[]; adv: number }>;
 }
 
@@ -51,14 +54,19 @@ function face(key: FontKey): Face {
     right: classes(raw.kern.right),
     values: raw.kern.values.map((row) => new Map(row)),
     decompose: new Map(Object.entries(raw.decompose).map(([k, v]) => [k.codePointAt(0)!, cps(v)])),
+    advance: new Map(Object.entries(raw.advance ?? {}).map(([k, v]) => [k.codePointAt(0)!, v])),
     ligatures: raw.ligatures.map((l) => ({ cps: cps(l.text), adv: l.adv })),
   };
   faces.set(key, f);
   return f;
 }
 
-/** The two faces a pane's font stack tries before the system fonts (globals.css, theme.ts). */
-const STACK: Record<"web" | "app", Array<"web" | "app">> = { web: ["web", "app"], app: ["app"] };
+/**
+ * The Chirp build a device lays text out in. Every device uses x.com's (devices.ts); the stack's next
+ * face, fonts/v2, has no character x.com's lacks, so a character missing here goes to the system fonts.
+ * No device sets `font: "app"`, and its metrics aren't kept: it would need the generator first.
+ */
+const STACK: Record<"web" | "app", Array<"web">> = { web: ["web"], app: [] };
 
 export function hasGlyph(font: "web" | "app", cp: number): boolean {
   return STACK[font].some((k) => face(`${k}-400`).adv.has(cp));
@@ -149,6 +157,13 @@ export function measure(text: string, style: RunStyle): Measured {
     }
     const key: FontKey = `${owner}-${weight}`;
     const f = face(key);
+    // Decomposed into glyphs no character maps to (Ŀ): their summed advance, kerned with nothing.
+    const whole = f.advance.get(base);
+    if (whole !== undefined) {
+      width += (whole * style.size) / f.upm + style.letterSpacing;
+      prev = null;
+      continue;
+    }
     // A cluster is the base character and any marks riding on it (zero width in Chirp, see the generator).
     for (const cp of f.decompose.get(base) ?? [base]) {
       const adv = f.adv.get(cp) ?? f.adv.get(base) ?? 0;

@@ -11,7 +11,10 @@ import { appFoldCut, cardUrl, isTrailing, quoteUrl, type Entity } from "./entiti
 export interface LinkAttachment {
   /** The link X turns into a quote embed, if any. */
   quote: Entity | null;
-  /** The link a card would come from (the first one), when there's no quote. */
+  /**
+   * The first link, when there's no quote: where a card would come from. Media or a poll still leave it
+   * set (the link stays text and no card is built); `cardKey` says whether a card is looked up.
+   */
   cardEntity: Entity | undefined;
   /** The address to look a card up for, or null when X never builds one here. */
   cardKey: string | null;

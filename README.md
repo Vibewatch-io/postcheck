@@ -113,7 +113,7 @@ Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
 ```bash
 npm run dev                      # local dev
 npm run build                    # production build (verify needs it)
-npm test                         # rule tests over fixtures/posts
+npm test                         # rule tests over fixtures/posts, and the layout engine against fixtures/web and fixtures/app
 npm run start                    # serve the build; verify drives it
 npm run verify                   # render every corpus post headless, diff against x.com and iPhone captures
 npm run verify -- --no-chirp     # same with X's CDN blocked (fallback font path)
@@ -133,7 +133,8 @@ The renderer is ordinary code you can lift into your own project. The pieces tha
 
 - `src/lib/entities.ts`: twitter-text weighting, X's rules for links, mentions, hashtags and cashtags, the Show more cut and the iOS app's line fold. Plain TypeScript with no dependencies.
 - `src/lib/devices.ts` and `src/lib/media.ts`: each surface's column, type size, line pitch and media layout, with the evidence behind each value (or "inferred", "assumed") in a comment.
-- `src/lib/layout/` and `src/lib/check.ts`: the same line breaks without a browser. Chirp's advance widths and kerning (`chirp-metrics.json`) and the way Chrome adds a line up (each text item rounded up to 1/64px, kerning across spans except at a `<wbr>`, one LayoutUnit of overflow allowed) reproduce the preview's line breaks, Show more and app fold on every corpus layout set in Chirp, and `npm test` checks the result against X's own captures. Text Chirp has no glyphs for (CJK, Thai, Arabic and the like) takes the widths of Apple's fallback fonts and is marked approximate, since every reader's phone draws it in its own.
+- `src/lib/layout/`: the preview's line breaks without a browser. It measures text with Chirp's own advance widths and kerning (`chirp-metrics.json`) and fills lines by Chrome's rules, each found by measuring in Chromium: every text node's width is rounded up to 1/64px, kerning carries across spans but not across a `<wbr>`, and a line may run 1/64px past its column. On every corpus layout set in Chirp it gives the preview's lines, Show more and app fold, and `npm test` checks it against X's own captures. Text Chirp has no glyphs for (emoji, CJK, Thai, Arabic and the like) takes the widths of the preview's fallback fonts and is marked approximate, since every reader's phone draws it in its own.
+- `src/lib/check.ts`: `checkPost()` runs a whole check in code (the tips plus every device's visible lines, Show more and dangling words), and `linksOf()` names the card and quote lookups it needs first.
 - `src/components/x-post.tsx`: a React component that draws one post (its tokens, identity, card, quote, media, poll, device and theme). It needs `src/lib`, the components it imports, the font, tracking, `.nb-hyphen` and `.x-avatar-square` rules in `src/app/globals.css` and the `data-font` stamp from `src/components/font-tier.tsx`, not the app around it. Where a post folds depends on its rendered lines: `src/components/line-probe.tsx` measures them and `renderFor()` in `src/components/postcheck.tsx` applies the cut.
 - [QUIRKS.md](QUIRKS.md): every rule in prose with its evidence, useful whatever you write in.
 - `fixtures/` and `npm run verify`: 151 real posts (`fixtures/corpus.json`) with X's own data for each, most with the lines x.com, an iPhone and an Android phone drew for them. That's a ready-made test corpus for any renderer.

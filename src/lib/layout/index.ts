@@ -266,7 +266,8 @@ export function layoutBody(input: BodyInput, d: Device): Layout {
     else r.end = carry;
   }
   const token = snap(measure(" Show more", base).width);
-  return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view: d.view, lines: rows, total: rows.length, tokenWidth: token, approximate };
+  const view = d.kind === "focal" ? "post" : d.view;
+  return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view, lines: rows, total: rows.length, tokenWidth: token, approximate };
 }
 
 /** Chrome lets a line run one LayoutUnit (1/64px) past the column before it breaks. */

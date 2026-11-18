@@ -25,8 +25,9 @@ from fontTools.ttLib import TTFont
 ROOT = Path(__file__).resolve().parent.parent
 CSS = ROOT / "src/app/globals.css"
 OUT = ROOT / "src/lib/layout/chirp-metrics.json"
-# The faces the previews use: x.com's build for the web views and Android, fonts/v2 for the iOS app.
-FACES = {"web": "TwitterChirpWeb", "app": "TwitterChirp"}
+# The face every preview lays text out in: x.com's build (devices.ts `font: "web"`). The fonts/v2 build
+# (TwitterChirp) has no character it lacks, so the fallback never reaches it, and is left out.
+FACES = {"web": "TwitterChirpWeb"}
 WEIGHTS = (400, 700)
 
 
@@ -57,13 +58,35 @@ def load(url):
         return TTFont(io.BytesIO(r.read()))
 
 
-def lookups(table, tag):
-    """The lookups a feature runs, in lookup-list order (HarfBuzz applies them in that order)."""
+def feature_indices(table):
+    """The features Chrome applies to the page's text: the page is `lang="en"`, so the default and English
+    language systems of the Latin and default scripts. Other languages' rules (Dutch IJ, Turkish i) don't apply."""
+    out = set()
+    for rec in table.ScriptList.ScriptRecord:
+        if rec.ScriptTag not in ("DFLT", "latn"):
+            continue
+        systems = [rec.Script.DefaultLangSys] + [ls.LangSys for ls in rec.Script.LangSysRecord if ls.LangSysTag == "ENG "]
+        for sys_ in systems:
+            if sys_ is None:
+                continue
+            out.update(sys_.FeatureIndex)
+            if sys_.ReqFeatureIndex != 0xFFFF:
+                out.add(sys_.ReqFeatureIndex)
+    return out
+
+
+def lookup_indices(table, tag):
+    """The lookups a feature runs for the page's language, in lookup-list order (HarfBuzz's order)."""
     idx = set()
-    for fr in table.FeatureList.FeatureRecord:
+    for i in feature_indices(table):
+        fr = table.FeatureList.FeatureRecord[i]
         if fr.FeatureTag == tag:
             idx.update(fr.Feature.LookupListIndex)
-    return [table.LookupList.Lookup[i] for i in sorted(idx)]
+    return sorted(idx)
+
+
+def lookups(table, tag):
+    return [table.LookupList.Lookup[i] for i in lookup_indices(table, tag)]
 
 
 def subtables(lookup, ext_type):
@@ -123,31 +146,73 @@ def kern_pairs(font, glyphs):
     return total
 
 
+def rule_records(st):
+    """Every SubstLookupRecord in a contextual subtable (formats 1, 2 and 3, chained or not)."""
+    out = []
+
+    def walk(o, depth=0):
+        if o is None or depth > 3:
+            return
+        out.extend(getattr(o, "SubstLookupRecord", None) or [])
+        for name in ("SubRuleSet", "SubRule", "SubClassSet", "SubClassRule", "ChainSubRuleSet", "ChainSubRule", "ChainSubClassSet", "ChainSubClassRule"):
+            for x in getattr(o, name, None) or []:
+                walk(x, depth + 1)
+
+    walk(st)
+    return out
+
+
 def gsub_widths(font, cmap, rev):
-    """Default-on GSUB that changes widths: `ccmp` multiple substitutions (decompositions) and `calt`
-    ligatures. Single substitutions are checked to keep the advance; anything else stops the script."""
+    """Default-on GSUB that changes widths, for the features Chrome applies to text (ccmp, locl, calt, rlig).
+
+    - A decomposition of a typed character (multiple substitution) is recorded as the characters it
+      becomes, or, when one of them is a glyph no character maps to (Ŀ → L + a dot), as its summed advance.
+    - A ligature of typed characters (the bird) is recorded; one built from unmapped glyphs can't come
+      from typed text.
+    - A single substitution, direct or called from a contextual rule, must keep the advance.
+    - A contextual decomposition or ligature, or any other lookup type, stops the script: the engine
+      has no context to apply it with.
+    """
     gsub = font["GSUB"].table
     hmtx = font["hmtx"].metrics
-    decompose, ligatures = {}, []
+    decompose, advance, ligatures = {}, {}, []
+    seen = set()
+
+    def check(index, tag, contextual):
+        if (index, contextual) in seen:
+            return
+        seen.add((index, contextual))
+        for t, st in subtables(gsub.LookupList.Lookup[index], 7):
+            if t == 1:
+                for a, b in st.mapping.items():
+                    if a in rev and hmtx[a][0] != hmtx[b][0]:
+                        sys.exit(f"{tag} swaps {a} for {b} at a different width; the engine can't model it")
+            elif t in (2, 4) and contextual:
+                sys.exit(f"{tag} has a contextual {'decomposition' if t == 2 else 'ligature'} (lookup {index}); the engine can't model it")
+            elif t == 2:
+                for a, seq in st.mapping.items():
+                    if a not in rev:
+                        continue
+                    if all(g in rev for g in seq):
+                        decompose[rev[a]] = [rev[g] for g in seq]
+                    else:
+                        advance[rev[a]] = sum(hmtx[g][0] for g in seq)
+            elif t == 4:
+                for first, ligs in st.ligatures.items():
+                    for lig in ligs:
+                        parts = [first] + list(lig.Component)
+                        if all(g in rev for g in parts):
+                            ligatures.append({"text": "".join(chr(rev[g]) for g in parts), "adv": hmtx[lig.LigGlyph][0]})
+            elif t in (5, 6):
+                for rec in rule_records(st):
+                    check(rec.LookupListIndex, tag, True)
+            else:
+                sys.exit(f"{tag} uses GSUB lookup type {t} (lookup {index}); the engine can't model it")
+
     for tag in ("ccmp", "locl", "calt", "rlig"):
-        for lk in lookups(gsub, tag):
-            for t, st in subtables(lk, 7):
-                if t == 1:
-                    for a, b in st.mapping.items():
-                        if hmtx[a][0] != hmtx[b][0] and a in rev:
-                            sys.exit(f"{tag} swaps {a} for {b} at a different width; the engine can't model it")
-                elif t == 2:
-                    for a, seq in st.mapping.items():
-                        if a in rev and all(g in rev for g in seq):
-                            decompose[rev[a]] = [rev[g] for g in seq]
-                elif t == 4:
-                    for first, ligs in st.ligatures.items():
-                        for lig in ligs:
-                            parts = [first] + list(lig.Component)
-                            if all(g in rev for g in parts):
-                                ligatures.append({"text": "".join(chr(rev[g]) for g in parts), "adv": hmtx[lig.LigGlyph][0]})
-                # Context lookups (5, 6) call single substitutions checked above.
-    return decompose, ligatures
+        for i in lookup_indices(gsub, tag):
+            check(i, tag, False)
+    return decompose, advance, ligatures
 
 
 def metrics(font):
@@ -168,13 +233,14 @@ def metrics(font):
         for ca in by_glyph.get(a, []):
             for cb in by_glyph.get(b, []):
                 pairs[(ca, cb)] = v
-    decompose, ligatures = gsub_widths(font, cmap, rev)
+    decompose, advance, ligatures = gsub_widths(font, cmap, rev)
     return {
         "upm": font["head"].unitsPerEm,
         "chars": "".join(chr(cp) for cp in sorted(adv)),
         "adv": [adv[cp] for cp in sorted(adv)],
         "kern": kern_classes(pairs),
         "decompose": {chr(cp): "".join(chr(c) for c in seq) for cp, seq in sorted(decompose.items())},
+        "advance": {chr(cp): a for cp, a in sorted(advance.items())},
         "ligatures": ligatures,
     }
 

@@ -17,9 +17,8 @@ const json = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 
 test("Chirp's metrics reproduce Chrome's widths of the reference line", () => {
   const REF = "Every week, the 10 most active public voices in";
-  // x.com draws it 320.3px wide in its Chirp; the app build (fonts/v2) 313.0 (verify.mjs, globals.css).
+  // x.com draws it 320.3px wide in its Chirp (verify.mjs, globals.css).
   assert.equal(Math.round(measure(REF, { font: "web", bold: false, size: 15, letterSpacing: 0 }).width * 10) / 10, 320.3);
-  assert.equal(Math.round(measure(REF, { font: "app", bold: false, size: 15, letterSpacing: 0 }).width * 10) / 10, 313.0);
 });
 
 test("the engine's tracking is globals.css's Chirp tier", () => {
@@ -134,6 +133,8 @@ function engineLines(p: Fixture, d: Device) {
   const draft = input(p);
   const { cardUrl } = linksOf(draft);
   // The site ships its own card; every other recorded lookup is a card or a "none".
+  // A link with no recorded answer fails, as it fails verify.mjs: it must never pass as "no card".
+  if (cardUrl && cardUrl !== SITE_URL && !(cardUrl in unfurls)) throw new Error(`no recorded card lookup for ${cardUrl} in fixtures/unfurl.json`);
   const recorded = cardUrl === SITE_URL ? { title: "Postcheck" } : cardUrl ? unfurls[cardUrl] : undefined;
   const lookups: Lookups = { card: recorded ? (recorded as CardData) : "none", quote: "found" };
   const report = checkPost(draft, lookups, { devices: [d.id] }).devices[0];

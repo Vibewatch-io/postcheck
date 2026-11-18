@@ -9,7 +9,7 @@ import { DEFAULT_DEVICE, DEFAULT_PHONE_ID, DEVICES, type Device } from "./device
 import { trimDraft } from "./draft";
 import { MAX_WEIGHTED_LENGTH, extractEntities, showMoreCut, statusId, stripFormatting, tokenize, weightedLength, type StyleRun } from "./entities";
 import { APP_MIN_RATIO, mediaLayout, type MediaKind } from "./media";
-import { POLL_MIN_CHOICES, shownPoll, type Poll } from "./poll";
+import { POLL_MIN_CHOICES, filledChoices, shownPoll, type Poll } from "./poll";
 import { foldFor, hiddenUrlStart, linkAttachment } from "./post-model";
 import { layoutBody, visibleLines, type Layout } from "./layout";
 
@@ -139,8 +139,9 @@ export function checkPost(draft: Draft, lookups: Lookups = {}, opts: CheckOption
     longQuote: link.quote !== null && length.weighted > MAX_WEIGHTED_LENGTH,
     showMore: cut280 < post.length,
   };
-  // Every device is laid out: dangling words and the fold read the chosen ones, the report the wanted ones.
-  const layouts = new Map<string, Layout>(DEVICES.map((d) => [d.id, layoutBody(body, d)]));
+  // Only the devices the answer reads: the ones asked for, and the phone and web view the tips cover.
+  const needed = DEVICES.filter((d) => wanted.includes(d.id) || d.id === phone.id || d.id === web.id);
+  const layouts = new Map<string, Layout>(needed.map((d) => [d.id, layoutBody(body, d)]));
   const lineSets = [...layouts.values()];
   const phoneFold = foldFor(post, cut280, phone, layouts.get(phone.id));
   // Android cuts at 280 too: the fold tip is about the line fold only where it comes first.
@@ -175,7 +176,7 @@ export function checkPost(draft: Draft, lookups: Lookups = {}, opts: CheckOption
     attachment: media.length
       ? { type: "media", kinds: media.map((m) => m.kind) }
       : pollOnPost
-        ? { type: "poll", choices: pollOnPost.choices.filter((c) => c.trim()) }
+        ? { type: "poll", choices: filledChoices(pollOnPost).map((c) => c.label) }
         : link.quote
           ? { type: "quote", found: lookups.quote === "found" ? true : lookups.quote === "unavailable" ? false : null }
           : link.cardEntity && !link.cardEntity.isStatus
