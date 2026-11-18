@@ -195,6 +195,10 @@ await page.route(/\/api\/unfurl$/, async (route) => {
 if (args.includes("--no-chirp")) await page.route(/abs\.twimg\.com/, (r) => r.abort());
 await page.goto(base);
 await page.waitForFunction(() => window.__postcheck?.ready, null, { timeout: 20000 });
+// The previews fold, and the tips name lines, from the layout engine the page loads as its own chunk:
+// without it there is nothing of theirs to check.
+const engine = await page.evaluate(() => window.__postcheck.engine);
+if (engine !== "ready") { console.error(`the page's layout engine didn't load (${engine}); see the browser console`); process.exit(3); }
 await page.evaluate(() => document.fonts.ready);
 
 // Font sanity: the same reference string measured on x.com (web build) and against the app's metrics.
@@ -344,7 +348,7 @@ async function load(id, p = {}) {
 }
 // gapMore pins the tool's own Show more where a gap is a fold one side draws and the other doesn't (a line at the edge
 // pushing a post past 9 lines); by default the pin requires Show more to agree.
-async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool, gapMore = expMore) {
+async function diff(label, deviceLast, id, expected, got, expMore, gotMore, knownGap, gapTool, gapMore = expMore, device = null) {
   // Blank lines: app transcriptions record them, the web extractor and the tool's row walk do not.
   const exp = expected.filter((l) => !isUrlLine(l) && l !== "").map(norm);
   const act = got.filter((l) => !isUrlLine(l)).map(norm);
@@ -387,6 +391,12 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
     // The folded line: the app's character-level cut landing one or two characters away is the same sub-pixel question.
     else if (expMore && bad === exp.length - 1 && longer.length - shorter.length <= 2) edgeNote = `fold cut ${longer.length - shorter.length} char(s) off`;
     else failNote = `  (${fitNote(fit, "body")})`;
+  }
+  // The same text both sides, cut in a different place by a Chirp fold drawn in GT America (see chirpFoldFlip):
+  // every row above X's fold line matches, so a wrapping fault elsewhere still fails.
+  if (!edgeNote && tier !== "chirp" && expMore && gotMore && sameText && bad === exp.length - 1) {
+    const flip = await chirpFoldFlip(deviceLast, device, exp, got);
+    if (flip) edgeNote = flip;
   }
   if (edgeNote) { edge++; console.log(`  edge ${label} ${id}  (${edgeNote})`); }
   else { fail++; console.log(`  FAIL ${label} ${id}${failNote}`); }
@@ -617,6 +627,37 @@ async function cellDiff(label, id, want) {
   else { fail++; console.log(`  FAIL ${label} cell ${id}\n       height X ${want} / tool ${Math.round(got * 10) / 10}`); }
 }
 
+/** The last draft laid out in code for one device, with the replayed card lookup (checkPost's device report). */
+function engineReport(device) {
+  const { cardUrl } = linksOf(lastDraft);
+  const recorded = cardUrl === SITE_URL ? { title: "Postcheck" } : cardUrl ? unfurls[cardUrl] : undefined;
+  return checkPost(lastDraft, { card: recorded ?? "none", quote: "found" }, { devices: [device] }).devices[0];
+}
+
+/**
+ * On the GT America tier a fold still comes from the engine, laid out in Chirp (the font X sets the post in),
+ * while the rows are drawn in GT America. Where the engine's Chirp lines first part from X's on a line within
+ * 5px of the column in Chirp, the cut inherits that coin flip: the tolerance the Chirp tier gives the same post.
+ * As in nearEdge, GT America must stay within 12px of Chirp on that line, so a broken fallback still fails.
+ * The preview must also have drawn exactly the engine's text up to its cut (`rows`, whitespace aside): the
+ * exception covers where the cut falls, never text the preview lost or kept on its own.
+ * Needs the Chirp reference page; null when there is no such line.
+ */
+async function chirpFoldFlip(deviceLast, device, exp, rows) {
+  if (!ref || !lastDraft || !device) return null;
+  const report = engineReport(device);
+  const flat = (lines) => lines.join("").replace(/\s+/g, "");
+  if (!report.showMore || flat(rows) !== flat(report.lines)) return null;
+  const eng = report.lines.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
+  const k = exp.findIndex((l, i) => l !== eng[i]);
+  if (k === -1 || !eng[k]) return null;
+  if (!wrapMove(exp[k], eng[k])) return null;
+  const longer = exp[k].length > eng[k].length ? exp[k] : eng[k];
+  const fit = await lineFit(deviceLast, longer);
+  const flip = fit.chirp !== undefined && Math.abs(fit.chirp - fit.limit) <= 5 && Math.abs(fit.width - fit.chirp) <= 12;
+  return flip ? `fold laid out in Chirp, at the edge on line ${k + 1}: ${fit.chirp}px in Chirp, ${fit.width}px here, vs ${fit.limit}px` : null;
+}
+
 /**
  * The layout engine (no browser) against the preview just read: the same draft, laid out in code for the
  * same device, must give the rows the preview drew. Card lookups are the replayed ones. Text the engine
@@ -629,9 +670,7 @@ async function cellDiff(label, id, want) {
 function engineDiff(label, device, id, rows, more, against = "preview", x = null) {
   // The engine lays text out in Chirp: on the GT America tier the preview isn't what it models.
   if (!lastDraft || tier !== "chirp") return;
-  const { cardUrl } = linksOf(lastDraft);
-  const recorded = cardUrl === SITE_URL ? { title: "Postcheck" } : cardUrl ? unfurls[cardUrl] : undefined;
-  const r = checkPost(lastDraft, { card: recorded ?? "none", quote: "found" }, { devices: [device] }).devices[0];
+  const r = engineReport(device);
   const want = rows.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
   const got = r.lines.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
   if (JSON.stringify(got) === JSON.stringify(want) && r.showMore === more) { pass++; return; }
@@ -659,7 +698,7 @@ for (const f of readdirSync("fixtures/web")) {
     // A stuck lookup is its own failure; diffing the half-drawn post would count it twice.
     if (!(await (p.compose ? compose(p.compose) : load(p.id, p)))) continue;
     const got = await page.evaluate(ROWS("false"));
-    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines);
+    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines, p.showMore, fx.device || "web");
     if (p.previewGap) engineDiff("web ", fx.device || "web", p.id, p.lines, p.showMore, "X");
     else engineDiff("web ", fx.device || "web", p.id, got.rows, got.more);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
@@ -681,8 +720,8 @@ for (const f of readdirSync("fixtures/app")) {
     // A previewGap pins the preview's own rows where it can't draw X's (no CSS rounds a glyph's advance to
     // device pixels); the engine is held to X's rows there.
     // A gtGap pins what the GT America tier draws where its own coin flip moves the fold (only that tier reads it).
-    if (tier !== "chirp" && p.gtGap) await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gtGap, p.gtGapTool, p.gtGapMore);
-    else await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines, p.gapMore);
+    if (tier !== "chirp" && p.gtGap) await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gtGap, p.gtGapTool, p.gtGapMore, fx.device);
+    else await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines, p.gapMore, fx.device);
     if (p.previewGap) engineDiff("app ", fx.device, p.id, p.lines, p.showMore, "X");
     else engineDiff("app ", fx.device, p.id, got.rows, got.more, "preview", p);
     if (p.card?.box) await cardDiff("app ", true, p.id, p.card);

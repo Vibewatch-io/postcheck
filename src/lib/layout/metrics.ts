@@ -81,6 +81,11 @@ const fallback = (fallbackTable as unknown as { sizes: Record<string, FallbackSi
 /** A character outside every measured block: about an average Latin letter. */
 const OTHER_EM = 0.6;
 
+/** A fallback cluster drawn as an emoji: one advance whatever it holds (see fallbackWidth). */
+export function isEmoji(cluster: string): boolean {
+  return EMOJI.test(cluster) || EMOJI_SEQUENCE.test(cluster);
+}
+
 /**
  * A fallback cluster's width in px at `size`: an emoji cluster draws at one advance whatever it holds.
  * Sizes not measured (none of the devices) scale from 15px.
@@ -89,7 +94,7 @@ function fallbackWidth(cluster: string, cp: number, size: number): number {
   const table = fallback[String(size)];
   const scale = table ? 1 : size / 15;
   const t = table ?? fallback["15"];
-  if (EMOJI.test(cluster) || EMOJI_SEQUENCE.test(cluster)) return (t.emoji / 64) * scale;
+  if (isEmoji(cluster)) return (t.emoji / 64) * scale;
   let lo = 0;
   let hi = t.runs.length - 1;
   while (lo <= hi) {

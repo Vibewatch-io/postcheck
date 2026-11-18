@@ -51,7 +51,11 @@ export interface DeviceReport {
   /** The lines a reader sees before any Show more tap ("" = a paragraph gap). */
   lines: string[];
   showMore: boolean;
-  /** Words alone on the last line of a paragraph (timeline views). */
+  /**
+   * Words alone on the last line of a paragraph (timeline views). A paragraph partly set in a fallback font
+   * other than emoji is skipped, as its breaks are estimates (LineInfo.estimated); the rest of the post is
+   * still checked, even while `approximate` is true for the device.
+   */
   dangling: string[];
   /**
    * Some of the text is drawn in a fallback font (an emoji, CJK, Thai, Arabic…), whose widths here are
