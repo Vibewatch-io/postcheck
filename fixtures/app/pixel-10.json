@@ -1425,7 +1425,7 @@
     "....................................................................."
    ],
    "showMore": false,
-   "previewGap": "the Android app sets each glyph at its advance rounded to whole device pixels, which no CSS can do: the layout engine draws X's lines, the browser preview web Chirp's fractional advances (QUIRKS.md, \"Layout engine\"): X fits 91 periods a line (11 − 1.34px kern each), the preview 88",
+   "previewGap": "the Android app sets each glyph at its advance rounded to whole device pixels, which no CSS can do: the layout engine draws X's lines, the browser preview web Chirp's fractional advances (QUIRKS.md, \"Layout engine\"): X fits 91 periods a line (11 − 1.34px kern each), the preview 87 in the 880px (335.24dp) column",
    "previewLines": [
     "Repeat test 136",
     ".......................................................................................",

@@ -687,7 +687,8 @@ function engineDiff(label, device, id, rows, more, against = "preview", x = null
     if (k >= 0 && xRows[k] && got[k] && wrapMove(xRows[k], got[k])) {
       const longer = xRows[k].length > got[k].length ? xRows[k] : got[k];
       const w = measure(longer, bodyStyle(d)).width;
-      if (Math.abs(w - d.textWidth) <= 5) {
+      // The same two clauses as judge(): at the column edge, or the fold's last line cut a character or two off.
+      if (Math.abs(w - d.textWidth) <= 5 || (x.showMore && k === xRows.length - 1 && longer.length - (longer === xRows[k] ? got[k] : xRows[k]).length <= 2)) {
         edge++;
         console.log(`  edge ${label} engine ${id} on ${device}: X's rows but line ${k + 1} (${Math.round(w * 10) / 10}px vs ${Math.round(d.textWidth * 10) / 10}px; the preview differs)`);
         return;

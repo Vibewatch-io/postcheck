@@ -185,10 +185,13 @@ export const THIS_PHONE_ID = "this-phone";
 /**
  * The visitor's own phone, when they open the site on one: a phone's page width in CSS pixels is its
  * screen width in points (dp on Android), the unit the X app lays out in, so a timeline cell drawn at
- * that width is the app's own layout. Same cell geometry and fold rules as the phone list (QUIRKS.md),
- * drawn edge to edge with no frame. Assumes default text size, like every capture. On Android, `density`
+ * that width is the app's own layout (on Android to a pixel or two, below). Same cell geometry and fold
+ * rules as the phone list (QUIRKS.md), drawn edge to edge with no frame. Assumes default text size, like
+ * every capture. On Android, `density`
  * is the screen's device pixels per dp, which the page reads as devicePixelRatio (assumed equal at
- * Chrome's default page zoom), and the column is worked out in whole device pixels from it.
+ * Chrome's default page zoom), and the column is worked out in whole device pixels from it. The page's
+ * width is whole CSS px, so the panel it implies can be a pixel or two off the real one (412 × 2.625 =
+ * 1081.5 for a 1080px Pixel): an approximation the listed phones, with their real panels, don't need.
  */
 export function thisPhone(width: number, height: number, platform: "ios" | "android", density?: number): Device {
   const d: Device = { ...phone(THIS_PHONE_ID, `This phone (${width})`, width, height, "none", 0, platform), frameless: true, tipLabel: "this phone" };
