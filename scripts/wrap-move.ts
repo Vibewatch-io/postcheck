@@ -30,7 +30,9 @@ export function wrapMove(a: string, b: string): "word" | "chars" | null {
   if (longer === shorter || !longer.startsWith(shorter)) return null;
   const moved = longer.slice(shorter.length);
   const unit = moved.trim();
-  const atBreak = /^\s/.test(moved) || BREAK_AFTER.test(shorter) || (UNSPACED.test(shorter.slice(-1)) && UNSPACED.test(moved[0]));
+  // The characters either side of the move, whole (a CJK extension character is two UTF-16 units).
+  const [before, after] = [Array.from(shorter).pop() ?? "", Array.from(moved)[0] ?? ""];
+  const atBreak = /^\s/.test(moved) || BREAK_AFTER.test(shorter) || (UNSPACED.test(before) && UNSPACED.test(after));
   if (atBreak && oneUnit(unit)) return "word";
   if (!/\s/.test(moved) && !BREAK_INSIDE.test(moved) && moved.length <= 2) return "chars";
   return null;

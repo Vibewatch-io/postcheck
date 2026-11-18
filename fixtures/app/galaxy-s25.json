@@ -1369,7 +1369,15 @@
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
     "iiiiiiiiii"
-   ]
+   ],
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 132",
+    "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+    "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+    "iiiiiiiiiiiiii"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145852306993579",
@@ -1384,7 +1392,14 @@
     "Repeat test 133",
     "i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i",
     "i i i i i i i i i i i i i i i i i i i i"
-   ]
+   ],
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 133",
+    "i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i",
+    "i i i i i i i i i i i i i i i i i i i i i i i"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145887790862446",
@@ -1401,7 +1416,15 @@
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
     "llllllllll"
-   ]
+   ],
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 134",
+    "llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
+    "llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
+    "llllllllllll"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145921395605656",
@@ -1428,7 +1451,14 @@
     "...............................................................................",
     "...............................................................................",
     ".."
-   ]
+   ],
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 136",
+    ".................................................................................",
+    "..............................................................................."
+   ],
+   "gtGapMore": false
   }
  ]
 }

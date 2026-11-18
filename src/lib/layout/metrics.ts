@@ -190,7 +190,8 @@ function measureRun(text: string, style: RunStyle): Measured {
     if (!owner) {
       prev = null;
       if (ZERO.test(segment) && cps.every((cp) => ZERO.test(String.fromCodePoint(cp)))) continue;
-      width += fallbackWidth(segment, base, style.size) + spacing;
+      const fb = fallbackWidth(segment, base, style.size);
+      width += (style.devicePixels ? Math.round(fb * style.devicePixels) / style.devicePixels : fb) + spacing;
       approximate = true;
       continue;
     }

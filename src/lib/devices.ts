@@ -75,7 +75,7 @@ const phone = (
   // The iOS body runs at a 19.28pt pitch, not 20: seven one-letter lines of test 13 step 19.27–19.29 in
   // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
   // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 64dp to width − 12dp, so
-  // column = width − 76 (since 2026-10-21; it was 60dp and width − 72 on 2026-10-08, same app version);
+  // column = width − 76, in whole device pixels where the density is known (androidColumn; since 2026-10-21; it was 60dp and width − 72 on 2026-10-08, same app version);
   // its lines match x.com's untracked web Chirp at 15px, each glyph's advance rounded to whole device
   // pixels (`density`; tests 132–136), with a 20dp pitch below 400 dp (scripts/android/README.md; the
   // wide-screen size is below).
@@ -162,10 +162,20 @@ const PHONES: Device[] = [
   phone("iphone-air", "iPhone Air", 420, 912, "dynamic-island", 58),
   phone("iphone-se", "iPhone SE / 12–13 mini", 375, 667, "none", 0),
   // Densities assumed from each model's panel at its default display size: 1080px over 360dp (3) and over
-  // 411.4dp (2.625, the Pixel 3's density, on which this width's captures were made).
-  { ...phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36, "android"), density: 3 },
-  { ...phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40, "android"), density: 2.625 },
+  // 411.4dp (2.625, the Pixel 3's density, on which this width's captures were made). The column is the
+  // TextView's whole pixels on that 1080px panel: 852px (284dp) and 880px (335.24dp, not 412 − 76).
+  { ...phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36, "android"), density: 3, textWidth: androidColumn(1080, 3) },
+  { ...phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40, "android"), density: 2.625, textWidth: androidColumn(1080, 2.625) },
 ];
+
+/**
+ * The Android body column in dp: the TextView spans the panel from 64dp to 12dp short of its right edge,
+ * each margin in whole device pixels (uiautomator bounds 192–1044 of 1080px at 3, 168–1048 at 2.625:
+ * 12dp is 31.5px there, laid out as 32).
+ */
+export function androidColumn(panelPx: number, density: number): number {
+  return (panelPx - Math.round(64 * density) - Math.round(12 * density)) / density;
+}
 
 /** The phone most people read on (the 402pt group, see PHONES), shown first. */
 export const DEFAULT_PHONE_ID = "iphone-17";
@@ -178,11 +188,12 @@ export const THIS_PHONE_ID = "this-phone";
  * that width is the app's own layout. Same cell geometry and fold rules as the phone list (QUIRKS.md),
  * drawn edge to edge with no frame. Assumes default text size, like every capture. On Android, `density`
  * is the screen's device pixels per dp, which the page reads as devicePixelRatio (assumed equal at
- * Chrome's default page zoom).
+ * Chrome's default page zoom), and the column is worked out in whole device pixels from it.
  */
 export function thisPhone(width: number, height: number, platform: "ios" | "android", density?: number): Device {
   const d: Device = { ...phone(THIS_PHONE_ID, `This phone (${width})`, width, height, "none", 0, platform), frameless: true, tipLabel: "this phone" };
-  return platform === "android" && density && density > 0 ? { ...d, density } : d;
+  // The panel's pixels from the page's whole-pixel width: within a pixel or two of the real panel.
+  return platform === "android" && density && density > 0 ? { ...d, density, textWidth: androidColumn(Math.round(width * density), density) } : d;
 }
 
 /** The listed phone a share link names when it was made in this-phone mode: same platform, nearest width. */

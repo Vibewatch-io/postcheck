@@ -46,7 +46,7 @@
    values. Stamped by font-tier.tsx. */
 :root { --ls-web: 0px; --ls-app: -0.18px; --ls-app-post: -0.204px; --ls-app-row: -0.235px; --ws-app-row: 0.195px; --kern-app-row: none; }
 html[data-font="gt"] { --ls-web: 0.128px; --ls-app: -0.057px; --ls-app-post: -0.069px; --ls-app-row: -0.071px; --ws-app-row: 0px; --kern-app-row: none; }
-html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; --ls-app-post: 0px; --ls-app-row: 0px; --ws-app-row: 0px; --kern-app-row: auto; }
+html[data-font="system"] { --ls-web: 0px; --ls-app: 0px; --ls-app-post: 0px; --ls-app-row: 0px; --ws-app-row: 0px; --kern-app-row: none; }
 /* The Android app's no-break-after-hyphen (post-body.tsx): a word joiner after the hyphen, outside the DOM text. */
 .nb-hyphen::after { content: "\2060"; }
 

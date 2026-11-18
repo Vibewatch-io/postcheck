@@ -290,6 +290,9 @@ function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boo
   const firstRowOf = new Map<number, number>();
   const limit = d.textWidth;
   const snap = snapFor(d);
+  const android = d.platform === "android";
+  // Android: no LayoutUnit to spare, only float noise (80 `i` at 11px fill the 880px column exactly, test 132).
+  const slack = android ? 1e-9 : EPSILON;
   for (const [p, cells] of paragraphs.entries()) {
     if (!cells.length) {
       rows.push({ words: [], paragraph: -1, end: 0, spans: [] });
@@ -316,8 +319,10 @@ function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boo
         // negative kern is dropped, a positive one kept (Chromium: "hello.world@example" | ".com" at 147px
         // on the iPhone pane, 31 of 60 W's at 473px on the web).
         // (Before a space nothing is reshaped: the space hangs on this line. Chirp has no space kerning anyway.)
-        const lastKern = cells[j + 1]?.space ? 0 : Math.min(c.kernNext ?? 0, 0);
-        if (!c.space && done + snap(cur + c.width - lastKern) > limit + EPSILON && j > i) break;
+        // The Android app measures a line in floats with the kerning to the next glyph kept (test 136 at 411.4 dp:
+        // 91 periods are 878.7px so, 880.04px without it, in an 880px column), and with no LayoutUnit to spare.
+        const lastKern = cells[j + 1]?.space || android ? 0 : Math.min(c.kernNext ?? 0, 0);
+        if (!c.space && done + snap(cur + c.width - lastKern) > limit + slack && j > i) break;
         cur += c.width;
         if (c.breakAfter) lastBreak = j;
       }

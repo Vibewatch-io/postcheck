@@ -872,7 +872,12 @@
     "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच करता है"
    ],
    "showMore": false,
-   "gtGap": "GT America's +0.128px lands on the system font's Devanagari too: the first line (340.3px in Chirp against the 336px column) runs 348.1px in GT America and pushes two words (\"करता है\") down",
+   "previewGap": "fallback-font text: X's first line is 340.3px in the preview's fonts against the 335.24px column, so the preview drops a word; the engine, with the Android app's whole-pixel advances, draws X's line",
+   "previewLines": [
+    "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच करता",
+    "है"
+   ],
+   "gtGap": "GT America's +0.128px lands on the system font's Devanagari too: X's first line, 340.3px in the preview's fonts and 348.1px in GT America against the 335.24px column, loses two words here (one on the Chirp tier)",
    "gtGapTool": [
     "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच",
     "करता है"
@@ -1355,7 +1360,14 @@
     "Repeat test 132",
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
-   ]
+   ],
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 132",
+    "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+    "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145852306993579",
@@ -1364,7 +1376,14 @@
     "i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i",
     "i i i i i i i i i i i i i i i i"
    ],
-   "showMore": false
+   "showMore": false,
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 133",
+    "i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i",
+    "i i i i i i i i i i i i i i i i i i i"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145887790862446",
@@ -1379,7 +1398,14 @@
     "Repeat test 134",
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
-   ]
+   ],
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 134",
+    "llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
+    "llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145921395605656",
@@ -1402,9 +1428,16 @@
    "previewGap": "the Android app sets each glyph at its advance rounded to whole device pixels, which no CSS can do: the layout engine draws X's lines, the browser preview web Chirp's fractional advances (QUIRKS.md, \"Layout engine\"): X fits 91 periods a line (11 − 1.34px kern each), the preview 88",
    "previewLines": [
     "Repeat test 136",
-    "........................................................................................",
-    "........................................................................"
-   ]
+    ".......................................................................................",
+    "........................................................................."
+   ],
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 136",
+    ".........................................................................................",
+    "......................................................................."
+   ],
+   "gtGapMore": false
   }
  ]
 }

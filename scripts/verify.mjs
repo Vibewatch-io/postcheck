@@ -11,6 +11,8 @@ import { chromium, errors } from "playwright";
 import { checkPost, linksOf } from "../src/lib/check.ts";
 import { SITE_URL } from "../src/lib/site.ts";
 import { DEVICES } from "../src/lib/devices.ts";
+import { bodyStyle } from "../src/lib/layout/index.ts";
+import { measure } from "../src/lib/layout/metrics.ts";
 import { wrapMove } from "./wrap-move.ts";
 
 import { createServer } from "node:net";
@@ -355,8 +357,6 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   let bad = null;
   for (let i = 0; i < Math.max(exp.length, act.length); i++) if (exp[i] !== act[i]) { bad = i; break; }
   if (bad === null && expMore === gotMore) { pass++; console.log(`  ok   ${label} ${id}${knownGap ? "  (marked gap now passes: drop the gap)" : ""}`); return; }
-  // A run of one glyph (tests 132–136) measures Chirp's own widths, which GT America's glyphs don't share.
-  if (tier !== "chirp" && (corpusTags.get(id) ?? []).includes("repeat-letters")) { gap++; console.log(`  gap  ${label} ${id}  (GT America: a run of one glyph measures Chirp's own widths)`); return; }
   // A fixture can name a feature the tool doesn't model yet (a poll, a card X withholds for an
   // unknown reason) and pin what the tool draws meanwhile (`gapTool`): reported as a gap on every
   // run, and as a failure if anything else about the post changes. Checked before the edge
@@ -680,6 +680,20 @@ function engineDiff(label, device, id, rows, more, against = "preview", x = null
     console.log(`  ok   ${label} engine ${id} on ${device}: X's rows (the preview, in fractional advances, differs)`);
     return;
   }
+  // ...or X's rows but for a word moved at the column edge: the corpus test's font tolerance (tests/layout.test.ts).
+  if (xRows && r.showMore === x.showMore && x.lines.join("").replace(/\s+/g, "") === r.lines.join("").replace(/\s+/g, "")) {
+    const k = xRows.findIndex((l, i) => l !== got[i]);
+    const d = DEVICES.find((e) => e.id === device);
+    if (k >= 0 && xRows[k] && got[k] && wrapMove(xRows[k], got[k])) {
+      const longer = xRows[k].length > got[k].length ? xRows[k] : got[k];
+      const w = measure(longer, bodyStyle(d)).width;
+      if (Math.abs(w - d.textWidth) <= 5) {
+        edge++;
+        console.log(`  edge ${label} engine ${id} on ${device}: X's rows but line ${k + 1} (${Math.round(w * 10) / 10}px vs ${Math.round(d.textWidth * 10) / 10}px; the preview differs)`);
+        return;
+      }
+    }
+  }
   const bad = want.findIndex((l, i) => l !== got[i]);
   const at = bad === -1 ? want.length : bad;
   const detail = bad === -1 && got.length === want.length ? `Show more: ${against} ${more} / engine ${r.showMore}` : `line ${at + 1}\n         ${`${against}:`.padEnd(8)} ${want[at] ?? "(none)"}\n         engine:  ${got[at] ?? "(none)"}`;
@@ -698,7 +712,8 @@ for (const f of readdirSync("fixtures/web")) {
     // A stuck lookup is its own failure; diffing the half-drawn post would count it twice.
     if (!(await (p.compose ? compose(p.compose) : load(p.id, p)))) continue;
     const got = await page.evaluate(ROWS("false"));
-    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines, p.showMore, fx.device || "web");
+    if (tier !== "chirp" && p.gtGap) await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gtGap, p.gtGapTool, p.gtGapMore, fx.device || "web");
+    else await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines, p.showMore, fx.device || "web");
     if (p.previewGap) engineDiff("web ", fx.device || "web", p.id, p.lines, p.showMore, "X");
     else engineDiff("web ", fx.device || "web", p.id, got.rows, got.more);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
