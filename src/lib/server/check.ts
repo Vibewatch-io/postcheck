@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { BADGES, checkPost, linksOf, type Badge, type CheckOptions, type CheckResult, type Draft, type Lookups } from "@/lib/check";
 import { DEVICES } from "@/lib/devices";
+import { stripFormatting } from "@/lib/entities";
 import type { QuoteResult } from "@/lib/quote";
 import { lookupQuote } from "./fxtwitter";
 import { unfurl } from "./unfurl";
@@ -61,7 +62,9 @@ export function parseCheckRequest(body: unknown): CheckRequest | { error: string
   }
   if (media?.length && poll) return { error: "X takes media or a poll, not both" };
   // X posts media alone; a poll needs its question, which the tips then ask for.
-  if (!b.text.trim() && !poll && !media?.length) return { error: "text is empty" };
+  // Judged on what would be posted: "****" is two empty bold markers and no text.
+  const shown = b.plain ? b.text : stripFormatting(b.text).text;
+  if (!shown.trim() && !poll && !media?.length) return { error: "text is empty" };
   return {
     draft: { text: b.text, plain: b.plain as boolean | undefined, media, poll },
     opts: { badge: b.badge as Badge | undefined, phone: b.phone as string | undefined, web: b.web as string | undefined, devices: b.devices as string[] | undefined },

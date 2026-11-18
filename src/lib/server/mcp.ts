@@ -7,8 +7,11 @@ import { parseCheckRequest, type CheckRequest, type CheckResponse } from "./chec
  * (the hosted check) and list_devices. This module is the protocol alone, so it is tested without Next.
  */
 
-/** Protocol versions answered, newest first: a client asking for one of these gets it back. */
-export const MCP_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
+/**
+ * Protocol versions answered, newest first: a client asking for one of these gets it back. 2024-11-05 is
+ * left out: its HTTP transport needs a server-sent-event stream this stateless server doesn't keep.
+ */
+export const MCP_VERSIONS = ["2025-06-18", "2025-03-26"];
 
 const SEVERITY = { fix: "FIX", tip: "TIP", note: "NOTE" } as const;
 
@@ -68,6 +71,8 @@ const failure = (id: unknown, code: number, message: string) => ({ jsonrpc: "2.0
 export async function handleMcp(message: unknown, ctx: McpContext): Promise<object | null> {
   if (!message || typeof message !== "object" || Array.isArray(message)) return failure(null, -32600, "invalid request");
   const { jsonrpc, id, method, params } = message as Rpc;
+  // JSON-RPC ids are strings, numbers or null; anything else is no request at all.
+  if (id !== undefined && id !== null && typeof id !== "string" && typeof id !== "number") return failure(null, -32600, "invalid request");
   const isRequest = id !== undefined && id !== null;
   if (jsonrpc !== "2.0") return failure(id, -32600, "invalid request");
   // A response (result or error, no method) is acknowledged with 202 like a notification.
@@ -125,12 +130,14 @@ export function formatReport(r: CheckResponse): string {
       ? r.attachment.card
         ? `, a ${r.attachment.card.layout} link card for ${r.attachment.card.host}`
         : r.attachment.reason === "none"
-          ? ", a link X shows no card for"
+          ? ", a link that gets no card"
           : ", a link whose card couldn't be checked"
       : r.attachment?.type === "quote"
         ? r.attachment.found === false
           ? ", a link to a post that isn't there"
-          : ", a quote post"
+          : r.attachment.found === null
+            ? ", a link to a post that couldn't be looked up"
+            : ", a quote post"
         : r.attachment?.type === "media"
           ? `, ${r.attachment.kinds.length} media item${r.attachment.kinds.length === 1 ? "" : "s"}`
           : r.attachment?.type === "poll"

@@ -1,4 +1,4 @@
-import { NO_STORE, readJsonBody } from "@/lib/server/fetch-guard";
+import { NO_STORE, postOnly, readJsonBody } from "@/lib/server/fetch-guard";
 import { CHECK_BODY_CAP, CHECK_BODY_TIMEOUT_MS, authorize, runCheck } from "@/lib/server/check";
 import { MCP_VERSIONS, handleMcp } from "@/lib/server/mcp";
 import { sameOrigin } from "@/lib/server/same-origin";
@@ -13,14 +13,18 @@ export const runtime = "nodejs";
 const json = (body: unknown, status = 200, extra: HeadersInit = {}) =>
   new Response(JSON.stringify(body), { status, headers: { ...NO_STORE, "content-type": "application/json", ...extra } });
 
-/** No server-sent stream and no sessions: only POST. */
-const postOnly = () => new Response(null, { status: 405, headers: { ...NO_STORE, allow: "POST" } });
+/** No server-sent stream and no sessions: only POST (see postOnly). */
 export const GET = postOnly;
 export const DELETE = postOnly;
 
 export async function POST(request: Request) {
-  // A web page may not drive this server from someone's browser (MCP's transport rules).
-  if (request.headers.has("origin") && !sameOrigin(request)) return json({ error: "origin not allowed" }, 403);
+  // A web page may not drive this server from someone's browser (MCP's transport rules): a request with
+  // either browser marker (Origin, Sec-Fetch-Site) must come from this site.
+  if ((request.headers.has("origin") || request.headers.has("sec-fetch-site")) && !sameOrigin(request)) return json({ error: "origin not allowed" }, 403);
+  // Streamable HTTP: the client posts JSON and accepts a JSON answer.
+  if (!/^application\/json\b/i.test(request.headers.get("content-type") ?? "")) return json({ error: "send Content-Type: application/json" }, 415);
+  const accept = request.headers.get("accept");
+  if (accept && !/application\/json|\*\/\*|application\/\*/i.test(accept)) return json({ error: "this server answers with application/json" }, 406);
   if (authorize(request) === "denied") return json({ jsonrpc: "2.0", id: null, error: { code: -32001, message: "unknown API key" } }, 401, { "www-authenticate": "Bearer" });
   const version = request.headers.get("mcp-protocol-version");
   if (version && !MCP_VERSIONS.includes(version)) return json({ jsonrpc: "2.0", id: null, error: { code: -32600, message: `unsupported MCP-Protocol-Version ${version}` } }, 400);

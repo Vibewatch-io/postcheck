@@ -4,6 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { authorize, parseCheckRequest, runCheck, type LookupDeps } from "../src/lib/server/check";
 import { handleMcp } from "../src/lib/server/mcp";
+import { readJsonBody } from "../src/lib/server/fetch-guard";
 import * as check from "../src/app/api/check/route";
 import * as mcp from "../src/app/api/mcp/route";
 
@@ -40,7 +41,7 @@ test("only the exact key is keyed; a wrong or malformed one is refused, not trea
   assert.equal(authorize(req("Bearer s3cret"), "s3cret"), "key");
   assert.equal(authorize(req("Bearer nope"), "s3cret"), "denied");
   assert.equal(authorize(req("s3cret"), "s3cret"), "denied");
-  assert.equal(authorize(req("Bearer s3cret"), undefined), "denied");
+  assert.equal(authorize(req("Bearer s3cret"), ""), "denied");
 });
 
 const card = { url: "https://example.com/", host: "example.com", title: "Example", description: "", image: null, layout: "large" as const };
@@ -90,7 +91,16 @@ test("/api/check answers a check, refuses a bad body and a bad key, and keeps no
   assert.equal(json.ok, true);
   assert.deepEqual(json.devices[0].lines, ["Just a short post."]);
   assert.equal((await check.POST(post("http://localhost/api/check", "{not json"))).status, 400);
-  assert.equal((await check.POST(post("http://localhost/api/check", { text: "hi" }, { authorization: "Bearer wrong" }))).status, 401);
+  // The route reads POSTCHECK_API_KEY at call time: pin it, so the test never depends on the environment.
+  const saved = process.env.POSTCHECK_API_KEY;
+  process.env.POSTCHECK_API_KEY = "test-key";
+  try {
+    assert.equal((await check.POST(post("http://localhost/api/check", { text: "hi" }, { authorization: "Bearer not-the-key" }))).status, 401);
+    assert.equal((await check.POST(post("http://localhost/api/check", { text: "hi" }, { authorization: "Bearer test-key" }))).status, 200);
+  } finally {
+    if (saved === undefined) delete process.env.POSTCHECK_API_KEY;
+    else process.env.POSTCHECK_API_KEY = saved;
+  }
   assert.equal(check.GET().status, 405);
 });
 
@@ -121,9 +131,35 @@ test("MCP: a response message gets no answer", async () => {
 
 // X posts media alone; and a 25,000-character post fits even when the client escapes every character.
 test("a media-only post is checked, and an escaped 25,000-character body fits the cap", async () => {
-  assert.ok(!("error" in parseCheckRequest({ text: "", media: [{ kind: "photo", width: 1600, height: 900 }] })));
+  const media = await check.POST(post("http://localhost/api/check", { text: "", media: [{ kind: "photo", width: 1600, height: 900 }], devices: ["web"] }));
+  assert.equal(media.status, 200);
+  assert.deepEqual(((await media.json()) as { attachment: unknown }).attachment, { type: "media", kinds: ["photo"] });
+  assert.ok("error" in parseCheckRequest({ text: "****" }), "markers alone are an empty post");
   const escaped = '{"text":"' + "\\u0416".repeat(25_000) + '","devices":["web"]}';
   assert.ok(escaped.length > 150_000);
   const res = await check.POST(post("http://localhost/api/check", escaped));
   assert.equal(res.status, 200);
+});
+
+// Streamable HTTP's media types, JSON-RPC's id types, and the cross-site marker without an Origin.
+test("/api/mcp refuses the wrong media types, malformed ids and cross-site browser requests", async () => {
+  const init = { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } };
+  const url = "https://postcheck.vibewatch.io/api/mcp";
+  assert.equal((await mcp.POST(new Request(url, { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify(init) }))).status, 415);
+  assert.equal((await mcp.POST(post(url, init, { accept: "text/event-stream" }))).status, 406);
+  assert.equal((await mcp.POST(post(url, init, { "sec-fetch-site": "cross-site" }))).status, 403);
+  const ctx = { run: async () => { throw new Error("not called"); } };
+  assert.deepEqual(await handleMcp({ jsonrpc: "2.0", id: true, method: "ping" }, ctx), { jsonrpc: "2.0", id: null, error: { code: -32600, message: "invalid request" } });
+  const old = (await handleMcp({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2024-11-05" } }, ctx)) as { result: { protocolVersion: string } };
+  assert.equal(old.result.protocolVersion, "2025-06-18");
+});
+
+// A body that stops arriving is abandoned at the deadline, and its stream really is cancelled (the reader
+// holds the lock, so cancelling the body itself would fail and leave the read pending).
+test("a stalled request body is cancelled at the deadline", async () => {
+  let cancelled = false;
+  const body = new ReadableStream<Uint8Array>({ pull: () => new Promise<void>(() => {}), cancel: () => { cancelled = true; } });
+  const req = new Request("http://localhost/api/check", { method: "POST", body, duplex: "half" } as RequestInit);
+  assert.equal(await readJsonBody(req, 1024, 50), undefined);
+  assert.equal(cancelled, true);
 });

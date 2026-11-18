@@ -119,7 +119,7 @@ npm run dev
 
 Node 24+. `npm run build` and `npm run lint` are the gate.
 
-No environment variables are needed to run it. `POSTCHECK_API_KEY` is optional and only matters for the check API (see Deploying).
+No environment variables are needed to run it. `POSTCHECK_API_KEY` is optional and only matters for `/api/check` and `/api/mcp` (see Deploying).
 
 ## Deploying
 
