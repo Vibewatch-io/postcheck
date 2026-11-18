@@ -1966,20 +1966,7 @@
     "lines": 4,
     "hasCard": false,
     "hasName": true
-   },
-   "gap": "font coin flip: line 8 (\"…needs Show more\") is 321.9px in a 322px column (test 05 shows the same line as an edge); here it pushes the post to a 10th line, so the tool folds what the iPhone shows whole in 9",
-   "gapTool": [
-    "Long quote test 40b: a link to a post sits after",
-    "character 280, at the very end. the quick brown",
-    "fox jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog and this sentence keeps",
-    "going past the cut so the post needs Show",
-    "more on the web timeline"
-   ],
-   "gapMore": true
+   }
   },
   {
    "id": "2113019564380549631",
@@ -2002,12 +1989,13 @@
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
    ],
    "showMore": false,
-   "gap": "the iOS app sets the body without pair kerning (Chirp-UI's own pairs: WW +0.88pt, .. −0.43pt at 15pt) in its own font's advances; the preview uses x.com's Chirp with kerning at −0.18px: X fits 90 i a line, the preview 89",
-   "gapTool": [
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
     "Repeat test 132",
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
-   ]
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145852306993579",
@@ -2016,7 +2004,14 @@
     "i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i",
     "i i i i i i i i i i i i i"
    ],
-   "showMore": false
+   "showMore": false,
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
+    "Repeat test 133",
+    "i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i",
+    "i i i i i i i i i i i i i i i"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145887790862446",
@@ -2026,12 +2021,13 @@
     "llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
    ],
    "showMore": false,
-   "gap": "the iOS app sets the body without pair kerning (Chirp-UI's own pairs: WW +0.88pt, .. −0.43pt at 15pt) in its own font's advances; the preview uses x.com's Chirp with kerning at −0.18px: X fits 90 l a line, the preview 89",
-   "gapTool": [
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
     "Repeat test 134",
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
-   ]
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2123145921395605656",
@@ -2041,14 +2037,7 @@
     "WWWWWWWWWWWWWWWWWWWWWWW",
     "WWWWWWWWWWWWWW"
    ],
-   "showMore": false,
-   "gap": "the iOS app sets the body without pair kerning (Chirp-UI's own pairs: WW +0.88pt, .. −0.43pt at 15pt) in its own font's advances; the preview uses x.com's Chirp with kerning at −0.18px: X fits 23 W a line (no WW kern), the preview 22",
-   "gapTool": [
-    "Repeat test 135",
-    "WWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWWWWWWWW",
-    "WWWWWWWWWWWWWWWW"
-   ]
+   "showMore": false
   },
   {
    "id": "2123145958821441890",
@@ -2058,12 +2047,13 @@
     "............................................................................"
    ],
    "showMore": false,
-   "gap": "the iOS app sets the body without pair kerning (Chirp-UI's own pairs: WW +0.88pt, .. −0.43pt at 15pt) in its own font's advances; the preview uses x.com's Chirp with kerning at −0.18px: X fits 84 periods a line (no .. kern), the preview 94",
-   "gapTool": [
+   "gtGap": "GT America's glyphs aren't Chirp's: a run of one glyph measures the font itself, so this tier draws its own rows (QUIRKS.md, \"Fallback when X blocks its CDN\")",
+   "gtGapTool": [
     "Repeat test 136",
-    "..............................................................................................",
-    ".................................................................."
-   ]
+    "................................................................................................",
+    "................................................................"
+   ],
+   "gtGapMore": false
   }
  ]
 }

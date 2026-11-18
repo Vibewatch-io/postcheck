@@ -15,6 +15,11 @@ export interface Device {
   lineHeight: number;
   /** Export pixel ratio (phones are 3x panels). */
   pixelRatio: number;
+  /**
+   * Android only: the screen's device pixels per dp. The Android app sets each glyph at its advance
+   * rounded to whole device pixels, so line breaks depend on it (QUIRKS.md, "Layout engine").
+   */
+  density?: number;
   /** Phone corner radius and Dynamic Island / notch style. */
   radius?: number;
   /** The app folds the body behind Show more past this many rendered lines (see QUIRKS.md). */
@@ -64,14 +69,16 @@ const phone = (
   height,
   // App cell: 12px inset, 44px avatar, 8px gap → the body runs in the media column, width − 71
   // (64→386 on a 393pt iPhone 15 Pro). Body ink on 110 captured lines (21 posts) matches x.com's web
-  // Chirp at −0.18px (globals.css; sd 1.1px). Line breaks fix only the ratio of tracking to column:
-  // this pair reproduces the captures as well as the old 316 / −0.32px one did (QUIRKS.md).
+  // Chirp at −0.18px (globals.css; sd 1.1px). The body's line breaks follow the app's unkerned Chirp-UI,
+  // set as web Chirp unkerned at −0.235px with spaces 0.195px wider (--ls-app-row, --ws-app-row; runs of
+  // one glyph, tests 132–136, QUIRKS.md "Layout engine").
   // The iOS body runs at a 19.28pt pitch, not 20: seven one-letter lines of test 13 step 19.27–19.29 in
   // two iPhone 15 Pro captures (QUIRKS.md, "Layout: app").
   // Android (X 12.31 on a Pixel 3 at 360 and 411.4 dp): the body runs from 64dp to width − 12dp, so
-  // column = width − 76 (since 2026-10-21; it was 60dp and width − 72 on 2026-10-08, same app version);
-  // its lines match x.com's untracked web Chirp at 15px, with a 20dp pitch below 400 dp
-  // (scripts/android/README.md; the wide-screen size is below).
+  // column = width − 76, in whole device pixels where the density is known (androidColumn; since 2026-10-21; it was 60dp and width − 72 on 2026-10-08, same app version);
+  // its lines match x.com's untracked web Chirp at 15px, each glyph's advance rounded to whole device
+  // pixels (`density`; tests 132–136), with a 20dp pitch below 400 dp (scripts/android/README.md; the
+  // wide-screen size is below).
   textWidth: platform === "ios" ? width - 71 : width - 76,
   pane: platform === "ios" ? "app" : "web",
   // Android sets the body at 16/21.33 on a wide screen: the same lines measure 6.4% wider at 411.4 dp than at
@@ -108,11 +115,14 @@ const phonePost = (d: Device): Device => ({
 
 /**
  * The iOS post screen's tracking (--ls-app-post, −0.204px): the timeline's −0.18px at 15px is the same
- * −0.012em at 17px, which 99 post-screen lines fit (QUIRKS.md). Spread into the style of the element
- * that holds that device's text.
+ * −0.012em at 17px, which 99 post-screen lines fit (QUIRKS.md). Its body keeps pair kerning and the
+ * plain space: the timeline row's unkerned setting (--ls-app-row) fits those lines no better. Spread
+ * into the style of the element that holds that device's text.
  */
 export function postScreenTracking(d: Device): CSSProperties | undefined {
-  return d.pane === "app" && d.view === "post" ? ({ "--ls-app": "var(--ls-app-post)" } as CSSProperties) : undefined;
+  return d.pane === "app" && d.view === "post"
+    ? ({ "--ls-app": "var(--ls-app-post)", "--ls-app-row": "var(--ls-app-post)", "--ws-app-row": "0px", "--kern-app-row": "auto" } as CSSProperties)
+    : undefined;
 }
 
 /**
@@ -151,9 +161,21 @@ const PHONES: Device[] = [
   phone("iphone-16-plus", "iPhone 15–16 Plus / 14–15 Pro Max", 430, 932, "dynamic-island", 55),
   phone("iphone-air", "iPhone Air", 420, 912, "dynamic-island", 58),
   phone("iphone-se", "iPhone SE / 12–13 mini", 375, 667, "none", 0),
-  phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36, "android"),
-  phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40, "android"),
+  // Densities assumed from each model's panel at its default display size: 1080px over 360dp (3) and over
+  // 411.4dp (2.625, the Pixel 3's density, on which this width's captures were made). The column is the
+  // TextView's whole pixels on that 1080px panel: 852px (284dp) and 880px (335.24dp, not 412 − 76).
+  { ...phone("galaxy-s25", "Galaxy S25", 360, 780, "punch-hole", 36, "android"), density: 3, textWidth: androidColumn(1080, 3) },
+  { ...phone("pixel-10", "Pixel 10", 412, 923, "punch-hole", 40, "android"), density: 2.625, textWidth: androidColumn(1080, 2.625) },
 ];
+
+/**
+ * The Android body column in dp: the TextView spans the panel from 64dp to 12dp short of its right edge,
+ * each margin in whole device pixels (uiautomator bounds 192–1044 of 1080px at 3, 168–1048 at 2.625:
+ * 12dp is 31.5px there, laid out as 32).
+ */
+export function androidColumn(panelPx: number, density: number): number {
+  return (panelPx - Math.round(64 * density) - Math.round(12 * density)) / density;
+}
 
 /** The phone most people read on (the 402pt group, see PHONES), shown first. */
 export const DEFAULT_PHONE_ID = "iphone-17";
@@ -163,11 +185,18 @@ export const THIS_PHONE_ID = "this-phone";
 /**
  * The visitor's own phone, when they open the site on one: a phone's page width in CSS pixels is its
  * screen width in points (dp on Android), the unit the X app lays out in, so a timeline cell drawn at
- * that width is the app's own layout. Same cell geometry and fold rules as the phone list (QUIRKS.md),
- * drawn edge to edge with no frame. Assumes default text size, like every capture.
+ * that width is the app's own layout (on Android to a pixel or two, below). Same cell geometry and fold
+ * rules as the phone list (QUIRKS.md), drawn edge to edge with no frame. Assumes default text size, like
+ * every capture. On Android, `density`
+ * is the screen's device pixels per dp, which the page reads as devicePixelRatio (assumed equal at
+ * Chrome's default page zoom), and the column is worked out in whole device pixels from it. The page's
+ * width is whole CSS px, so the panel it implies can be a pixel or two off the real one (412 × 2.625 =
+ * 1081.5 for a 1080px Pixel): an approximation the listed phones, with their real panels, don't need.
  */
-export function thisPhone(width: number, height: number, platform: "ios" | "android"): Device {
-  return { ...phone(THIS_PHONE_ID, `This phone (${width})`, width, height, "none", 0, platform), frameless: true, tipLabel: "this phone" };
+export function thisPhone(width: number, height: number, platform: "ios" | "android", density?: number): Device {
+  const d: Device = { ...phone(THIS_PHONE_ID, `This phone (${width})`, width, height, "none", 0, platform), frameless: true, tipLabel: "this phone" };
+  // The panel's pixels from the page's whole-pixel width: within a pixel or two of the real panel.
+  return platform === "android" && density && density > 0 ? { ...d, density, textWidth: androidColumn(Math.round(width * density), density) } : d;
 }
 
 /** The listed phone a share link names when it was made in this-phone mode: same platform, nearest width. */

@@ -382,7 +382,7 @@ glyphs, each the engine's prediction (here and below, a row counts its glyphs, n
 Captured 2026-11-18 on the Android app (X 12.36.1, Pixel 3; `fixtures/app/galaxy-s25.json`, `pixel-10.json`),
 rows counted one ink blob per glyph:
 
-| # | 360 dp: X | engine | 411.4 dp: X | engine |
+| # | 360 dp: X | preview | 411.4 dp: X | preview |
 |---|---|---|---|---|
 | 132 | 77/77/6 | 75/75/10 | 80/80 | 83/77 |
 | 133 | 41/19 | 40/20 | 44/16 | 44/16 |
@@ -391,12 +391,14 @@ rows counted one ink blob per glyph:
 | 136 | 80/80 | 79/79/2 | 91/69 | 88/72 |
 
 Every row fits one rule: the app sets each glyph at its advance rounded to whole device pixels (`i` 11 px at
-both sizes, from 11.34 and 10.58), with kerning unrounded (QUIRKS, "Layout engine"). The 7 misses are marked gaps.
+both sizes, from 11.34 and 10.58), with kerning unrounded (QUIRKS, "Layout engine"). The layout engine now draws all 10
+rows; the browser preview can't round a glyph's advance, so its 7 misses are pinned (`previewGap`).
 
 Captured 2026-11-18 on the iPhone 15 Pro (`fixtures/app/iphone-16.json`; search-result cells, which bold the
 matched first line): rows 90/70, 47/13, 90/70, 23/23/14 and 84/76. The preview predicted 89/71, 47/13, 89/71,
 22/22/16 and 94/66; CoreText with the app's font, 92/68, 48/12, 92/68, 21/21/18 and 97/63. Neither matches: the
-app sets its own Chirp-UI with no pair kerning (QUIRKS, "Layout engine"). The 4 misses are marked gaps.
+app sets its own Chirp-UI with no pair kerning (QUIRKS, "Layout engine"). Set that way (x.com's Chirp unkerned at
+−0.235px, spaces 0.195px wider), the engine and the preview draw all five.
 
 ---
 

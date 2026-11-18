@@ -1032,7 +1032,8 @@ function useThisPhone(): Device | null {
       const height = Math.round(portrait ? innerHeight : Math.max(screen.width, screen.height));
       const platform = /Android/i.test(navigator.userAgent) ? "android" : "ios";
       // The address bar coming and going changes the height only: keep the same device then.
-      setDevice((d) => (d && d.width === width && d.platform === platform ? d : thisPhone(width, height, platform)));
+      const density = platform === "android" ? window.devicePixelRatio : undefined;
+      setDevice((d) => (d && d.width === width && d.platform === platform && d.density === density ? d : thisPhone(width, height, platform, density)));
     };
     read();
     document.documentElement.dataset.phoneChecked = "";
