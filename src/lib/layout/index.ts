@@ -10,14 +10,35 @@ import { emailRanges, styleAt, type StyleRun, type Token } from "../entities";
 import { kernBetween, ligatureIn, measure, type RunStyle } from "./metrics";
 
 /**
- * CSS letter-spacing on the Chirp tier (src/app/globals.css :root): x.com's untracked, the iOS
- * timeline's −0.18px and its post screen's −0.204px. tests/layout.test.ts reads globals.css to keep
- * these in step.
+ * The body's CSS on the Chirp tier (src/app/globals.css :root), which the preview sets it in:
+ * letter-spacing for x.com (untracked), the iOS timeline row (--ls-app-row) and the iOS post screen
+ * (--ls-app-post); word-spacing for the iOS row (--ws-app-row). tests/layout.test.ts reads globals.css to
+ * keep these in step.
  */
-export const TRACKING = { web: 0, app: -0.18, appPost: -0.204 };
+export const TRACKING = { web: 0, appRow: -0.235, appPost: -0.204 };
+export const WORD_SPACING = { appRow: 0.195 };
 
 export function trackingFor(d: Device): number {
-  return d.pane === "web" ? TRACKING.web : d.view === "post" ? TRACKING.appPost : TRACKING.app;
+  return d.pane === "web" ? TRACKING.web : d.view === "post" ? TRACKING.appPost : TRACKING.appRow;
+}
+
+/**
+ * How a device sets its body (QUIRKS.md, "Layout engine"). The iOS timeline row: the app's Chirp-UI
+ * with no pair kerning, modelled as x.com's Chirp unkerned with its own tracking and a wider space
+ * (Chirp-UI's glyphs are about 11/1000 em narrower, its space 2/1000 wider). The Android app: each
+ * glyph's advance rounded to whole device pixels at the screen's density.
+ */
+export function bodyStyle(d: Device): RunStyle {
+  if (d.font !== "web") throw new RangeError(`${d.id} lays text out in a Chirp build with no metrics (font "${d.font}")`);
+  const iosRow = d.pane === "app" && d.view !== "post";
+  return {
+    font: d.font,
+    bold: false,
+    size: d.fontSize,
+    letterSpacing: trackingFor(d),
+    ...(iosRow ? { wordSpacing: WORD_SPACING.appRow, noKern: true } : {}),
+    ...(d.platform === "android" && d.density ? { devicePixels: d.density } : {}),
+  };
 }
 
 export interface BodyInput {
@@ -107,7 +128,7 @@ interface Built {
 const built = new WeakMap<BodyInput, Map<string, Built>>();
 function cellsFor(input: BodyInput, d: Device): Built {
   const android = d.platform === "android";
-  const key = JSON.stringify([d.platform ?? "web", d.pane, d.font, d.fontSize, trackingFor(d), rowHidesStyles(d, android && Boolean(input.expanded))]);
+  const key = JSON.stringify([d.platform ?? "web", d.pane, bodyStyle(d), rowHidesStyles(d, android && Boolean(input.expanded))]);
   let byKey = built.get(input);
   if (!byKey) built.set(input, (byKey = new Map()));
   const hit = byKey.get(key);
@@ -121,8 +142,7 @@ function buildCells(input: BodyInput, d: Device): Built {
   const android = d.platform === "android";
   const shownStyles = rowHidesStyles(d, android && Boolean(input.expanded)) ? [] : input.styles;
   const hidden = (android && input.quoteShown) || (d.platform === "ios" && input.longQuote) ? null : input.hiddenUrlStart;
-  if (d.font !== "web") throw new RangeError(`${d.id} lays text out in a Chirp build with no metrics (font "${d.font}")`);
-  const base: RunStyle = { font: d.font, bold: false, size: d.fontSize, letterSpacing: trackingFor(d) };
+  const base = bodyStyle(d);
   const linkBreaks = d.pane === "app" || android;
 
   // The body's nodes, as PostBody emits them: words and entities as pieces, spaces and newlines as text.
@@ -250,7 +270,7 @@ function buildCells(input: BodyInput, d: Device): Built {
     });
   }
 
-  return { paragraphs, pieces, approximate, tokenWidth: snap(measure(" Show more", base).width) };
+  return { paragraphs, pieces, approximate, tokenWidth: snapFor(d)(measure(" Show more", base).width) };
 }
 
 /** The lines on one device: greedy filling at its column width (see the notes on Chrome above). */
@@ -258,6 +278,7 @@ function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boo
   const rows: LineInfo[] = [];
   const firstRowOf = new Map<number, number>();
   const limit = d.textWidth;
+  const snap = snapFor(d);
   for (const cells of paragraphs) {
     if (!cells.length) {
       rows.push({ words: [], paragraph: -1, end: 0, spans: [] });
@@ -293,7 +314,7 @@ function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boo
       if (j >= cells.length) end = cells.length;
       else if (lastBreak >= i) end = lastBreak + 1;
       else end = Math.max(j, i + 1); // nothing to break at: break-word cuts at the last cell that fits
-      rows.push(rowOf(cells.slice(i, end), pieces, firstRowOf, rows.length));
+      rows.push(rowOf(cells.slice(i, end), pieces, firstRowOf, rows.length, snap));
       i = end;
       // A line never starts with the spaces that ended the one before (they hang there).
       while (i < cells.length && cells[i].space && !cells[i].token) i++;
@@ -331,8 +352,14 @@ function snap(w: number): number {
   return Math.ceil(w * 64 - 1e-7) / 64;
 }
 
+/** The Android app lays a line out in floats, with no LayoutUnit (QUIRKS.md, "Layout engine"). */
+const unsnapped = (w: number) => w;
+function snapFor(d: Device): (w: number) => number {
+  return d.platform === "android" ? unsnapped : snap;
+}
+
 /** One row as measureLines reports it: each [data-w] fragment on it with its offsets and pixel edges. */
-function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, rowIndex: number): LineInfo {
+function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, rowIndex: number, snap: (w: number) => number): LineInfo {
   const row: LineInfo = { words: [], paragraph: -1, end: 0, spans: [] };
   // Edges as Chrome places them: each item starts where the snapped widths of the ones before it end.
   let done = 0;

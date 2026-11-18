@@ -67,6 +67,16 @@ function emailParts(tokens: Token[]): Map<number, Array<[number, number]>> {
   return out;
 }
 
+/**
+ * The body's spacing CSS per pane (globals.css): x.com's tracking, or the iOS row's own tracking, word
+ * spacing and no pair kerning, which the post screen swaps for its own (postScreenTracking). The layout
+ * engine sets the body the same way (src/lib/layout bodyStyle).
+ */
+export function bodySpacing(pane: "web" | "app" | undefined): React.CSSProperties {
+  if (pane === "app") return { letterSpacing: "var(--ls-app-row)", wordSpacing: "var(--ws-app-row)", fontKerning: "var(--kern-app-row)" as React.CSSProperties["fontKerning"] };
+  return pane ? { letterSpacing: `var(--ls-${pane})` } : {};
+}
+
 export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
   { tokens, showMoreAt, onShowMore, hiddenUrlStart, theme, fontSize, lineHeight, width, font, pane, platform, styles = [], linkColor = theme.link, maxLines },
   ref,
@@ -140,7 +150,7 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
       dir="auto"
       style={{
         fontFamily: fontStack(font),
-        letterSpacing: pane ? `var(--ls-${pane})` : undefined,
+        ...bodySpacing(pane),
         fontSize,
         lineHeight: `${lineHeight}px`,
         fontWeight: 400,

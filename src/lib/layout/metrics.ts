@@ -109,7 +109,28 @@ export interface RunStyle {
   size: number;
   /** px added after every character (CSS letter-spacing). */
   letterSpacing: number;
+  /** px added to every space, U+0020 and U+00A0 (CSS word-spacing, as Chrome applies it). */
+  wordSpacing?: number;
+  /** No pair kerning (CSS font-kerning: none). */
+  noKern?: boolean;
+  /**
+   * Device pixels per px: each glyph is set at its advance rounded to whole device pixels and kerned
+   * unrounded, as the Android app sets text.
+   */
+  devicePixels?: number;
 }
+
+/** Everything about a style that changes a width, as a memo key. */
+const styleKey = (s: RunStyle) => `${s.font}${s.bold ? 7 : 4}${s.size}|${s.letterSpacing}|${s.wordSpacing ?? 0}|${s.noKern ? 1 : 0}|${s.devicePixels ?? 0}`;
+
+/** A glyph advance in px: font units scaled to the size, rounded to device pixels where the style says so. */
+function advancePx(units: number, f: { upm: number }, style: RunStyle): number {
+  const px = (units * style.size) / f.upm;
+  return style.devicePixels ? Math.round(px * style.devicePixels) / style.devicePixels : px;
+}
+
+/** CSS word-spacing's characters (Chrome: Character::TreatAsSpace, minus the tab and newline pre-wrap keeps apart). */
+const WORD_SEPARATOR = /^[\u0020\u00a0]$/u;
 
 export interface Measured {
   width: number;
@@ -128,7 +149,7 @@ const memo = new Map<string, Measured>();
  */
 export function measure(text: string, style: RunStyle): Measured {
   if (text.length > 8) return measureRun(text, style);
-  const key = `${style.font}${style.bold ? 7 : 4}${style.size}|${style.letterSpacing}|${text}`;
+  const key = `${styleKey(style)}|${text}`;
   let m = memo.get(key);
   if (!m) {
     if (memo.size > 50_000) memo.clear();
@@ -160,30 +181,32 @@ function measureRun(text: string, style: RunStyle): Measured {
     // Chrome keeps a cluster in one font: Chirp only if it has every character in it ("1" + U+20E3, a
     // keycap, isn't Chirp's digit), and never an emoji-presentation sequence (Chrome: 19px at 15px).
     const owner = EMOJI_SEQUENCE.test(segment) ? undefined : STACK.find((k) => cps.every((cp) => face(`${k}-400`).adv.has(cp) || IGNORABLE.test(String.fromCodePoint(cp))));
+    const spacing = style.letterSpacing + (style.wordSpacing && WORD_SEPARATOR.test(segment) ? style.wordSpacing : 0);
     if (!owner) {
       prev = null;
       if (ZERO.test(segment) && cps.every((cp) => ZERO.test(String.fromCodePoint(cp)))) continue;
-      width += fallbackWidth(segment, base, style.size) + style.letterSpacing;
+      width += fallbackWidth(segment, base, style.size) + spacing;
       approximate = true;
       continue;
     }
     const key: FontKey = `${owner}-${weight}`;
     const f = face(key);
-    // Decomposed into glyphs no character maps to (Ŀ): their summed advance, kerned with nothing.
+    // Decomposed into glyphs no character maps to (Ŀ): their summed advance, kerned with nothing (rounded
+    // as one glyph where the style rounds: the table keeps only the sum).
     const whole = f.advance.get(base);
     if (whole !== undefined) {
-      width += (whole * style.size) / f.upm + style.letterSpacing;
+      width += advancePx(whole, f, style) + spacing;
       prev = null;
       continue;
     }
     // A cluster is the base character and any marks riding on it (zero width in Chirp, see the generator).
     for (const cp of f.decompose.get(base) ?? [base]) {
       const adv = f.adv.get(cp) ?? f.adv.get(base) ?? 0;
-      if (prev && prev.key === key) width += kernOf(f, prev.cp, cp) * style.size / f.upm;
-      width += adv * style.size / f.upm;
+      if (prev && prev.key === key && !style.noKern) width += kernOf(f, prev.cp, cp) * style.size / f.upm;
+      width += advancePx(adv, f, style);
       prev = { key, cp };
     }
-    width += style.letterSpacing;
+    width += spacing;
   }
   return { width, approximate };
 }
@@ -195,7 +218,7 @@ export function ligatureIn(text: string, style: RunStyle): { at: number; text: s
   for (const l of f.ligatures) {
     const s = String.fromCodePoint(...l.cps);
     const at = text.indexOf(s);
-    if (at >= 0 && (!best || at < best.at)) best = { at, text: s, width: (l.adv * style.size) / f.upm };
+    if (at >= 0 && (!best || at < best.at)) best = { at, text: s, width: advancePx(l.adv, f, style) };
   }
   return best;
 }
@@ -210,7 +233,7 @@ const kernMemo = new Map<string, number>();
 
 /** Kerning in px between the last character of one run and the first of the next, when both are in the same face. */
 export function kernBetween(a: string, b: string, style: RunStyle): number {
-  const key = `${style.font}${style.bold ? 7 : 4}${style.size}|${a.slice(-2)}|${b.slice(0, 2)}`;
+  const key = `${style.font}${style.bold ? 7 : 4}${style.size}|${style.noKern ? 1 : 0}|${a.slice(-2)}|${b.slice(0, 2)}`;
   let k = kernMemo.get(key);
   if (k === undefined) {
     if (kernMemo.size > 50_000) kernMemo.clear();
@@ -221,6 +244,7 @@ export function kernBetween(a: string, b: string, style: RunStyle): number {
 }
 
 function kernPair(a: string, b: string, style: RunStyle): number {
+  if (style.noKern) return 0;
   const ca = Array.from(a).pop()?.codePointAt(0);
   const cb = b.codePointAt(0);
   if (ca === undefined || cb === undefined) return 0;

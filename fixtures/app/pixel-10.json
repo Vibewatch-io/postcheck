@@ -871,7 +871,13 @@
    "lines": [
     "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच करता है"
    ],
-   "showMore": false
+   "showMore": false,
+   "gtGap": "GT America's +0.128px lands on the system font's Devanagari too: the first line (340.3px in Chirp against the 336px column) runs 348.1px in GT America and pushes two words (\"करता है\") down",
+   "gtGapTool": [
+    "हिन्दी में लिखा गया यह वाक्य संयुक्त अक्षरों की जाँच",
+    "करता है"
+   ],
+   "gtGapMore": false
   },
   {
    "id": "2107204999889690882",
@@ -1344,8 +1350,8 @@
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
    ],
    "showMore": false,
-   "gap": "Android sets each glyph at its advance rounded to whole device pixels (kerning unrounded) and adds no 1/64px per item; the engine uses web Chirp's fractional advances: X fits 80 i a line (11px each in 880px), the engine 83 (10.58px)",
-   "gapTool": [
+   "previewGap": "the Android app sets each glyph at its advance rounded to whole device pixels, which no CSS can do: the layout engine draws X's lines, the browser preview web Chirp's fractional advances (QUIRKS.md, \"Layout engine\"): X fits 80 i a line (11px each in 880px), the preview 83 (10.58px)",
+   "previewLines": [
     "Repeat test 132",
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
@@ -1368,8 +1374,8 @@
     "llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
    ],
    "showMore": false,
-   "gap": "Android sets each glyph at its advance rounded to whole device pixels (kerning unrounded) and adds no 1/64px per item; the engine uses web Chirp's fractional advances: X fits 80 l a line (11px each in 880px), the engine 83 (10.58px)",
-   "gapTool": [
+   "previewGap": "the Android app sets each glyph at its advance rounded to whole device pixels, which no CSS can do: the layout engine draws X's lines, the browser preview web Chirp's fractional advances (QUIRKS.md, \"Layout engine\"): X fits 80 l a line (11px each in 880px), the preview 83 (10.58px)",
+   "previewLines": [
     "Repeat test 134",
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
     "lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
@@ -1393,8 +1399,8 @@
     "....................................................................."
    ],
    "showMore": false,
-   "gap": "Android sets each glyph at its advance rounded to whole device pixels (kerning unrounded) and adds no 1/64px per item; the engine uses web Chirp's fractional advances: X fits 91 periods a line (11 − 1.34px kern each), the engine 88",
-   "gapTool": [
+   "previewGap": "the Android app sets each glyph at its advance rounded to whole device pixels, which no CSS can do: the layout engine draws X's lines, the browser preview web Chirp's fractional advances (QUIRKS.md, \"Layout engine\"): X fits 91 periods a line (11 − 1.34px kern each), the preview 88",
+   "previewLines": [
     "Repeat test 136",
     "........................................................................................",
     "........................................................................"

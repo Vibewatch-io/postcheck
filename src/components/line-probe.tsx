@@ -5,7 +5,7 @@ import { bodyLineHeight, postScreenTracking, rowHidesStyles, type Device } from 
 import type { StyleRun, Token } from "@/lib/entities";
 import { THEMES, fontStack } from "@/lib/theme";
 import type { DeviceLines, LineInfo } from "@/lib/advice";
-import { PostBody } from "./post-body";
+import { PostBody, bodySpacing } from "./post-body";
 
 interface Props {
   tokens: Token[];
@@ -140,7 +140,7 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, quoteShown = fals
           {/* The app never appends the web's 280-cut "Show more": a long post under 10 lines shows whole
               there, so counting the token would push a full last line onto a 10th row (test 94). */}
           <PostBody tokens={tokens} showMoreAt={showMore && d.pane === "web" ? tokens.length : -1} hiddenUrlStart={(d.platform === "android" && quoteShown) || (d.platform === "ios" && longQuote) ? null : hiddenUrlStart} theme={THEMES.light} fontSize={d.fontSize} lineHeight={bodyLineHeight(d, shownStyles(d, expanded, styles).length > 0)} width={d.textWidth} font={d.font} pane={d.pane} platform={d.platform} styles={shownStyles(d, expanded, styles)} />
-          <span data-token style={{ position: "absolute", whiteSpace: "pre", fontFamily: fontStack(d.font), fontSize: d.fontSize, lineHeight: `${d.lineHeight}px`, letterSpacing: `var(--ls-${d.pane})` }}>
+          <span data-token style={{ position: "absolute", whiteSpace: "pre", fontFamily: fontStack(d.font), fontSize: d.fontSize, lineHeight: `${d.lineHeight}px`, ...bodySpacing(d.pane) }}>
             {" Show more"}
           </span>
         </div>

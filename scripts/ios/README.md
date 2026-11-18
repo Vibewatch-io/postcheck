@@ -65,6 +65,15 @@ still holds; the tool now draws the body at −0.18px in a 322pt column (screen
 way, so the post screen keeps −0.32px. QUIRKS.md, "Layout: app", has the
 numbers.
 
+## Correction (2026-11-18): no pair kerning
+
+Runs of one glyph (@postcheck_test tests 132–136) show the app sets the timeline
+body with no pair kerning, though Chirp-UI has pairs (`WW` +0.88pt, `..` −0.43pt):
+this oracle, kerning on at −0.2pt in 316.5pt, fits 92 `i` and 97 periods a line
+where the iPhone draws 90 and 84. The tool now sets the row unkerned (x.com's
+Chirp at −0.235px, spaces 0.195px wider); QUIRKS.md, "Layout engine", has the
+numbers. The oracle itself still kerns.
+
 ## Also here
 
 - `measure.swift`: typographic width of lines in a given font/size/axes (`KERN` env for tracking).

@@ -10,6 +10,8 @@ import { chromium, errors } from "playwright";
 // The layout engine (src/lib/check.ts) is TypeScript: `npm run verify` runs this file under tsx.
 import { checkPost, linksOf } from "../src/lib/check.ts";
 import { SITE_URL } from "../src/lib/site.ts";
+import { DEVICES } from "../src/lib/devices.ts";
+import { wrapMove } from "./wrap-move.ts";
 
 import { createServer } from "node:net";
 const args = process.argv.slice(2);
@@ -254,19 +256,24 @@ async function lineFit(deviceLast, text, quote = false) {
     body.appendChild(s);
     const w = s.getBoundingClientRect().width / scale;
     s.remove();
-    // The body's own tracking as written (var(--ls-web) or var(--ls-app)), so the reference page resolves it for its tier.
-    return { width: Math.round(w * 10) / 10, limit: Math.round((body.getBoundingClientRect().width / scale) * 10) / 10, family: cs.fontFamily, size: cs.fontSize, tracking: body.style.letterSpacing };
+    // The body's own spacing as written (var(--ls-web), var(--ls-app-row)…) and any tier variables a
+    // container swaps in (the post screen's), so the reference page resolves them for its own tier.
+    const vars = {};
+    for (let e = body; e; e = e.parentElement) for (const k of ["--ls-app", "--ls-app-row", "--ws-app-row", "--kern-app-row"]) if (!(k in vars) && e.style?.getPropertyValue(k)) vars[k] = e.style.getPropertyValue(k);
+    const spacing = { tracking: body.style.letterSpacing, wordSpacing: body.style.wordSpacing, kerning: body.style.fontKerning, vars };
+    return { width: Math.round(w * 10) / 10, limit: Math.round((body.getBoundingClientRect().width / scale) * 10) / 10, family: cs.fontFamily, size: cs.fontSize, spacing };
   }, { deviceLast, text, quote });
-  const { family, size, tracking, ...out } = fit;
-  if (ref) out.chirp = await ref.evaluate(({ text, family, size, tracking }) => {
+  const { family, size, spacing, ...out } = fit;
+  if (ref) out.chirp = await ref.evaluate(({ text, family, size, spacing }) => {
     const s = document.createElement("span");
-    s.style.cssText = `position:absolute;white-space:pre;font-family:${family};font-size:${size};letter-spacing:${tracking || "normal"}`;
+    s.style.cssText = `position:absolute;white-space:pre;font-family:${family};font-size:${size};letter-spacing:${spacing.tracking || "normal"};word-spacing:${spacing.wordSpacing || "normal"};font-kerning:${spacing.kerning || "auto"}`;
+    for (const [k, v] of Object.entries(spacing.vars)) s.style.setProperty(k, v);
     s.textContent = text;
     document.body.appendChild(s);
     const w = s.getBoundingClientRect().width;
     s.remove();
     return Math.round(w * 10) / 10;
-  }, { text, family, size, tracking });
+  }, { text, family, size, spacing });
   return out;
 }
 /**
@@ -344,6 +351,8 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   let bad = null;
   for (let i = 0; i < Math.max(exp.length, act.length); i++) if (exp[i] !== act[i]) { bad = i; break; }
   if (bad === null && expMore === gotMore) { pass++; console.log(`  ok   ${label} ${id}${knownGap ? "  (marked gap now passes: drop the gap)" : ""}`); return; }
+  // A run of one glyph (tests 132–136) measures Chirp's own widths, which GT America's glyphs don't share.
+  if (tier !== "chirp" && (corpusTags.get(id) ?? []).includes("repeat-letters")) { gap++; console.log(`  gap  ${label} ${id}  (GT America: a run of one glyph measures Chirp's own widths)`); return; }
   // A fixture can name a feature the tool doesn't model yet (a poll, a card X withholds for an
   // unknown reason) and pin what the tool draws meanwhile (`gapTool`): reported as a gap on every
   // run, and as a failure if anything else about the post changes. Checked before the edge
@@ -354,16 +363,17 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
     else {
       fail++;
       const why = !Array.isArray(gapTool) ? "marked gap has no gapTool pin" : gapMore !== gotMore ? "marked gap, but Show more drifted" : "marked gap, but the tool no longer draws its pinned gapTool lines";
-      console.log(`  FAIL ${label} ${id}  (${why})`);
+      console.log(`  FAIL ${label} ${id}  (${why})\n       drawn: ${JSON.stringify(got)}`);
     }
     if (bad !== null) console.log(`       line ${bad + 1}\n         X:    ${exp[bad] ?? "(none)"}\n         tool: ${act[bad] ?? "(none)"}`);
     if (expMore !== gotMore) console.log(`       Show more: X ${expMore} / tool ${gotMore}`);
     return;
   }
   // A line that differs by one word right at the body edge is a font-metrics coin flip, not a rule error.
-  // Only where the wrap moved: one line runs on into the next and the text is the same (whitespace aside,
-  // so a break inside a word still counts; a post both sides fold or cut may end at a different character).
-  // Show more must agree: a fold one side draws and the other doesn't is never a font tolerance.
+  // Only where the wrap moved by one word, or by two characters inside one (wrapMove), and the text is the
+  // same (whitespace aside, so a break inside a word still counts; a post both sides fold or cut may end at
+  // a different character). Show more must agree: a fold one side draws and the other doesn't is never a
+  // font tolerance.
   let edgeNote = null;
   let failNote = "";
   // Compare the whole text, URL-only lines included: a wrap can move a link onto a line of its own (test 30 on the GT tier).
@@ -371,7 +381,7 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
   const sameText = expMore === gotMore && (ej === aj || (expMore && (ej.startsWith(aj) || aj.startsWith(ej))));
   const longer = exp[bad]?.length > act[bad]?.length ? exp[bad] : act[bad];
   const shorter = longer === exp[bad] ? act[bad] : exp[bad];
-  if (bad !== null && exp[bad] && act[bad] && sameText && longer.startsWith(shorter)) {
+  if (bad !== null && exp[bad] && act[bad] && sameText && wrapMove(exp[bad], act[bad])) {
     const fit = await lineFit(deviceLast, longer);
     if (nearEdge(fit)) edgeNote = fitNote(fit, "body");
     // The folded line: the app's character-level cut landing one or two characters away is the same sub-pixel question.
@@ -430,7 +440,7 @@ async function quoteDiff(label, deviceLast, id, want) {
     if (exp.join("\n") !== rows.join("\n")) {
       const lines = `lines\n         X:    ${exp.join(" | ")}\n         tool: ${rows.join(" | ")}`;
       // The same coin flip as diff(): the first differing line lands within 5px of the quote's text
-      // column, and only where the lines wrap moved. The quoted text must match character for
+      // column, and only where the wrap moved by a word or two characters. The quoted text must match character for
       // character (whitespace aside, so a break inside a hyphenated word, CJK or a link still counts),
       // so a dropped or changed word fails even when the 5-line clamp (x-post.tsx maxLines) keeps the
       // box the same. When both sides fill the clamp, the shift may push the tail out of view.
@@ -438,7 +448,7 @@ async function quoteDiff(label, deviceLast, id, want) {
       const [a, b] = [exp[bad], rows[bad]];
       const [ea, ra] = [exp.join(""), rows.join("")].map((t) => t.replace(/\s+/g, ""));
       const clamped = exp.length === 5 && rows.length === 5;
-      const wrapOnly = a && b && (a.startsWith(b) || b.startsWith(a)) && (ea === ra || (clamped && (ea.startsWith(ra) || ra.startsWith(ea))));
+      const wrapOnly = a && b && wrapMove(a, b) && (ea === ra || (clamped && (ea.startsWith(ra) || ra.startsWith(ea))));
       const fit = wrapOnly ? await lineFit(deviceLast, a.length > b.length ? a : b, true) : null;
       if (fit && nearEdge(fit)) edgeNote = [fitNote(fit, "text"), lines];
       else problems.push(lines);
@@ -611,19 +621,29 @@ async function cellDiff(label, id, want) {
  * The layout engine (no browser) against the preview just read: the same draft, laid out in code for the
  * same device, must give the rows the preview drew. Card lookups are the replayed ones. Text the engine
  * sets in fallback fonts (CJK, Thai, Arabic…) is approximate and only reported. Matches count as passes.
+ * Where a fixture pins a preview gap (`previewGap`: a rule no CSS can draw), the engine must give X's own
+ * rows instead (`against` = "X"). On a device whose glyphs the preview can't round (Android: `density`), the
+ * engine may also differ from the preview by drawing X's own rows (`x`): the preview is judged against X
+ * on its own (diff()).
  */
-function engineDiff(label, device, id, rows, more) {
+function engineDiff(label, device, id, rows, more, against = "preview", x = null) {
   // The engine lays text out in Chirp: on the GT America tier the preview isn't what it models.
   if (!lastDraft || tier !== "chirp") return;
   const { cardUrl } = linksOf(lastDraft);
   const recorded = cardUrl === SITE_URL ? { title: "Postcheck" } : cardUrl ? unfurls[cardUrl] : undefined;
   const r = checkPost(lastDraft, { card: recorded ?? "none", quote: "found" }, { devices: [device] }).devices[0];
-  const want = rows.filter((l) => !isUrlLine(l)).map(norm);
+  const want = rows.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
   const got = r.lines.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
   if (JSON.stringify(got) === JSON.stringify(want) && r.showMore === more) { pass++; return; }
+  const xRows = x && DEVICES.find((d) => d.id === device)?.density ? x.lines.filter((l) => l !== "" && !isUrlLine(l)).map(norm) : null;
+  if (xRows && JSON.stringify(got) === JSON.stringify(xRows) && r.showMore === x.showMore) {
+    pass++;
+    console.log(`  ok   ${label} engine ${id} on ${device}: X's rows (the preview, in fractional advances, differs)`);
+    return;
+  }
   const bad = want.findIndex((l, i) => l !== got[i]);
   const at = bad === -1 ? want.length : bad;
-  const detail = bad === -1 && got.length === want.length ? `Show more: preview ${more} / engine ${r.showMore}` : `line ${at + 1}\n         preview: ${want[at] ?? "(none)"}\n         engine:  ${got[at] ?? "(none)"}`;
+  const detail = bad === -1 && got.length === want.length ? `Show more: ${against} ${more} / engine ${r.showMore}` : `line ${at + 1}\n         ${`${against}:`.padEnd(8)} ${want[at] ?? "(none)"}\n         engine:  ${got[at] ?? "(none)"}`;
   if (r.approximate) { console.log(`  ~    ${label} engine ${id} on ${device} (fallback fonts): ${detail}`); return; }
   fail++;
   console.log(`  FAIL ${label} engine ${id} on ${device}: ${detail}`);
@@ -639,8 +659,9 @@ for (const f of readdirSync("fixtures/web")) {
     // A stuck lookup is its own failure; diffing the half-drawn post would count it twice.
     if (!(await (p.compose ? compose(p.compose) : load(p.id, p)))) continue;
     const got = await page.evaluate(ROWS("false"));
-    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool);
-    engineDiff("web ", fx.device || "web", p.id, got.rows, got.more);
+    await diff("web ", false, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines);
+    if (p.previewGap) engineDiff("web ", fx.device || "web", p.id, p.lines, p.showMore, "X");
+    else engineDiff("web ", fx.device || "web", p.id, got.rows, got.more);
     if (p.quote && typeof p.quote === "object") await quoteDiff("web ", false, p.id, p.quote);
     if (p.media) await mediaDiff("web ", false, p.id, p.media, true);
     if (p.blue) await colourDiff("web ", false, p.id, p.blue);
@@ -657,8 +678,13 @@ for (const f of readdirSync("fixtures/app")) {
     // A stuck lookup is its own failure; diffing the half-drawn post would count it twice.
     if (!(await (p.compose ? compose(p.compose) : load(p.id, p)))) continue;
     const got = await page.evaluate(ROWS("true"));
-    await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap, p.gapTool, p.gapMore);
-    engineDiff("app ", fx.device, p.id, got.rows, got.more);
+    // A previewGap pins the preview's own rows where it can't draw X's (no CSS rounds a glyph's advance to
+    // device pixels); the engine is held to X's rows there.
+    // A gtGap pins what the GT America tier draws where its own coin flip moves the fold (only that tier reads it).
+    if (tier !== "chirp" && p.gtGap) await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gtGap, p.gtGapTool, p.gtGapMore);
+    else await diff("app ", true, p.id, p.lines, got.rows, p.showMore, got.more, p.gap ?? p.previewGap, p.gapTool ?? p.previewLines, p.gapMore);
+    if (p.previewGap) engineDiff("app ", fx.device, p.id, p.lines, p.showMore, "X");
+    else engineDiff("app ", fx.device, p.id, got.rows, got.more, "preview", p);
     if (p.card?.box) await cardDiff("app ", true, p.id, p.card);
     else if (p.card === null) await cardDiff("app ", true, p.id, null);
     if (p.quote && typeof p.quote === "object") await quoteDiff("app ", true, p.id, p.quote);

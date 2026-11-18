@@ -9,9 +9,10 @@ import { DEVICES, type Device } from "../src/lib/devices";
 import { checkPost, linksOf, type Draft, type Lookups } from "../src/lib/check";
 import { extractEntities, stripFormatting, tokenize } from "../src/lib/entities";
 import type { CardData } from "../src/lib/card";
-import { layoutBody, trackingFor, TRACKING } from "../src/lib/layout";
+import { bodyStyle, layoutBody, TRACKING, WORD_SPACING } from "../src/lib/layout";
 import { measure } from "../src/lib/layout/metrics";
 import { SITE_URL } from "../src/lib/site";
+import { wrapMove } from "../scripts/wrap-move";
 
 const json = (path: string) => JSON.parse(readFileSync(path, "utf8"));
 
@@ -21,11 +22,16 @@ test("Chirp's metrics reproduce Chrome's widths of the reference line", () => {
   assert.equal(Math.round(measure(REF, { font: "web", bold: false, size: 15, letterSpacing: 0 }).width * 10) / 10, 320.3);
 });
 
-test("the engine's tracking is globals.css's Chirp tier", () => {
+test("the engine's body spacing is globals.css's Chirp tier", () => {
   const css = readFileSync("src/app/globals.css", "utf8");
-  const root = /:root\s*\{\s*--ls-web:\s*([-\d.]+)px;\s*--ls-app:\s*([-\d.]+)px;\s*--ls-app-post:\s*([-\d.]+)px;/.exec(css);
+  const root = /:root\s*\{([^}]*--ls-web[^}]*)\}/.exec(css)?.[1];
   assert.ok(root, "no :root tracking line in globals.css");
-  assert.deepEqual([Number(root[1]), Number(root[2]), Number(root[3])], [TRACKING.web, TRACKING.app, TRACKING.appPost]);
+  const v = (name: string) => /^(-?[\d.]+)px$/.exec(new RegExp(`--${name}:\\s*([^;]+);`).exec(root)?.[1].trim() ?? "")?.[1];
+  assert.deepEqual(
+    ["ls-web", "ls-app-row", "ws-app-row", "ls-app-post"].map((n) => Number(v(n))),
+    [TRACKING.web, TRACKING.appRow, WORD_SPACING.appRow, TRACKING.appPost],
+  );
+  assert.match(root, /--kern-app-row:\s*none;/);
 });
 
 // X's bird: Chirp's default `calt` turns the literal "[CHIRPBIRDICON]" into one glyph, which Chrome
@@ -37,9 +43,10 @@ test("the bird ligature forms only without letter-spacing", () => {
 });
 
 // Chrome's rows at the one column width where each case breaks at the boundary in question (a Chromium
-// sweep of a PostBody-shaped body, 2026-11-18). Each failed before its fix: breaks only inside one span;
-// a break after "-" refused before digits; no break before an em dash; kerning kept at a mid-word break;
-// kerning stopped by Android's word joiner.
+// sweep of a PostBody-shaped body, 2026-11-18; the iPhone rows again under the row's unkerned CSS, with
+// PostBody rendered on the server). Each failed before its fix: breaks only inside one span; a break after
+// "-" refused before digits; no break before an em dash; kerning kept at a mid-word break; kerning stopped
+// by Android's word joiner; the iPhone row kerned.
 const CHROME_ROWS: Array<{ device: string; width: number; text: string; rows: string[] }> = [
   { device: "web", width: 164, text: "We said thanks—@alice and moved on to the next thing", rows: ["We|said|thanks—", "@alice|and|moved|on|to", "the|next|thing"] },
   { device: "web", width: 140, text: "This is a **self**-hosted tool for everyone here today", rows: ["This|is|a|self|-", "hosted|tool|for", "everyone|here|today"] },
@@ -51,7 +58,8 @@ const CHROME_ROWS: Array<{ device: string; width: number; text: string; rows: st
   // A word with nowhere to break must fit with and without its last kern: W–W kerns +0.81px, so the line
   // keeps it (31 of 60 W's at 473px, where dropping it would fit 32).
   { device: "web", width: 473, text: "W".repeat(60), rows: ["W".repeat(31), "W".repeat(29)] },
-  { device: "iphone-16", width: 292, text: "W".repeat(60), rows: ["W".repeat(19), "W".repeat(19), "W".repeat(19), "WWW"] },
+  // The iPhone row sets no pair kerning (font-kerning: none): 21 W's a line where the kerned web Chirp fits 19.
+  { device: "iphone-16", width: 292, text: "W".repeat(60), rows: ["W".repeat(21), "W".repeat(21), "W".repeat(18)] },
   // A no-break space holds "hello world" together; too wide for the column, it breaks inside "world".
   { device: "web", width: 60, text: "aa hello\u00a0world", rows: ["aa", "hello|wo", "rld"] },
 ];
@@ -149,6 +157,49 @@ function engineLines(p: Fixture, d: Device) {
 const norm = (s: string) => s.replace(/\s+([.,!?:;'’)\]"”…])/g, "$1").replace(/([(["“])\s+/g, "$1").replace(/^\.\s+@/, ".@").replace(/\s+/g, " ").trim();
 const isUrlLine = (s: string) => /^(https?:\/\/|[a-z0-9-]+\.[a-z]{2,}\S*\/?…?$)/i.test(s.trim());
 
+type Judged = "exact" | "edge" | "gap" | { miss: string };
+
+/** One post against X under verify.mjs's rules: exact, within font tolerance, a pinned gap, or a miss. */
+function judge(p: Fixture, got: { lines: string[]; showMore: boolean }, d: Device): Judged {
+  const exp = p.lines.filter((l) => !isUrlLine(l) && l !== "").map(norm);
+  const act = got.lines.filter((l) => !isUrlLine(l) && l !== "").map(norm);
+  const bad = Array.from({ length: Math.max(exp.length, act.length) }, (_, i) => i).find((i) => exp[i] !== act[i]);
+  if (bad === undefined && p.showMore === got.showMore) return "exact";
+  if (p.gap) {
+    const pinned = (p.gapTool ?? []).map(norm).join("\n") === act.join("\n") && (p.gapMore ?? p.showMore) === got.showMore;
+    return pinned ? "gap" : { miss: `marked gap (${p.gap}) no longer draws its pinned lines` };
+  }
+  // A line whose wrap moved by one word (or two characters inside one) right at the column edge is a
+  // font-metrics coin flip (verify.mjs): only where the text is the same, and never a disagreement about Show more.
+  const [ej, aj] = [p.lines.join(""), got.lines.join("")].map((t) => t.replace(/\s+/g, ""));
+  const sameText = p.showMore === got.showMore && (ej === aj || (p.showMore && (ej.startsWith(aj) || aj.startsWith(ej))));
+  if (bad !== undefined && exp[bad] && act[bad] && sameText && wrapMove(exp[bad], act[bad])) {
+    const longer = exp[bad].length > act[bad].length ? exp[bad] : act[bad];
+    const shorter = longer === exp[bad] ? act[bad] : exp[bad];
+    const width = measure(longer, bodyStyle(d)).width;
+    if (Math.abs(width - d.textWidth) <= 5 || (p.showMore && bad === exp.length - 1 && longer.length - shorter.length <= 2)) return "edge";
+  }
+  return { miss: bad === undefined ? `Show more: X ${p.showMore} / engine ${got.showMore}` : `line ${bad + 1}\n    X:      ${exp[bad] ?? "(none)"}\n    engine: ${act[bad] ?? "(none)"}` };
+}
+
+// The tolerance once passed a ten-character miss inside a run of periods as a one-word edge (iPhone, test
+// 136: X 84 a line, the engine 94; both lines end at the column). On x.com's column 144 periods end 3.44px
+// short of it, so the same miss is built there.
+test("the font tolerance takes a one-word move or two characters, not a longer miss inside a word", () => {
+  const web = byId.get("web")!;
+  const dots = (...n: number[]) => n.map((k) => ".".repeat(k));
+  const post = (lines: string[]): Fixture => ({ id: "t", lines, showMore: false });
+  assert.ok(Math.abs(measure(".".repeat(144), bodyStyle(web)).width - web.textWidth) <= 5);
+  assert.notEqual(judge(post(dots(134, 26)), { lines: dots(144, 16), showMore: false }, web), "edge");
+  assert.equal(judge(post(dots(142, 18)), { lines: dots(144, 16), showMore: false }, web), "edge");
+  // Two characters across a break opportunity are two units, not a cut inside one word.
+  assert.equal(wrapMove("foo", "foo-b"), null);
+  // One word kept on the line at the edge: with "it" this line ends 2.81px short of the column.
+  const line = "Every week, the 10 most active public voices in the space get a short note";
+  assert.ok(Math.abs(measure(`${line} it`, bodyStyle(web)).width - web.textWidth) <= 5);
+  assert.equal(judge(post([line, "it was"]), { lines: [`${line} it`, "was"], showMore: false }, web), "edge");
+});
+
 test("the engine draws the corpus as X does (fixtures/web, fixtures/app)", () => {
   let exact = 0;
   let edge = 0;
@@ -162,37 +213,13 @@ test("the engine draws the corpus as X does (fixtures/web, fixtures/app)", () =>
       assert.ok(d, `${f}: unknown device ${fx.device}`);
       for (const p of fx.posts) {
         const got = engineLines(p, d);
-        const exp = p.lines.filter((l) => !isUrlLine(l) && l !== "").map(norm);
-        const act = got.lines.filter((l) => !isUrlLine(l) && l !== "").map(norm);
-        const bad = Array.from({ length: Math.max(exp.length, act.length) }, (_, i) => i).find((i) => exp[i] !== act[i]);
-        const where = `${f} ${p.id} on ${d.id}`;
-        if (bad === undefined && p.showMore === got.showMore) {
-          exact++;
-          continue;
-        }
-        if (p.gap) {
-          const pinned = (p.gapTool ?? []).map(norm).join("\n") === act.join("\n") && (p.gapMore ?? p.showMore) === got.showMore;
-          if (pinned) gaps++;
-          else failures.push(`${where}: marked gap (${p.gap}) no longer draws its pinned lines`);
-          continue;
-        }
-        // A line that moved by one word right at the column edge is a font-metrics coin flip (verify.mjs):
-        // only where the text is the same and the wrap moved, and never a disagreement about Show more.
-        const [ej, aj] = [p.lines.join(""), got.lines.join("")].map((t) => t.replace(/\s+/g, ""));
-        const sameText = p.showMore === got.showMore && (ej === aj || (p.showMore && (ej.startsWith(aj) || aj.startsWith(ej))));
-        if (bad !== undefined && exp[bad] && act[bad] && sameText) {
-          const longer = exp[bad].length > act[bad].length ? exp[bad] : act[bad];
-          const shorter = longer === exp[bad] ? act[bad] : exp[bad];
-          const width = measure(longer, { font: "web", bold: false, size: d.fontSize, letterSpacing: trackingFor(d) }).width;
-          if (longer.startsWith(shorter) && (Math.abs(width - d.textWidth) <= 5 || (p.showMore && bad === exp.length - 1 && longer.length - shorter.length <= 2))) {
-            edge++;
-            continue;
-          }
-        }
-        const detail = bad === undefined ? `Show more: X ${p.showMore} / engine ${got.showMore}` : `line ${bad + 1}\n    X:      ${exp[bad] ?? "(none)"}\n    engine: ${act[bad] ?? "(none)"}`;
+        const verdict = judge(p, got, d);
+        if (verdict === "exact") exact++;
+        else if (verdict === "edge") edge++;
+        else if (verdict === "gap") gaps++;
         // Text set in fallback fonts (emoji, CJK, Thai, Arabic…) is drawn by each reader's own system fonts:
         // the engine says so and the miss is reported, not failed.
-        (got.approximate ? approximate : failures).push(`${where}: ${detail}`);
+        else (got.approximate && !p.gap ? approximate : failures).push(`${f} ${p.id} on ${d.id}: ${verdict.miss}`);
       }
     }
   }
