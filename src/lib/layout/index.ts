@@ -8,7 +8,7 @@
 import type { DeviceLines, LineInfo } from "../advice";
 import { rowHidesStyles, type Device } from "../devices";
 import { emailRanges, styleAt, type StyleRun, type Token } from "../entities";
-import { kernBetween, ligatureIn, measure, type RunStyle } from "./metrics";
+import { isEmoji, kernBetween, ligatureIn, measure, type RunStyle } from "./metrics";
 
 /**
  * CSS letter-spacing on the Chirp tier (src/app/globals.css :root): x.com's untracked, the iOS
@@ -91,14 +91,16 @@ const NO_BREAK_AFTER = /[([{'‘"“«（「『【〔〈《$£€¥]$/u;
  * their offsets and edges.
  */
 export function layoutBody(input: BodyInput, d: Device): Layout {
-  const { paragraphs, pieces, approximate, tokenWidth } = cellsFor(input, d);
-  return fill(paragraphs, pieces, d, approximate, tokenWidth);
+  const { paragraphs, pieces, approximate, estimated, tokenWidth } = cellsFor(input, d);
+  return fill(paragraphs, pieces, d, approximate, estimated, tokenWidth);
 }
 
 interface Built {
   paragraphs: Cell[][];
   pieces: Piece[];
   approximate: boolean;
+  /** Per paragraph: some of it is set in a fallback font other than emoji (see LineInfo.estimated). */
+  estimated: boolean[];
   tokenWidth: number;
 }
 
@@ -149,6 +151,7 @@ function buildCells(input: BodyInput, d: Device): Built {
   const paragraphs: Cell[][] = [[]];
   const pieces: Piece[] = [];
   let approximate = false;
+  const estimated: boolean[] = [];
   let prevText = "";
   let prevStyle: RunStyle | null = null;
   let item = 0;
@@ -157,6 +160,10 @@ function buildCells(input: BodyInput, d: Device): Built {
   const push = (text: string, style: RunStyle, cell: Omit<Cell, "text" | "width" | "item">) => {
     const m = measure(text, style);
     approximate ||= m.approximate;
+    // An emoji draws at one fixed advance; other fallback text is summed from per-character widths that
+    // shaping (Arabic, Devanagari), dictionary breaks (Thai) and CJK punctuation move, so its
+    // paragraph's breaks are estimates (the corpus's engine-vs-preview misses are all of this kind).
+    if (m.approximate && !isEmoji(text)) estimated[paragraphs.length - 1] = true;
     // Chrome shapes a paragraph across its spans, so neighbours in the same face and weight kern even
     // across a span's edge, and through Android's word joiner (an ignorable character), but not across a
     // <wbr> ("github.com/" | "vercel/" measured unkerned; "end-to-end" with joiners kerned, 81.125px).
@@ -254,15 +261,15 @@ function buildCells(input: BodyInput, d: Device): Built {
     });
   }
 
-  return { paragraphs, pieces, approximate, tokenWidth: snap(measure(" Show more", base).width) };
+  return { paragraphs, pieces, approximate, estimated, tokenWidth: snap(measure(" Show more", base).width) };
 }
 
 /** The lines on one device: greedy filling at its column width (see the notes on Chrome above). */
-function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boolean, tokenWidth: number): Layout {
+function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boolean, estimated: boolean[], tokenWidth: number): Layout {
   const rows: LineInfo[] = [];
   const firstRowOf = new Map<number, number>();
   const limit = d.textWidth;
-  for (const cells of paragraphs) {
+  for (const [p, cells] of paragraphs.entries()) {
     if (!cells.length) {
       rows.push({ words: [], paragraph: -1, end: 0, spans: [] });
       continue;
@@ -293,7 +300,9 @@ function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boo
       if (j >= cells.length) end = cells.length;
       else if (lastBreak >= i) end = lastBreak + 1;
       else end = Math.max(j, i + 1); // nothing to break at: break-word cuts at the last cell that fits
-      rows.push(rowOf(cells.slice(i, end), pieces, firstRowOf, rows.length));
+      const row = rowOf(cells.slice(i, end), pieces, firstRowOf, rows.length);
+      if (estimated[p]) row.estimated = true;
+      rows.push(row);
       i = end;
       // A line never starts with the spaces that ended the one before (they hang there).
       while (i < cells.length && cells[i].space && !cells[i].token) i++;

@@ -51,7 +51,7 @@ export interface DeviceReport {
   /** The lines a reader sees before any Show more tap ("" = a paragraph gap). */
   lines: string[];
   showMore: boolean;
-  /** Words alone on the last line of a paragraph (timeline views). */
+  /** Words alone on the last line of a paragraph (timeline views), save where its breaks are estimates (`approximate`, emoji aside). */
   dangling: string[];
   /**
    * Some of the text is drawn in a fallback font (an emoji, CJK, Thai, Arabic…), whose widths here are

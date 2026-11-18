@@ -294,14 +294,14 @@ export function Postcheck() {
   );
   // An expanded Android row shows its styling (rowHidesStyles), so it is laid out with it.
   const expandedBody = useMemo<BodyInput>(() => ({ ...body, expanded: true }), [body]);
-  const lineSets: DeviceLines[] = useMemo(() => {
-    if (!layoutBody) return [];
+  const { lineSets, layoutFailed } = useMemo((): { lineSets: DeviceLines[]; layoutFailed: boolean } => {
+    if (!layoutBody) return { lineSets: [], layoutFailed: false };
     try {
-      return [webDevice, phoneDevice].map((d) => layoutBody(expanded[d.id] ? expandedBody : body, d));
+      return { lineSets: [webDevice, phoneDevice].map((d) => layoutBody(expanded[d.id] ? expandedBody : body, d)), layoutFailed: false };
     } catch (e) {
-      // A fault in the engine costs this draft its line tips and folds, never the page.
+      // A fault in the engine costs this draft its line tips and folds (the banner says so), never the page.
       console.warn("Postcheck: the layout engine failed on this draft.", e);
-      return [];
+      return { lineSets: [], layoutFailed: true };
     }
   }, [layoutBody, webDevice, phoneDevice, expanded, body, expandedBody]);
 
@@ -708,9 +708,10 @@ export function Postcheck() {
             fontTier === "gt" && "X's font (Chirp) didn't load, so the previews use GT America, the typeface it was derived from. Line breaks are within about 2px of X's; treat any word right at the edge as uncertain.",
             fontTier === "system" && "X's font (Chirp) didn't load and no stand-in is available, so line breaks here are only approximate.",
             // The tips and folds come from the layout engine, which sets the text in Chirp on every tier.
-            stand && layoutBody && "The tips and where Show more cuts in are still worked out in Chirp.",
+            stand && layoutBody && !layoutFailed && "The tips and where Show more cuts in are still worked out in Chirp.",
             engine === "unavailable" && "This browser can't run Postcheck's line layout, so the previews skip the apps' nine-line fold and the tips leave out line breaks.",
             engine === "loading" && engineSlow && "Postcheck's line layout is still loading, so for now the previews skip the apps' nine-line fold and the tips leave out line breaks.",
+            layoutFailed && "Postcheck's line layout failed on this draft, so the previews skip the apps' nine-line fold and the tips leave out line breaks.",
           ].filter(Boolean);
           return notes.length ? (
             <p className="mb-3 rounded-lg border border-brand-orange/40 bg-orange-50 px-3 py-2 text-sm text-brand-warm-dark" role="status">

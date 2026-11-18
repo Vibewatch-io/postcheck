@@ -27,6 +27,11 @@ export interface LineInfo {
   end: number;
   /** Each word on the line with its text offsets and pixel edges (relative to the body's left edge). */
   spans: Array<{ start: number; end: number; left: number; right: number; link?: boolean; cont?: boolean }>;
+  /**
+   * Some of the line's paragraph is set in a fallback font other than emoji (Arabic, Devanagari, Thai,
+   * CJK…), whose widths are estimates: its breaks are too, so no tip calls one of its words dangling.
+   */
+  estimated?: boolean;
 }
 
 export interface DeviceLines {
@@ -87,7 +92,8 @@ const RANK: Record<Severity, number> = { fix: 0, tip: 1, note: 2 };
 
 /**
  * The words left alone on the last rendered line of a paragraph at one device's width: a single word
- * of up to 12 characters, in paragraph order. The post page is measured but never checked.
+ * of up to 12 characters, in paragraph order. The post page is measured but never checked, nor is a
+ * paragraph whose breaks are estimates (LineInfo.estimated).
  */
 export function danglingWords(set: DeviceLines): string[] {
   if (set.view === "post") return [];
@@ -100,7 +106,7 @@ export function danglingWords(set: DeviceLines): string[] {
   }
   const out: string[] = [];
   for (const lines of byPara.values()) {
-    if (lines.length < 2) continue;
+    if (lines.length < 2 || lines.some((l) => l.estimated)) continue;
     const last = lines[lines.length - 1];
     // The tail of a token that wrapped (a link after "/", a word after a hyphen, CJK) isn't a word the
     // writer can move.

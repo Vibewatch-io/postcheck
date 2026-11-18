@@ -382,9 +382,10 @@ async function diff(label, deviceLast, id, expected, got, expMore, gotMore, know
     else if (expMore && bad === exp.length - 1 && longer.length - shorter.length <= 2) edgeNote = `fold cut ${longer.length - shorter.length} char(s) off`;
     else failNote = `  (${fitNote(fit, "body")})`;
   }
-  // The same text both sides, cut in a different place by a Chirp fold drawn in GT America (see chirpFoldFlip).
-  if (!edgeNote && tier !== "chirp" && expMore && gotMore && sameText) {
-    const flip = await chirpFoldFlip(deviceLast, device, exp);
+  // The same text both sides, cut in a different place by a Chirp fold drawn in GT America (see chirpFoldFlip):
+  // every row above X's fold line matches, so a wrapping fault elsewhere still fails.
+  if (!edgeNote && tier !== "chirp" && expMore && gotMore && sameText && bad === exp.length - 1) {
+    const flip = await chirpFoldFlip(deviceLast, device, exp, got);
     if (flip) edgeNote = flip;
   }
   if (edgeNote) { edge++; console.log(`  edge ${label} ${id}  (${edgeNote})`); }
@@ -628,11 +629,16 @@ function engineReport(device) {
  * while the rows are drawn in GT America. Where the engine's Chirp lines first part from X's on a line within
  * 5px of the column in Chirp, the cut inherits that coin flip: the tolerance the Chirp tier gives the same post.
  * As in nearEdge, GT America must stay within 12px of Chirp on that line, so a broken fallback still fails.
+ * The preview must also have drawn exactly the engine's text up to its cut (`rows`, whitespace aside): the
+ * exception covers where the cut falls, never text the preview lost or kept on its own.
  * Needs the Chirp reference page; null when there is no such line.
  */
-async function chirpFoldFlip(deviceLast, device, exp) {
+async function chirpFoldFlip(deviceLast, device, exp, rows) {
   if (!ref || !lastDraft || !device) return null;
-  const eng = engineReport(device).lines.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
+  const report = engineReport(device);
+  const flat = (lines) => lines.join("").replace(/\s+/g, "");
+  if (!report.showMore || flat(rows) !== flat(report.lines)) return null;
+  const eng = report.lines.filter((l) => l !== "" && !isUrlLine(l)).map(norm);
   const k = exp.findIndex((l, i) => l !== eng[i]);
   if (k === -1 || !eng[k]) return null;
   const longer = exp[k].length > eng[k].length ? exp[k] : eng[k];
