@@ -48,6 +48,10 @@ const CHROME_ROWS: Array<{ device: string; width: number; text: string; rows: st
   { device: "galaxy-s25", width: 164, text: "A long-winded well-known end-to-end self-hosted thing here", rows: ["A|long-winded", "well-known", "end-to-end", "self-hosted|thing|here"] },
   { device: "web", width: 324, text: "Prices: $100, €50 and 1–30 days; also 2026-11-18 and well—maybe", rows: ["Prices:|$100,|€50|and|1–30|days;|also|2026-", "11-18|and|well—maybe"] },
   { device: "web", width: 224, text: "Prices: $100, €50 and 1–30 days; also 2026-11-18 and well—maybe", rows: ["Prices:|$100,|€50|and|1–30", "days;|also|2026-11-18|and|well", "—maybe"] },
+  // A word with nowhere to break must fit with and without its last kern: W–W kerns +0.81px, so the line
+  // keeps it (31 of 60 W's at 473px, where dropping it would fit 32).
+  { device: "web", width: 473, text: "W".repeat(60), rows: ["W".repeat(31), "W".repeat(29)] },
+  { device: "iphone-16", width: 292, text: "W".repeat(60), rows: ["W".repeat(19), "W".repeat(19), "W".repeat(19), "WWW"] },
   // A no-break space holds "hello world" together; too wide for the column, it breaks inside "world".
   { device: "web", width: 60, text: "aa hello\u00a0world", rows: ["aa", "hello|wo", "rld"] },
 ];
