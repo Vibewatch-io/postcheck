@@ -376,8 +376,8 @@ The engine's predictions were written down before posting.
 Posted 2026-11-18: 132 2123145806400344330, 133 2123145852306993579, 134 2123145887790862446,
 135 2123145921395605656, 136 2123145958821441890.
 
-Captured 2026-11-18 on x.com (`fixtures/web/postcheck_test.json`): rows 137/23, 60, 137/23, 34/26 and 144/16
-characters, each the engine's prediction; 135's 34 would be 35 if the positive kern were dropped.
+Captured 2026-11-18 on x.com (`fixtures/web/postcheck_test.json`): rows of 137/23, 60, 137/23, 34/26 and 144/16
+glyphs, each the engine's prediction (here and below, a row counts its glyphs, not 133's spaces); 135's 34 would be 35 if the positive kern were dropped.
 
 Captured 2026-11-18 on the Android app (X 12.36.1, Pixel 3; `fixtures/app/galaxy-s25.json`, `pixel-10.json`),
 rows counted one ink blob per glyph:
