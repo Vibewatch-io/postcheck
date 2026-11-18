@@ -290,9 +290,13 @@ function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boo
           cur = 0;
           curItem = c.item;
         }
-        // Could the line end after this cell? Chrome reshapes a line that breaks inside a word, so the
-        // cell's kerning with the next one (on the next line) no longer counts.
-        if (!c.space && done + snap(cur + c.width - (c.kernNext ?? 0)) > limit + EPSILON && j > i) break;
+        // Could the line end after this cell? Chrome measures a break inside a word with the cell's kerning
+        // with the next one, then reshapes the line end without it, and the line must fit both ways: a
+        // negative kern is dropped, a positive one kept (Chromium: "hello.world@example" | ".com" at 147px
+        // on the iPhone pane, 31 of 60 W's at 473px on the web).
+        // (Before a space nothing is reshaped: the space hangs on this line. Chirp has no space kerning anyway.)
+        const lastKern = cells[j + 1]?.space ? 0 : Math.min(c.kernNext ?? 0, 0);
+        if (!c.space && done + snap(cur + c.width - lastKern) > limit + EPSILON && j > i) break;
         cur += c.width;
         if (c.breakAfter) lastBreak = j;
       }
