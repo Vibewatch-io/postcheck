@@ -64,11 +64,25 @@ test("an emoji sequence is measured as an emoji, not as its first character", ()
   }
 });
 
-// The probes draw the web's Show more after a long post's whole text; on the post page, which never folds,
+// The engine lays the web's Show more after a long post's whole text; on the post page, which never folds,
 // a wrapped token must not show up as a trailing empty line.
 test("a post page's lines end with the post's last line", () => {
   const lines = checkPost({ text: "word ".repeat(64) }, {}, { devices: ["web-post"] }).devices[0].lines;
   assert.notEqual(lines[lines.length - 1], "");
+});
+
+// Fallback text other than emoji is laid out from per-character estimates that miss shaping: the engine
+// put "اليسار" alone on line 2 of the Arabic test on the Galaxy S25, where X (and the preview) keep the
+// paragraph on one line, and the site and the API both flagged it as dangling. An emoji's fixed advance
+// holds, so its paragraph keeps the tip.
+test("a paragraph set partly in a non-emoji fallback font gets no dangling-word tip", () => {
+  const arabic = json("fixtures/posts/2107204566764949613.json").text;
+  const r = checkPost({ text: arabic, plain: true }, {}, { phone: "galaxy-s25", devices: ["galaxy-s25"] });
+  assert.deepEqual(r.devices[0].dangling, []);
+  assert.ok(!r.advice.some((a) => a.id.startsWith("orphan-")), JSON.stringify(r.advice.map((a) => a.id)));
+  const emoji = checkPost({ text: "Shipping the new release today 🚀 with faster.", plain: true }, {}, { phone: "galaxy-s25", devices: ["galaxy-s25"] });
+  assert.equal(emoji.devices[0].approximate, true);
+  assert.deepEqual(emoji.devices[0].dangling, ["faster."]);
 });
 
 test("the engine breaks where Chrome does across spans, dashes and mid-word breaks", () => {

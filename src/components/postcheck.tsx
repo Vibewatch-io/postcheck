@@ -16,7 +16,7 @@ import { buildAdvice, type Advice, type DeviceLines } from "@/lib/advice";
 import { DefaultAvatar, XPost, type Badge, type Identity } from "./x-post";
 import { PHONE_BEZEL, PhoneFrame } from "./phone-frame";
 import { CameraIcon, SearchIcon } from "./icons";
-import { LineProbes } from "./line-probe";
+import type { BodyInput, Layout } from "@/lib/layout";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
@@ -44,6 +44,17 @@ const PRECACHED_CARDS: Record<string, CardData> = {
 
 /** A looked-up link: its card, why it has none (see NoCardReason), or a lookup still to answer. */
 type CardState = CardData | NoCardReason | "loading";
+
+/**
+ * The layout engine (src/lib/layout), which works out where a body's lines break from Chirp's own
+ * metrics, as the hosted check does. It is a chunk of its own, keeping its metric tables out of the
+ * first download, and starts loading as soon as this module runs in the browser, ahead of hydration.
+ * It needs Intl.Segmenter (Firefox 125 and later). Not on the server: the first render has no lines.
+ */
+const ENGINE: Promise<typeof import("@/lib/layout")> | null =
+  typeof window === "undefined" ? null : typeof Intl.Segmenter === "function" ? import("@/lib/layout") : Promise.reject(new Error("this browser has no Intl.Segmenter"));
+// Handled where the page subscribes to it; this only keeps an early failure from reporting as unhandled.
+ENGINE?.catch(() => {});
 
 /** A 1×1 grey image for the verify harness, standing in for media of any recorded size. */
 const STAND_IN_PHOTO = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
@@ -93,7 +104,6 @@ export function Postcheck() {
     setHereSeen(here);
     setPhoneDevice((d) => (d.id === THIS_PHONE_ID ? (here ?? DEFAULT_PHONE) : here && !phoneChosen ? here : d));
   }
-  const probeDevices = useMemo(() => (here ? [...DEVICES, here] : DEVICES), [here]);
   const [themeId, setThemeId] = useState<ThemeId>("light");
   const [themeChosen, setThemeChosen] = useState(false);
   // Follow the viewer's system setting until they pick one themselves.
@@ -109,7 +119,33 @@ export function Postcheck() {
   // Quote lookups by status number. A found or missing post is kept for the session; a failed
   // lookup is dropped so the next time that link is needed it is asked for again.
   const [quotes, setQuotes] = useState<Record<string, QuoteState>>({});
-  const [lineSets, setLineSets] = useState<DeviceLines[]>([]);
+  // The layout engine (ENGINE): until it lands, or if it can't run here, no preview folds by lines and
+  // no tip names a line.
+  const [engine, setEngine] = useState<"loading" | "unavailable" | { layoutBody: (input: BodyInput, d: Device) => Layout }>("loading");
+  // Still loading after 4 s: the page says so, so a stalled chunk doesn't pass for a post that doesn't fold.
+  const [engineSlow, setEngineSlow] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const slow = setTimeout(() => {
+      if (live) setEngineSlow(true);
+    }, 4000);
+    ENGINE?.then(
+      (m) => {
+        clearTimeout(slow);
+        if (live) setEngine({ layoutBody: m.layoutBody });
+      },
+      (e: unknown) => {
+        clearTimeout(slow);
+        console.warn("Postcheck: the layout engine didn't load, so no tip or fold goes by lines.", e);
+        if (live) setEngine("unavailable");
+      },
+    );
+    return () => {
+      live = false;
+      clearTimeout(slow);
+    };
+  }, []);
+  const layoutBody = typeof engine === "object" ? engine.layoutBody : null;
   const [lookupState, setLookupState] = useState<"idle" | "loading" | string>("idle");
   const [view, setView] = useState<"app" | "web">("app");
   // Clicking Show more expands that preview in place, the way x.com does, keyed by device id; a
@@ -246,10 +282,28 @@ export function Postcheck() {
   // The iPhone keeps a long post's trailing post link as text above its quote (test 40b); a post within 280 loses it (test 40).
   const longQuote = quote !== null && length.weighted > MAX_WEIGHTED_LENGTH;
 
-  // Probe text: the whole post, measured at every device width (the iOS app folds by
-  // rendered lines regardless of the 280 cut, so line 9 may lie past it).
-  const probeTokens = useMemo(() => tokenize(post, entities, styleCuts), [post, entities, styleCuts]);
-  const showMore280 = cut280 < post.length;
+  // Where each preview's lines break, laid out in code by the engine /api/check runs, so the site and
+  // the API give the same folds and tips. The whole post is laid out (the iOS app folds by rendered
+  // lines regardless of the 280 cut, so line 9 may lie past it), for the two previews shown: nothing
+  // reads another device's lines (buildAdvice keeps only `previews`). The engine sets text in Chirp
+  // whichever font tier loaded here, since X lays the post out in Chirp.
+  const quoteShown = quote !== null;
+  const body = useMemo<BodyInput>(
+    () => ({ tokens: tokenize(post, entities, styleCuts), styles, hiddenUrlStart, quoteShown, longQuote, showMore: cut280 < post.length }),
+    [post, entities, styleCuts, styles, hiddenUrlStart, quoteShown, longQuote, cut280],
+  );
+  // An expanded Android row shows its styling (rowHidesStyles), so it is laid out with it.
+  const expandedBody = useMemo<BodyInput>(() => ({ ...body, expanded: true }), [body]);
+  const { lineSets, layoutFailed } = useMemo((): { lineSets: DeviceLines[]; layoutFailed: boolean } => {
+    if (!layoutBody) return { lineSets: [], layoutFailed: false };
+    try {
+      return { lineSets: [webDevice, phoneDevice].map((d) => layoutBody(expanded[d.id] ? expandedBody : body, d)), layoutFailed: false };
+    } catch (e) {
+      // A fault in the engine costs this draft its line tips and folds (the banner says so), never the page.
+      console.warn("Postcheck: the layout engine failed on this draft.", e);
+      return { lineSets: [], layoutFailed: true };
+    }
+  }, [layoutBody, webDevice, phoneDevice, expanded, body, expandedBody]);
 
   // The apps additionally fold long-by-lines posts (see devices.ts APP_MAX_LINES).
   const clampFor = useCallback((d: Device) => appClamp(post, d, lineSets.find((s) => s.deviceId === d.id)), [lineSets, post]);
@@ -430,7 +484,9 @@ export function Postcheck() {
   useEffect(() => {
     const w = window as unknown as { __postcheck?: object };
     w.__postcheck = {
-      ready: Boolean(editor),
+      // Ready once the composer is up and the layout engine has loaded or failed; `engine` says which.
+      ready: Boolean(editor) && engine !== "loading",
+      engine: typeof engine === "object" ? "ready" : engine,
       // **bold** / __italic__ markers become style runs; `media` attaches stand-ins of the recorded
       // kinds and sizes (`photo` alone, one 16:9 photo); `state` sets the post states (pinned, paid
       // partnership, reply limit, tag); a media entry's `sensitive` flags that item; `poll` attaches a poll.
@@ -444,7 +500,7 @@ export function Postcheck() {
       },
       getText: () => (editor ? serializeDoc(editor.getJSON() as DocNode).text : draft.text),
     };
-  }, [editor, draft.text]);
+  }, [editor, draft.text, engine]);
 
   // A checked author can post past 280 (see buildAdvice's `verified`), so the counter
   // doesn't warn them: it keeps counting against the 280 fold.
@@ -529,7 +585,6 @@ export function Postcheck() {
     // windows the preview stacks under the composer and the page scrolls.
     <div ref={rowRef} className={`mx-auto flex min-h-0 w-full flex-1 ${narrow ? "flex-col items-center gap-6 pb-6" : "items-stretch gap-6"}`} style={{ maxWidth: ROW_MAX }}>
       <ThemeToggle themeId={themeId} onChange={(t) => { setThemeChosen(true); setThemeId(t); }} />
-      <LineProbes tokens={probeTokens} showMore={showMore280} hiddenUrlStart={hiddenUrlStart} quoteShown={quote !== null} longQuote={longQuote} expanded={expanded} devices={probeDevices} onMeasure={setLineSets} styles={styles} />
 
       {/* Left half: the composer centred vertically, like the preview, with the tips hanging in the
           space below it. The two spacers split the free height evenly, but the tips' block never
@@ -647,15 +702,23 @@ export function Postcheck() {
         setView={setView}
         actions={actions}
         fontTier={fontTier}
-        fontBanner={
-          fontTier && fontTier !== "chirp" ? (
+        fontBanner={(() => {
+          const stand = fontTier && fontTier !== "chirp";
+          const notes = [
+            fontTier === "gt" && "X's font (Chirp) didn't load, so the previews use GT America, the typeface it was derived from. Line breaks are within about 2px of X's; treat any word right at the edge as uncertain.",
+            fontTier === "system" && "X's font (Chirp) didn't load and no stand-in is available, so line breaks here are only approximate.",
+            // The tips and folds come from the layout engine, which sets the text in Chirp on every tier.
+            stand && layoutBody && !layoutFailed && "The tips and where Show more cuts in are still worked out in Chirp.",
+            engine === "unavailable" && "This browser can't run Postcheck's line layout, so the previews skip the apps' nine-line fold and the tips leave out line breaks.",
+            engine === "loading" && engineSlow && "Postcheck's line layout is still loading, so for now the previews skip the apps' nine-line fold and the tips leave out line breaks.",
+            layoutFailed && "Postcheck's line layout failed on this draft, so the previews skip the apps' nine-line fold and the tips leave out line breaks.",
+          ].filter(Boolean);
+          return notes.length ? (
             <p className="mb-3 rounded-lg border border-brand-orange/40 bg-orange-50 px-3 py-2 text-sm text-brand-warm-dark" role="status">
-              {fontTier === "gt"
-                ? "X's font (Chirp) didn't load, so the previews use GT America, the typeface it was derived from. Line breaks are within about 2px of X's; treat any word right at the edge as uncertain."
-                : "X's font (Chirp) didn't load and no stand-in is available, so line breaks here are only approximate."}
+              {notes.join(" ")}
             </p>
-          ) : null
-        }
+          ) : null;
+        })()}
         webDevice={webDevice}
         setWebDevice={setWebDevice}
         phoneDevice={phoneDevice}
