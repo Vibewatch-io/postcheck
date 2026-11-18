@@ -106,16 +106,18 @@ export function About() {
         The answer has <C>ok</C> (false when any tip is a fix), <C>advice</C>, and for each device the <C>lines</C> a reader sees before any
         tap, <C>showMore</C> and <C>dangling</C>. <C>fidelity</C> is <C>exact</C> when every line was measured in X’s font and every lookup
         answered. Otherwise it is <C>approximate</C> and <C>notes</C> say why, such as text X’s font doesn’t cover (emoji, Arabic, CJK,
-        Thai), which each phone draws in its own fonts, or a link or quoted post that couldn’t be looked up.
+        Thai), which each phone draws in its own fonts, or a link or quoted post that couldn’t be looked up. Long runs of one repeated letter
+        can still break differently in the phone apps, even when <C>fidelity</C> is <C>exact</C>.
       </p>
       <p className="mt-3">
         For Claude or any other MCP client, add <C>{MCP_URL}</C> as a remote server. Its tools are <C>check_post</C>, which takes the same
-        fields, and <C>list_devices</C>, which lists the device ids.
+        fields and answers with a readable report (or the JSON above when <C>format</C> is <C>json</C>), and <C>list_devices</C>, which
+        lists the device ids.
       </p>
       <Command>{`claude mcp add --transport http postcheck \\\n  ${MCP_URL}`}</Command>
       <p className="mt-3">
         Both are open to anyone, with a per-IP rate limit. Unlike this page, they receive the post’s text, use it for that one answer, and
-        never store or log it.
+        never store or log it. They look up the post’s first link and any quoted post the same way this page does.
       </p>
 
       <p className="mt-8">
