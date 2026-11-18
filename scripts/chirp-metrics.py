@@ -163,7 +163,8 @@ def rule_records(st):
 
 
 def gsub_widths(font, cmap, rev):
-    """Default-on GSUB that changes widths, for the features Chrome applies to text (ccmp, locl, calt, rlig).
+    """Default-on GSUB that changes widths, for the features Chrome applies to text (ccmp, locl, rlig, calt,
+    clig, liga; the last three only without letter-spacing, which the engine's ligatures follow).
 
     - A decomposition of a typed character (multiple substitution) is recorded as the characters it
       becomes, or, when one of them is a glyph no character maps to (Ŀ → L + a dot), as its summed advance.
@@ -209,7 +210,7 @@ def gsub_widths(font, cmap, rev):
             else:
                 sys.exit(f"{tag} uses GSUB lookup type {t} (lookup {index}); the engine can't model it")
 
-    for tag in ("ccmp", "locl", "calt", "rlig"):
+    for tag in ("ccmp", "locl", "rlig", "calt", "clig", "liga"):
         for i in lookup_indices(gsub, tag):
             check(i, tag, False)
     return decompose, advance, ligatures

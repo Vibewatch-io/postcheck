@@ -92,6 +92,7 @@ export function layoutBody(input: BodyInput, d: Device): Layout {
   const android = d.platform === "android";
   const shownStyles = rowHidesStyles(d, android && Boolean(input.expanded)) ? [] : input.styles;
   const hidden = (android && input.quoteShown) || (d.platform === "ios" && input.longQuote) ? null : input.hiddenUrlStart;
+  if (d.font !== "web") throw new RangeError(`${d.id} lays text out in a Chirp build with no metrics (font "${d.font}")`);
   const base: RunStyle = { font: d.font, bold: false, size: d.fontSize, letterSpacing: trackingFor(d) };
   const linkBreaks = d.pane === "app" || android;
 

@@ -179,7 +179,7 @@ test("the engine draws the corpus as X does (fixtures/web, fixtures/app)", () =>
         if (bad !== undefined && exp[bad] && act[bad] && sameText) {
           const longer = exp[bad].length > act[bad].length ? exp[bad] : act[bad];
           const shorter = longer === exp[bad] ? act[bad] : exp[bad];
-          const width = measure(longer, { font: d.font, bold: false, size: d.fontSize, letterSpacing: trackingFor(d) }).width;
+          const width = measure(longer, { font: "web", bold: false, size: d.fontSize, letterSpacing: trackingFor(d) }).width;
           if (longer.startsWith(shorter) && (Math.abs(width - d.textWidth) <= 5 || (p.showMore && bad === exp.length - 1 && longer.length - shorter.length <= 2))) {
             edge++;
             continue;
@@ -195,4 +195,12 @@ test("the engine draws the corpus as X does (fixtures/web, fixtures/app)", () =>
   if (approximate.length) console.log(`approximate (fallback fonts), not failed:\n  ${approximate.join("\n  ")}`);
   console.log(`layout corpus: ${exact} exact, ${edge} within font tolerance, ${gaps} known gaps, ${approximate.length} approximate, ${failures.length} failed`);
   assert.deepEqual(failures, []);
+});
+
+// The engine binary-searches the fallback table: a run out of order makes every lookup past it miss.
+test("the fallback-font table is in code-point order at every size", () => {
+  const sizes = (JSON.parse(readFileSync("src/lib/layout/fallback-metrics.json", "utf8")) as { sizes: Record<string, { runs: Array<[number, number, number]> }> }).sizes;
+  for (const [size, { runs }] of Object.entries(sizes)) {
+    runs.forEach((r, i) => assert.ok(r[0] <= r[1] && (i === 0 || r[0] > runs[i - 1][1]), `${size}px run ${i}: ${r[0].toString(16)}`));
+  }
 });

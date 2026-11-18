@@ -19,7 +19,8 @@ if (platform() !== "darwin") {
 // Paths from this file, so the script works from any directory.
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const OUT = `${ROOT}src/lib/layout/fallback-metrics.json`;
-// Blocks that come up in posts and that Chirp leaves to fallback fonts.
+// Blocks that come up in posts and that Chirp leaves to fallback fonts. The engine binary-searches the
+// table, so the runs must come out in code-point order: the list is sorted below and checked at the end.
 const RANGES = [
   [0x0370, 0x03ff], [0x0400, 0x052f], // Greek, Cyrillic (whatever Chirp lacks)
   [0x0590, 0x05ff], [0x0600, 0x06ff], [0x0750, 0x077f], // Hebrew, Arabic
@@ -29,7 +30,7 @@ const RANGES = [
   [0x3000, 0x30ff], [0x3130, 0x318f], [0x3400, 0x4dbf], [0x4e00, 0x9fff], // CJK punctuation, kana, Han
   [0xac00, 0xd7a3], [0xff00, 0xffef], // Hangul syllables, fullwidth forms
   [0x1d400, 0x1d7ff], // mathematical alphanumerics (the "Unicode bold" X posts use)
-];
+].sort((a, b) => a[0] - b[0]);
 // The preview's stack (theme.ts), GT America included: the site serves it, so a character Chirp lacks
 // and GT America has is drawn in GT America there. Its files are licensed to Vibewatch and never in the
 // repo; the script reads the local copy (.fonts/gt-america) and serves it only to its own headless page.
@@ -97,6 +98,7 @@ for (const size of SIZES) {
     return w;
   }), size);
   if (new Set(emoji).size !== 1) throw new Error(`emoji widths differ at ${size}px: ${emoji}`);
+  if (runs.some((r, i) => i > 0 && r[0] <= runs[i - 1][1])) throw new Error(`runs at ${size}px are out of order`);
   sizes[size] = { emoji: emoji[0], runs };
   console.log(`${size}px: ${runs.length} runs, emoji ${emoji[0] / 64}px`);
 }

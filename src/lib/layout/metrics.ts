@@ -62,15 +62,11 @@ function face(key: FontKey): Face {
 }
 
 /**
- * The Chirp build a device lays text out in. Every device uses x.com's (devices.ts); the stack's next
- * face, fonts/v2, has no character x.com's lacks, so a character missing here goes to the system fonts.
- * No device sets `font: "app"`, and its metrics aren't kept: it would need the generator first.
+ * The Chirp build text is measured in: x.com's, the one every device lays out in (devices.ts). The
+ * stack's next face, fonts/v2, has no character x.com's lacks, so a character missing here goes to the
+ * system fonts. A device on `font: "app"` would need that build's metrics generated first.
  */
-const STACK: Record<"web" | "app", Array<"web">> = { web: ["web"], app: [] };
-
-export function hasGlyph(font: "web" | "app", cp: number): boolean {
-  return STACK[font].some((k) => face(`${k}-400`).adv.has(cp));
-}
+const STACK = ["web"] as const;
 
 const EMOJI = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
 /** Marks that make a cluster an emoji whatever its first character: emoji presentation (VS16) and a keycap. */
@@ -106,7 +102,8 @@ function fallbackWidth(cluster: string, cp: number, size: number): number {
 }
 
 export interface RunStyle {
-  font: "web" | "app";
+  /** x.com's Chirp build, the only one measured (see STACK). */
+  font: "web";
   bold: boolean;
   /** px */
   size: number;
@@ -147,7 +144,7 @@ export function measure(text: string, style: RunStyle): Measured {
     const base = cps[0];
     // Chrome keeps a cluster in one font: Chirp only if it has every character in it ("1" + U+20E3, a
     // keycap, isn't Chirp's digit), and never an emoji-presentation sequence (Chrome: 19px at 15px).
-    const owner = EMOJI_SEQUENCE.test(segment) ? undefined : STACK[style.font].find((k) => cps.every((cp) => face(`${k}-400`).adv.has(cp) || IGNORABLE.test(String.fromCodePoint(cp))));
+    const owner = EMOJI_SEQUENCE.test(segment) ? undefined : STACK.find((k) => cps.every((cp) => face(`${k}-400`).adv.has(cp) || IGNORABLE.test(String.fromCodePoint(cp))));
     if (!owner) {
       prev = null;
       if (ZERO.test(segment) && cps.every((cp) => ZERO.test(String.fromCodePoint(cp)))) continue;
@@ -178,7 +175,7 @@ export function measure(text: string, style: RunStyle): Measured {
 
 /** The first default ligature in `text` for this style: where it starts, its text and its width. */
 export function ligatureIn(text: string, style: RunStyle): { at: number; text: string; width: number } | null {
-  const f = face(`${STACK[style.font][0]}-${style.bold ? 700 : 400}`);
+  const f = face(`${STACK[0]}-${style.bold ? 700 : 400}`);
   let best: { at: number; text: string; width: number } | null = null;
   for (const l of f.ligatures) {
     const s = String.fromCodePoint(...l.cps);
@@ -199,7 +196,7 @@ export function kernBetween(a: string, b: string, style: RunStyle): number {
   const ca = Array.from(a).pop()?.codePointAt(0);
   const cb = b.codePointAt(0);
   if (ca === undefined || cb === undefined) return 0;
-  const owner = (cp: number) => STACK[style.font].find((k) => face(`${k}-400`).adv.has(cp));
+  const owner = (cp: number) => STACK.find((k) => face(`${k}-400`).adv.has(cp));
   const oa = owner(ca);
   if (!oa || oa !== owner(cb)) return 0;
   const f = face(`${oa}-${style.bold ? 700 : 400}`);
