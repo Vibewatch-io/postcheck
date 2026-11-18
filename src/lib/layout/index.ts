@@ -330,7 +330,7 @@ function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boo
       if (j >= cells.length) end = cells.length;
       else if (lastBreak >= i) end = lastBreak + 1;
       else end = Math.max(j, i + 1); // nothing to break at: break-word cuts at the last cell that fits
-      const row = rowOf(cells.slice(i, end), pieces, firstRowOf, rows.length, snap);
+      const row = rowOf(cells.slice(i, end), pieces, firstRowOf, rows.length, snap, android);
       if (estimated[p]) row.estimated = true;
       rows.push(row);
       i = end;
@@ -381,7 +381,7 @@ function snapFor(d: Device): (w: number) => number {
  * broken after "/" on the app pane, a word after a hyphen, CJK) gives one fragment per row; every one
  * after the first is `cont`, a token's tail rather than a word the writer can move.
  */
-function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, rowIndex: number, snap: (w: number) => number): LineInfo {
+function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, rowIndex: number, snap: (w: number) => number, keepEndKern: boolean): LineInfo {
   const row: LineInfo = { words: [], paragraph: -1, end: 0, spans: [] };
   // Edges as Chrome places them: each item starts where the snapped widths of the ones before it end.
   let done = 0;
@@ -397,9 +397,9 @@ function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, 
   };
   const at = () => done + snap(cur);
   // A row that ends inside a word (no hanging space) was reshaped there: its last cell drops the kerning
-  // with the first cell of the next row.
+  // with the first cell of the next row. The Android app measures its lines with that kerning kept (fill()).
   const lastCell = cells[cells.length - 1];
-  const trimmed = lastCell && !lastCell.space && lastCell.kernNext ? cells.map((c) => (c === lastCell ? { ...c, width: c.width - (c.kernNext ?? 0) } : c)) : cells;
+  const trimmed = !keepEndKern && lastCell && !lastCell.space && lastCell.kernNext ? cells.map((c) => (c === lastCell ? { ...c, width: c.width - (c.kernNext ?? 0) } : c)) : cells;
   cells = trimmed;
   let k = 0;
   while (k < cells.length) {
