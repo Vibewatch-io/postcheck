@@ -116,7 +116,8 @@ export function LineProbes({ tokens, showMore, hiddenUrlStart, quoteShown = fals
           const el = refs.current[i]?.firstElementChild as HTMLElement | null;
           const m = el ? measureLines(el, bodyLineHeight(d, shownStyles(d, expanded, styles).length > 0)) : { lines: [], total: 0 };
           const token = refs.current[i]?.querySelector<HTMLElement>("[data-token]");
-          return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view: d.view, lines: m.lines, total: m.total, tokenWidth: token?.getBoundingClientRect().width ?? 0 };
+          // The web post page (kind "focal") is a post view as much as the app's: it gets no dangling-word tips.
+          return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view: d.kind === "focal" ? "post" : d.view, lines: m.lines, total: m.total, tokenWidth: token?.getBoundingClientRect().width ?? 0 };
         }),
       );
     };

@@ -20,5 +20,11 @@ doesn't cover them:
   to Vibewatch alone and is never in this repository. Schibsted Grotesk and
   Syne, the interface fonts, are under the SIL Open Font License and come
   from Google Fonts at build time.
+- Font measurements. src/lib/layout/chirp-metrics.json holds advance widths and
+  kerning values read from X's Chirp files (scripts/chirp-metrics.py), and
+  src/lib/layout/fallback-metrics.json the widths Apple's system fonts give
+  characters Chirp lacks (scripts/fallback-metrics.mjs). They're numbers, not
+  fonts, kept so posts can be laid out without a browser; the fonts they come
+  from belong to X Corp and Apple.
 - The names Postcheck and Vibewatch and their logos. A fork should go by its
   own name.

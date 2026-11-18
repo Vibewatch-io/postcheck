@@ -5,10 +5,10 @@ import { createPortal } from "react-dom";
 import { DEVICES, DEFAULT_DEVICE, DEFAULT_PHONE_ID, THIS_PHONE_ID, nearestListedPhone, rowHidesStyles, thisPhone, type Device } from "@/lib/devices";
 import { themeFor, type ThemeId } from "@/lib/theme";
 import { useFontTier, type FontTier } from "./font-tier";
-import { cardless, type CardData, type NoCardReason } from "@/lib/card";
+import { type CardData, type NoCardReason } from "@/lib/card";
 import { DESCRIPTION, MISMATCH_FORM, SITE_HOST, SITE_URL, TITLE } from "@/lib/site";
 import socialCard from "@/app/opengraph-image.png";
-import { MAX_WEIGHTED_LENGTH, appFoldCut, cardUrl, extractEntities, isTrailing, quoteUrl, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
+import { MAX_WEIGHTED_LENGTH, extractEntities, showMoreCut, stripFormatting, tokenize, weightedLength } from "@/lib/entities";
 import { draftToDoc, serializeDoc, trimDraft, type Draft, type DocNode } from "@/lib/draft";
 import { ComposerField, FormatBar, PostOptions, useComposer } from "./composer";
 import { NO_POST_STATE, type PostState } from "@/lib/post-state";
@@ -20,6 +20,7 @@ import { LineProbes } from "./line-probe";
 import { ShareButton } from "./share-button";
 import { SHARE_PREFIX, decodeShare, type SharedPreview } from "@/lib/share";
 import { statusId, type QuoteResult, type QuoteState } from "@/lib/quote";
+import { appClamp, foldFor, hiddenUrlStart as hiddenUrlStartOf, linkAttachment } from "@/lib/post-model";
 import { POLL_MIN_CHOICES, emptyPoll, filledChoices, missingPictures, shownPoll, type Poll } from "@/lib/poll";
 import { PollEditor } from "./poll-editor";
 import { APP_MIN_RATIO, mediaLayout, type MediaItem, type MediaKind } from "@/lib/media";
@@ -231,22 +232,17 @@ export function Postcheck() {
 
   // Over 280 X keeps the post and drops its poll (tests 94, 94b), so the preview drops it too.
   const pollOnPost = useMemo(() => shownPoll(poll, length.weighted), [poll, length.weighted]);
-  // A link to a post becomes a quote wherever it sits, and a quote beats a link card (@postcheck_test
-  // tests 40, 41, 45). A link to an X article is a plain link: no card, no embed (test 46). Media or
-  // a poll replaces both, and the link stays as text (test 95; the poll-and-quote case is assumed).
-  const quote = !media.length && !pollOnPost ? quoteUrl(entities) ?? null : null;
+  // Which link becomes a quote or a card (linkAttachment).
+  const link = useMemo(() => linkAttachment(entities, { media: media.length > 0, poll: pollOnPost !== null }), [entities, media.length, pollOnPost]);
+  const { quote, cardEntity, cardKey } = link;
   const quoteId = quote ? statusId(quote.href) : null;
   // No answer yet means a lookup is about to start: the embed holds its place from the first frame.
   const quoteState: QuoteState | null = quoteId ? (quotes[quoteId] ?? "loading") : null;
-  const cardEntity = quote ? undefined : cardUrl(entities);
-  const cardKey = cardEntity && !cardEntity.isStatus && !media.length && !pollOnPost && !cardless(cardEntity.href!) ? cardEntity.href! : null;
   // A recorded "none" or "failed" is an answer, not a lookup still to come. Both draw no card and
   // leave the link text visible; only the advice tells them apart.
   const cardState: CardState | null = cardKey ? (Object.hasOwn(cards, cardKey) ? cards[cardKey] : "loading") : null;
   const card = cardState === "none" || cardState === "failed" ? null : cardState;
-  const hasAttachment = quote !== null || (card !== null && card !== "loading");
-  const attachmentEntity = quote ?? cardEntity;
-  const hiddenUrlStart = attachmentEntity && hasAttachment && isTrailing(post, attachmentEntity) ? attachmentEntity.start : null;
+  const hiddenUrlStart = hiddenUrlStartOf(post, link, card !== null && card !== "loading");
   // The iPhone keeps a long post's trailing post link as text above its quote (test 40b); a post within 280 loses it (test 40).
   const longQuote = quote !== null && length.weighted > MAX_WEIGHTED_LENGTH;
 
@@ -256,44 +252,15 @@ export function Postcheck() {
   const showMore280 = cut280 < post.length;
 
   // The apps additionally fold long-by-lines posts (see devices.ts APP_MAX_LINES).
-  const clampFor = useCallback(
-    (d: Device) => {
-      if (!d.maxLines) return null;
-      const set = lineSets.find((s) => s.deviceId === d.id);
-      if (!set || set.total <= d.maxLines) return null;
-      const row = set.lines[d.maxLines - 1];
-      if (!row) return null;
-      // The last text line at or above the limit carries the token.
-      let r = d.maxLines - 1;
-      while (r > 0 && set.lines[r].spans.length === 0) r -= 1;
-      const limit = appFoldCut(post, row.end, { spans: set.lines[r].spans, tokenWidth: set.tokenWidth, textWidth: d.textWidth }, d.platform === "ios");
-      const lastWord = post.slice(0, limit).split(/\s+/).pop() ?? "";
-      return { cut: limit, total: set.total, maxLines: d.maxLines, lastWord };
-    },
-    [lineSets, post],
-  );
+  const clampFor = useCallback((d: Device) => appClamp(post, d, lineSets.find((s) => s.deviceId === d.id)), [lineSets, post]);
   const renderFor = useCallback(
     (d: Device) => {
-      // The post page (web and app) always shows the whole text: no 280 fold, no line fold.
-      // So does a timeline post once its Show more has been clicked.
-      if (d.kind === "focal" || d.view === "post" || expanded[d.id]) return { tokens: tokenize(post, entities, styleCuts), showMore: false, cut: post.length };
-      const clamp = clampFor(d);
-      // The iOS app folds by rendered lines only: a long post shows its first 9 lines, not X's 280 cut
-      // (Write/status/1646674962055565319 on an iPhone 15 Pro). Under 10 lines it shows everything it has.
-      // A long post under 10 lines shows whole, with no Show more (@postcheck_test tests 05, 06, 08 on an iPhone 15 Pro).
-      // The Android app cuts at 280 exactly like the web (tests 05–08) and, since 2026-10-21, also folds past
-      // 9 lines (tests 12, 13, 97): whichever comes first.
-      if (d.kind === "phone" && d.platform === "ios") {
-        const cut = clamp ? clamp.cut : post.length;
-        const ents = entities.filter((e) => e.end <= cut);
-        return { tokens: tokenize(post.slice(0, cut), ents, styleCuts), showMore: Boolean(clamp), cut };
-      }
-      const cut = clamp ? Math.min(cut280, clamp.cut) : cut280;
-      const visible = post.slice(0, cut);
+      const { cut, showMore } = foldFor(post, cut280, d, lineSets.find((s) => s.deviceId === d.id), Boolean(expanded[d.id]));
+      if (cut >= post.length && !showMore) return { tokens: tokenize(post, entities, styleCuts), showMore, cut };
       const ents = entities.filter((e) => e.end <= cut);
-      return { tokens: tokenize(visible, ents, styleCuts), showMore: cut < post.length, cut };
+      return { tokens: tokenize(post.slice(0, cut), ents, styleCuts), showMore, cut };
     },
-    [clampFor, cut280, post, entities, styleCuts, expanded],
+    [lineSets, cut280, post, entities, styleCuts, expanded],
   );
   const expand = useCallback((d: Device) => setExpanded((e) => ({ ...e, [d.id]: true })), []);
   const fold = useCallback((d: Device) => setExpanded((e) => {
