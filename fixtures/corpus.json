@@ -1125,6 +1125,47 @@
      "t42b",
      "quote-of-long-post"
     ]
+   },
+   {
+    "id": "2123145806400344330",
+    "tags": [
+     "t132",
+     "repeat-letters",
+     "unbreakable-run"
+    ]
+   },
+   {
+    "id": "2123145852306993579",
+    "tags": [
+     "t133",
+     "repeat-letters",
+     "spaced-run"
+    ]
+   },
+   {
+    "id": "2123145887790862446",
+    "tags": [
+     "t134",
+     "repeat-letters",
+     "unbreakable-run"
+    ]
+   },
+   {
+    "id": "2123145921395605656",
+    "tags": [
+     "t135",
+     "repeat-letters",
+     "unbreakable-run",
+     "positive-kern"
+    ]
+   },
+   {
+    "id": "2123145958821441890",
+    "tags": [
+     "t136",
+     "repeat-letters",
+     "unbreakable-run"
+    ]
    }
   ]
  }
