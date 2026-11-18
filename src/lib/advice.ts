@@ -85,6 +85,30 @@ export interface AdviceInput {
 
 const RANK: Record<Severity, number> = { fix: 0, tip: 1, note: 2 };
 
+/**
+ * The words left alone on the last rendered line of a paragraph at one device's width: a single word
+ * of up to 12 characters, in paragraph order. The post page is measured but never checked.
+ */
+export function danglingWords(set: DeviceLines): string[] {
+  if (set.view === "post") return [];
+  const byPara = new Map<number, LineInfo[]>();
+  for (const line of set.lines) {
+    if (line.paragraph < 0 || line.words.length === 0) continue;
+    const arr = byPara.get(line.paragraph) ?? [];
+    arr.push(line);
+    byPara.set(line.paragraph, arr);
+  }
+  const out: string[] = [];
+  for (const lines of byPara.values()) {
+    if (lines.length < 2) continue;
+    const last = lines[lines.length - 1];
+    // The tail of a token that wrapped (a link after "/", a word after a hyphen, CJK) isn't a word the
+    // writer can move.
+    if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "" && !last.spans[0]?.cont) out.push(last.words[0]);
+  }
+  return out;
+}
+
 // Reach advice must not contradict X's published source, xai-org/x-algorithm (checked at
 // 2d4a03c, 2026-09-15). "The ranker doesn't penalize it" is not the same as "do it".
 
@@ -303,33 +327,17 @@ export function buildAdvice(input: AdviceInput): Advice[] {
     });
   }
 
-  // Dangling words: a paragraph whose last rendered line holds a single short word. One tip per
-  // word, naming every preview where it dangles.
+  // Dangling words: one tip per word, naming every preview where it dangles.
   const orphans = new Map<string, { tip: Advice; where: string[] }>();
   for (const set of lineSets) {
-    if (set.view === "post") continue;
-    const byPara = new Map<number, LineInfo[]>();
-    for (const line of set.lines) {
-      if (line.paragraph < 0 || line.words.length === 0) continue;
-      const arr = byPara.get(line.paragraph) ?? [];
-      arr.push(line);
-      byPara.set(line.paragraph, arr);
-    }
-    for (const lines of byPara.values()) {
-      if (lines.length < 2) continue;
-      const last = lines[lines.length - 1];
-      // The tail of a token that wrapped (a link after "/", a word after a hyphen, CJK) isn't a word the
-      // writer can move.
-      if (last.words.length === 1 && last.words[0].length <= 12 && last.words[0] !== "" && !last.spans[0]?.cont) {
-        const key = last.words[0];
-        let orphan = orphans.get(key);
-        if (!orphan) {
-          orphan = { tip: { id: `orphan-${key}`, severity: "tip", title: `"${key}" dangles on its own line`, detail: "" }, where: [] };
-          orphans.set(key, orphan);
-          out.push(orphan.tip);
-        }
-        if (!orphan.where.includes(set.deviceLabel)) orphan.where.push(set.deviceLabel);
+    for (const key of danglingWords(set)) {
+      let orphan = orphans.get(key);
+      if (!orphan) {
+        orphan = { tip: { id: `orphan-${key}`, severity: "tip", title: `"${key}" dangles on its own line`, detail: "" }, where: [] };
+        orphans.set(key, orphan);
+        out.push(orphan.tip);
       }
+      if (!orphan.where.includes(set.deviceLabel)) orphan.where.push(set.deviceLabel);
     }
   }
 
