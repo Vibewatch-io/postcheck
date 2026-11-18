@@ -1966,20 +1966,7 @@
     "lines": 4,
     "hasCard": false,
     "hasName": true
-   },
-   "gtGap": "GT America coin flip: line 8 (\"…needs Show more\") is 323.1px in GT America at −0.071px against the 322px column (321.3px in Chirp, which fits): the GT tier pushes the post to a 10th line and folds what the iPhone shows whole in 9",
-   "gtGapTool": [
-    "Long quote test 40b: a link to a post sits after",
-    "character 280, at the very end. the quick brown",
-    "fox jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog the quick brown fox",
-    "jumps over a lazy dog and this sentence keeps",
-    "going past the cut so the post needs Show",
-    "more on the web timeline"
-   ],
-   "gtGapMore": true
+   }
   },
   {
    "id": "2113019564380549631",
