@@ -89,6 +89,35 @@ const NO_BREAK_AFTER = /[([{'‘"“«（「『【〔〈《$£€¥]$/u;
  * the result matches what measureLines reads back from the DOM.
  */
 export function layoutBody(input: BodyInput, d: Device): Layout {
+  const { paragraphs, pieces, approximate, tokenWidth } = cellsFor(input, d);
+  return fill(paragraphs, pieces, d, approximate, tokenWidth);
+}
+
+interface Built {
+  paragraphs: Cell[][];
+  pieces: Piece[];
+  approximate: boolean;
+  tokenWidth: number;
+}
+
+/**
+ * The body as cells for one device, built once per body and text setup: devices that differ only in
+ * column width (the iPhone timelines, say) share them, and only the line filling runs per width.
+ */
+const built = new WeakMap<BodyInput, Map<string, Built>>();
+function cellsFor(input: BodyInput, d: Device): Built {
+  const android = d.platform === "android";
+  const key = JSON.stringify([d.platform ?? "web", d.pane, d.font, d.fontSize, trackingFor(d), rowHidesStyles(d, android && Boolean(input.expanded))]);
+  let byKey = built.get(input);
+  if (!byKey) built.set(input, (byKey = new Map()));
+  const hit = byKey.get(key);
+  if (hit) return hit;
+  const b = buildCells(input, d);
+  byKey.set(key, b);
+  return b;
+}
+
+function buildCells(input: BodyInput, d: Device): Built {
   const android = d.platform === "android";
   const shownStyles = rowHidesStyles(d, android && Boolean(input.expanded)) ? [] : input.styles;
   const hidden = (android && input.quoteShown) || (d.platform === "ios" && input.longQuote) ? null : input.hiddenUrlStart;
@@ -221,6 +250,11 @@ export function layoutBody(input: BodyInput, d: Device): Layout {
     });
   }
 
+  return { paragraphs, pieces, approximate, tokenWidth: snap(measure(" Show more", base).width) };
+}
+
+/** The lines on one device: greedy filling at its column width (see the notes on Chrome above). */
+function fill(paragraphs: Cell[][], pieces: Piece[], d: Device, approximate: boolean, tokenWidth: number): Layout {
   const rows: LineInfo[] = [];
   const firstRowOf = new Map<number, number>();
   const limit = d.textWidth;
@@ -266,9 +300,8 @@ export function layoutBody(input: BodyInput, d: Device): Layout {
     if (r.end) carry = r.end;
     else r.end = carry;
   }
-  const token = snap(measure(" Show more", base).width);
   const view = d.kind === "focal" ? "post" : d.view;
-  return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view, lines: rows, total: rows.length, tokenWidth: token, approximate };
+  return { deviceId: d.id, deviceLabel: d.tipLabel ?? d.label, view, lines: rows, total: rows.length, tokenWidth, approximate };
 }
 
 /** Chrome lets a line run one LayoutUnit (1/64px) past the column before it breaks. */

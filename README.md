@@ -68,6 +68,8 @@ The post you type stays in your browser unless you share it. Four things do leav
 - **A username** you look up goes to `/api/profile`, which asks FxTwitter's public API (`api.fxtwitter.com`) for the name, avatar and badge, and vxtwitter's (`api.vxtwitter.com`) when FxTwitter has no answer. vxtwitter can't tell whether an account is verified, so the badge you chose stays as it is.
 - **Font requests** go to X's CDN (`abs.twimg.com`), because the previews render in Chirp loaded exactly the way x.com loads it. X sees the same request it would see from any page that embeds a post.
 
+The check API and MCP server (see Check a post from code) are the exception, and only for what you send them from code: they receive the post's text, use it for that one answer and never store or log it.
+
 Links, post numbers and usernames are never stored. Each travels in the body of the request, not its address, because addresses end up in request logs and caches. The responses are marked `no-store`, and the server keeps nothing. Your browser keeps the cards and quoted posts it has fetched for the rest of the visit, and only asks once a link looks finished. The sample post's own card (a link to this site) ships with the page, so an untouched page makes no lookups at all.
 
 **Share** copies a link that holds the preview itself: the text, its styling, the name, handle and check, the device and theme, and JPEG copies of your photo and attached media shrunk in the browser (a GIF or video travels as its first frame; the media steps down in size until the link fits under 38,000 characters, or is left out). Attached videos are read in your browser for their size, length and first frame and never sent anywhere. It is all compressed into the part of the link after `#`, which browsers never send to a server, so nothing is uploaded or stored and there is nothing for us to delete. Anyone who has the link can see the preview. Opening a shared post that contains a link fetches its card through `/api/unfurl`, or its quoted post through `/api/quote`, the same as typing it would.
@@ -75,6 +77,24 @@ Links, post numbers and usernames are never stored. Each travels in the body of 
 The only analytics is [Umami](https://umami.is), self-hosted by Vibewatch at `umami.vibewatch.io`: a cookieless page-view counter with no cross-site tracking. It is there because the fallback font's licence requires a monthly unique-visitor count (see Fonts). It records the page address without the `#` part or the query, so a share link's contents never reach it.
 
 **Check it yourself.** Open your browser's developer tools on the Network tab and type a post. Apart from loading the page (its own files, X's font and the page-view count), nothing goes out until the post has a link or you look up a username, and then only the requests above, all to this site's `/api/` routes. The code behind each one is in `src/app/api/`, and the repo's [Deployments](../../deployments/Production) page shows which commit the live site is running. The "Tell us" link under the preview puts the view, theme and font you had in the address of the GitHub form it opens; never the post. Security reports go through [SECURITY.md](SECURITY.md).
+
+## Check a post from code
+
+The site's checks are also an API and an MCP server on postcheck.vibewatch.io, for drafts written by a script or an agent. They run the layout engine (`src/lib/check.ts`, see Build on it), so the answer is the site's own: the same tips, and the lines each phone and x.com show before Show more, worked out from X's font metrics with no browser involved.
+
+```bash
+curl -s https://postcheck.vibewatch.io/api/check -H 'content-type: application/json' -d '{"text": "Your post"}'
+```
+
+The body takes `text` (`**bold**` and `__italic__` mark Premium styling unless `plain` is `true`), `badge` (`none`, `blue`, `gold` or `gray`: any check can post past 280), `phone` and `web` (the views the tips cover, the site's defaults otherwise), `devices` (which line breaks to return; every timeline by default), `media` (`[{"kind": "photo", "width": 1600, "height": 900}]`, by size alone) and `poll` (2 to 4 choices). The answer has `ok` (no tip is a fix), `advice`, and for each device the `lines` a reader sees before any tap, `showMore` and `dangling`. `fidelity` is `exact`, or `approximate` with `notes` saying why: text in a font X's Chirp doesn't cover (emoji, CJK, Thai, Arabic and the like), which each reader's phone draws in its own, or a link whose page couldn't be read.
+
+For Claude or any other MCP client, add `https://postcheck.vibewatch.io/api/mcp` as a remote server (Streamable HTTP). It offers `check_post`, with the same fields, and `list_devices`:
+
+```bash
+claude mcp add --transport http postcheck https://postcheck.vibewatch.io/api/mcp
+```
+
+Both are open to anyone behind the same per-IP rate limit as the other routes. A key (`Authorization: Bearer …`, matching `POSTCHECK_API_KEY` on the deployment) skips that shared limit; a wrong key is refused rather than treated as no key. Unlike the site, these two routes receive the post's text: it's used for that one answer and never stored or logged. The first link and a quoted post's number are looked up through the same guarded code as the site's lookups (Card, quote and profile lookups), without fetching the card's image or the quoted post's pictures; without the image, a card's size follows its tags.
 
 ## Fonts
 
@@ -99,6 +119,8 @@ npm run dev
 
 Node 24+. `npm run build` and `npm run lint` are the gate.
 
+No environment variables are needed to run it. `POSTCHECK_API_KEY` is optional and only matters for `/api/check` and `/api/mcp` (see Deploying).
+
 ## Deploying
 
 Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
@@ -106,7 +128,8 @@ Deploys anywhere Next.js runs; the API routes run as Node functions. Set:
 - `NEXT_PUBLIC_SITE_URL` if the site lives somewhere other than `postcheck.vibewatch.io`, so Open Graph URLs resolve.
 - A linked **private Vercel Blob store** holding `GT-America-Standard-Regular.woff2` and `GT-America-Standard-Bold.woff2` at its root (or under the folder named by `FONT_BLOB_PREFIX`), only if you hold your own GT America web licence. Without it the fallback is the system font, which is fine.
 - `NEXT_PUBLIC_UMAMI_SRC` (the tracker's `script.js` URL) and `NEXT_PUBLIC_UMAMI_WEBSITE_ID` for page-view counts in your own [Umami](https://umami.is). Without both, no analytics script loads; on Vercel, set them for Production only so previews stay out of the count. The tag relies on the tracker honouring `data-exclude-hash` and `data-exclude-search` (Umami 2.16 or later; the one at `umami.vibewatch.io` does).
-- **Rate limits** on `/api/unfurl`, `/api/quote` and `/api/profile` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
+- **Rate limits** on `/api/unfurl`, `/api/quote`, `/api/profile`, `/api/check` and `/api/mcp` (on Vercel, a WAF rate-limit rule per IP). The routes are SSRF-guarded but they are still a fetch proxy.
+- `POSTCHECK_API_KEY`, optionally: a secret that lets `/api/check` and `/api/mcp` callers skip the shared rate limit. Add "the `authorization` header is not `Bearer <key>`" to the rate-limit rule's conditions; the routes refuse any other key. Without it, every keyed call is refused and the open tier works as before.
 
 ## Working on it
 
