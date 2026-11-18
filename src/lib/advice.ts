@@ -32,7 +32,7 @@ export interface LineInfo {
 export interface DeviceLines {
   deviceId: string;
   deviceLabel: string;
-  /** Post-screen probes are measured but not used for dangling-word checks. */
+  /** Post screens are laid out but not used for dangling-word checks. */
   view?: "timeline" | "post";
   lines: LineInfo[];
   /** Total rendered lines including blank ones. */

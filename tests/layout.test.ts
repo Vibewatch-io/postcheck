@@ -60,7 +60,7 @@ test("an emoji sequence is measured as an emoji, not as its first character", ()
   }
 });
 
-// The probes draw the web's Show more after a long post's whole text; on the post page, which never folds,
+// The engine lays the web's Show more after a long post's whole text; on the post page, which never folds,
 // a wrapped token must not show up as a trailing empty line.
 test("a post page's lines end with the post's last line", () => {
   const lines = checkPost({ text: "word ".repeat(64) }, {}, { devices: ["web-post"] }).devices[0].lines;

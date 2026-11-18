@@ -34,7 +34,9 @@ interface Props {
 /**
  * Renders post text the way X lays it out: pre-wrap, break-word, links in
  * blue. Every word is wrapped in a span so line breaks can be read back from
- * the DOM (see line-probe.tsx); the spans change nothing visually.
+ * the DOM (scripts/verify.mjs compares them with X's captures and with the
+ * layout engine, src/lib/layout, which models these spans); the spans change
+ * nothing visually.
  */
 /**
  * Premium bold is weight 700 (Chirp Bold) and italic a synthesized slant of the same face, on x.com
@@ -77,7 +79,7 @@ export const PostBody = forwardRef<HTMLDivElement, Props>(function PostBody(
   // The Android app never breaks after a hyphen: "end-to-end" wraps whole, and a word too long for the
   // column breaks at the last character that fits ("…-and-th" | "en-some-…", @postcheck_test tests 15 and
   // 16 on a Pixel 3). A word joiner after each hyphen, drawn by CSS so the text nodes keep the post's own
-  // characters for the line probe, takes the break away; overflow-wrap still breaks an over-long word.
+  // characters for verify to read back, takes the break away; overflow-wrap still breaks an over-long word.
   const keepHyphens = (text: string) =>
     android && text.includes("-") ? text.split(/(-)/).map((s, j) => (s === "-" ? <span key={j} className="nb-hyphen">-</span> : s)) : text;
   const end = showMoreAt >= 0 ? showMoreAt : tokens.length;

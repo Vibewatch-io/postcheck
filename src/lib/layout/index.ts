@@ -1,8 +1,9 @@
 /**
  * Line layout in code: where a post's body breaks on a device, computed from Chirp's metrics
  * (metrics.ts) and the CSS the preview sets the body in (src/components/post-body.tsx: pre-wrap,
- * break-word, per-pane tracking). The answer has the shape the hidden DOM probes give
- * (src/components/line-probe.tsx), so the fold, the Show more cut and the tips read it unchanged.
+ * break-word, per-pane tracking). The site's folds and tips (src/components/postcheck.tsx) and the
+ * hosted check (../check.ts) both read its answer, so they always agree; scripts/verify.mjs checks it
+ * against the rows the preview draws for every corpus post.
  */
 import type { DeviceLines, LineInfo } from "../advice";
 import { rowHidesStyles, type Device } from "../devices";
@@ -30,7 +31,7 @@ export interface BodyInput {
   quoteShown?: boolean;
   /** A long post's trailing post link: the iPhone keeps it as text. */
   longQuote?: boolean;
-  /** The web's 280-cut " Show more" follows the whole text (the probes draw it there on web panes). */
+  /** The web's 280-cut " Show more": laid out after the whole text on web panes. */
   showMore: boolean;
   /** An expanded Android row shows its styling. */
   expanded?: boolean;
@@ -85,8 +86,9 @@ const NO_BREAK_BEFORE = /^[)\]}.,!?:;%'’"”»、。，．：；！？）」�
 const NO_BREAK_AFTER = /[([{'‘"“«（「『【〔〈《$£€¥]$/u;
 
 /**
- * Lay the body out on one device. `tokens`, `styles` and the rest are what LineProbes passes PostBody;
- * the result matches what measureLines reads back from the DOM.
+ * Lay the body out on one device. `tokens`, `styles` and the rest describe the whole post as PostBody
+ * would draw it; the result is the rows Chrome gives that body, each [data-w] span's fragments with
+ * their offsets and edges.
  */
 export function layoutBody(input: BodyInput, d: Device): Layout {
   const { paragraphs, pieces, approximate, tokenWidth } = cellsFor(input, d);
@@ -215,8 +217,10 @@ function buildCells(input: BodyInput, d: Device): Built {
       push(seg, style, { space: false, breakAfter, piece: idx, end: p.link === undefined ? at : p.end, last: i === segs.length - 1 });
     });
   }
-  // The probes draw the web's Show more after the whole text: a space, then the token, which wraps
-  // whole except on Android (inline there: "Show" | "more").
+  // On web panes the 280 cut's Show more follows the whole text: a space, then the token, which wraps
+  // whole except on Android (inline there: "Show" | "more"). The app never appends it: a long post
+  // under 10 lines shows whole there, so counting the token would push a full last line onto a 10th
+  // row (test 94).
   if (input.showMore && d.pane === "web" && nodes.length) {
     item++;
     push(" ", base, { space: true, breakAfter: true, piece: -1, end: 0, token: true });
@@ -327,7 +331,11 @@ function snap(w: number): number {
   return Math.ceil(w * 64 - 1e-7) / 64;
 }
 
-/** One row as measureLines reports it: each [data-w] fragment on it with its offsets and pixel edges. */
+/**
+ * One row: each [data-w] fragment on it with its offsets and pixel edges. A span that wraps (a link
+ * broken after "/" on the app pane, a word after a hyphen, CJK) gives one fragment per row; every one
+ * after the first is `cont`, a token's tail rather than a word the writer can move.
+ */
 function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, rowIndex: number): LineInfo {
   const row: LineInfo = { words: [], paragraph: -1, end: 0, spans: [] };
   // Edges as Chrome places them: each item starts where the snapped widths of the ones before it end.
@@ -382,7 +390,10 @@ function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, 
       row.spans.push({ start: c.end - c.text.length, end: cells[m - 1].end, left, right: x, ...cont });
       row.end = cells[m - 1].end;
     } else if (ends) {
-      // A link is one unit for the fold: only the row it ends on can cut after it (see measureLines).
+      // A link is one unit for the fold: only the row it ends on can cut after it. A row it runs off ends
+      // at the link's start (below), so a fold there keeps the whole link behind Show more (an empty span
+      // gives no cut inside it, and the fold still eats a character from the text before it). Assumed:
+      // no capture has a link across the fold.
       row.spans.push({ start: p.link, end: p.end, left, right: x, link: true, ...cont });
       row.end = p.end;
     } else {
@@ -400,12 +411,12 @@ function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, 
  * The lines a reader sees before any Show more tap, as text: each row's words as drawn (a link as its
  * display text, a wrapped token as its fragment) with the post's own characters between them, up to the
  * fold. A word is cut through at the fold, while a link that runs past it goes behind Show more whole
- * (see measureLines). Blank rows are paragraph gaps ("").
+ * (see rowOf). Blank rows are paragraph gaps ("").
  */
 export function visibleLines(post: string, set: DeviceLines, fold: { cut: number; showMore: boolean }): string[] {
   const cut = fold.showMore ? fold.cut : Infinity;
   const rows = set.lines;
-  // The last row holding text before the cut. A row past it can only be the probes' Show more token
+  // The last row holding text before the cut. A row past it can only be the web's Show more token
   // wrapped onto a line of its own, which a post that shows whole never draws (a post is trimmed, so it
   // never ends in a paragraph gap).
   const last = rows.reduce((n, l, i) => (l.spans.some((s) => s.start < cut) ? i : n), -1);
