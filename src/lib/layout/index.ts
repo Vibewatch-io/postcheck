@@ -76,6 +76,8 @@ const words = new Intl.Segmenter(undefined, { granularity: "word" });
 /** UAX #14 SA: scripts broken by dictionary. */
 const SA = /[\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u;
 
+/** No-break spaces: whitespace to tokenize(), glue to the line breaker. */
+const GL = /^[\u00a0\u202f\u2007\u2060\ufeff]$/u;
 const ID = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
 /** No break before these (UAX #14 CL, CP, EX, IS, NS and the like). */
 const NO_BREAK_BEFORE = /^[)\]}.,!?:;%'’"”»、。，．：；！？）」』】〕〉》ー々ゝゞぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ…‼⁉]/u;
@@ -147,7 +149,11 @@ export function layoutBody(input: BodyInput, d: Device): Layout {
     }
     if (n.kind === "space") {
       item++;
-      for (const { segment } of graphemes.segment(n.text)) push(segment, base, { space: true, breakAfter: true, piece: -1, end: 0 });
+      // A no-break space (UAX #14 GL) holds its neighbours together and never hangs at a line's end.
+      for (const { segment } of graphemes.segment(n.text)) {
+        const glue = GL.test(segment);
+        push(segment, base, { space: !glue, breakAfter: !glue, piece: -1, end: 0 });
+      }
       continue;
     }
     const p = n.piece;
@@ -199,6 +205,8 @@ export function layoutBody(input: BodyInput, d: Device): Layout {
       const next = cells[k + 1];
       if (c.space || c.token || c.breakAfter || !next || next.space || next.token) return;
       const [a, b] = [c.text, next.text];
+      // No break on either side of a no-break space (UAX #14 LB12, LB12a).
+      if (GL.test(a) || GL.test(b)) return;
       // Chrome's breaks between Latin characters, probed one by one (2026-11-18, overflow-wrap off): after
       // every hyphen-minus, digits and a word's start included ("2026-" | "11-18", "-" | "aaaa"); around an
       // em dash but not between two ("aa" | "——" | "bb"); after an en dash; after "?" and "…" before a
@@ -362,7 +370,10 @@ function rowOf(cells: Cell[], pieces: Piece[], firstRowOf: Map<number, number>, 
 export function visibleLines(post: string, set: DeviceLines, fold: { cut: number; showMore: boolean }): string[] {
   const cut = fold.showMore ? fold.cut : Infinity;
   const rows = set.lines;
-  const last = fold.showMore ? rows.reduce((n, l, i) => (l.spans.some((s) => s.start < cut) ? i : n), -1) : rows.length - 1;
+  // The last row holding text before the cut. A row past it can only be the probes' Show more token
+  // wrapped onto a line of its own, which a post that shows whole never draws (a post is trimmed, so it
+  // never ends in a paragraph gap).
+  const last = rows.reduce((n, l, i) => (l.spans.some((s) => s.start < cut) ? i : n), -1);
   return rows.slice(0, last + 1).map((line) => {
     let out = "";
     line.spans.forEach((s, i) => {

@@ -49,7 +49,24 @@ const CHROME_ROWS: Array<{ device: string; width: number; text: string; rows: st
   { device: "galaxy-s25", width: 164, text: "A long-winded well-known end-to-end self-hosted thing here", rows: ["A|long-winded", "well-known", "end-to-end", "self-hosted|thing|here"] },
   { device: "web", width: 324, text: "Prices: $100, €50 and 1–30 days; also 2026-11-18 and well—maybe", rows: ["Prices:|$100,|€50|and|1–30|days;|also|2026-", "11-18|and|well—maybe"] },
   { device: "web", width: 224, text: "Prices: $100, €50 and 1–30 days; also 2026-11-18 and well—maybe", rows: ["Prices:|$100,|€50|and|1–30", "days;|also|2026-11-18|and|well", "—maybe"] },
+  // A no-break space holds "hello world" together; too wide for the column, it breaks inside "world".
+  { device: "web", width: 60, text: "aa hello\u00a0world", rows: ["aa", "hello|wo", "rld"] },
 ];
+
+// A keycap is an emoji even though Chirp has its digit (Chrome: 19px at 15px, Apple's emoji font).
+test("an emoji sequence is measured as an emoji, not as its first character", () => {
+  for (const t of ["1\u20e3", "1\ufe0f\u20e3", "#\ufe0f\u20e3"]) {
+    const m = measure(t, { font: "web", bold: false, size: 15, letterSpacing: 0 });
+    assert.deepEqual([m.width, m.approximate], [19, true], JSON.stringify(t));
+  }
+});
+
+// The probes draw the web's Show more after a long post's whole text; on the post page, which never folds,
+// a wrapped token must not show up as a trailing empty line.
+test("a post page's lines end with the post's last line", () => {
+  const lines = checkPost({ text: "word ".repeat(64) }, {}, { devices: ["web-post"] }).devices[0].lines;
+  assert.notEqual(lines[lines.length - 1], "");
+});
 
 test("the engine breaks where Chrome does across spans, dashes and mid-word breaks", () => {
   for (const c of CHROME_ROWS) {

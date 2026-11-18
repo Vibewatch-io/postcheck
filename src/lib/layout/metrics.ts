@@ -65,6 +65,10 @@ export function hasGlyph(font: "web" | "app", cp: number): boolean {
 }
 
 const EMOJI = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
+/** Marks that make a cluster an emoji whatever its first character: emoji presentation (VS16) and a keycap. */
+const EMOJI_SEQUENCE = /\ufe0f|\u20e3/u;
+/** Characters a font needn't have for a cluster to stay in it. */
+const IGNORABLE = /[\u200c\u200d\u2060\ufe0e]/u;
 /** Joiners and selectors that ride on the character before them and take no width of their own. */
 const ZERO = /[\u200b-\u200d\u2060\ufe00-\ufe0f\u{e0020}-\u{e007f}\u{1f3fb}-\u{1f3ff}]|\p{M}/u;
 
@@ -81,7 +85,7 @@ function fallbackWidth(cluster: string, cp: number, size: number): number {
   const table = fallback[String(size)];
   const scale = table ? 1 : size / 15;
   const t = table ?? fallback["15"];
-  if (EMOJI.test(cluster)) return (t.emoji / 64) * scale;
+  if (EMOJI.test(cluster) || EMOJI_SEQUENCE.test(cluster)) return (t.emoji / 64) * scale;
   let lo = 0;
   let hi = t.runs.length - 1;
   while (lo <= hi) {
@@ -133,7 +137,9 @@ export function measure(text: string, style: RunStyle): Measured {
   for (const { segment } of graphemes.segment(text)) {
     const cps = Array.from(segment, (c) => c.codePointAt(0)!);
     const base = cps[0];
-    const owner = STACK[style.font].find((k) => face(`${k}-400`).adv.has(base));
+    // Chrome keeps a cluster in one font: Chirp only if it has every character in it ("1" + U+20E3, a
+    // keycap, isn't Chirp's digit), and never an emoji-presentation sequence (Chrome: 19px at 15px).
+    const owner = EMOJI_SEQUENCE.test(segment) ? undefined : STACK[style.font].find((k) => cps.every((cp) => face(`${k}-400`).adv.has(cp) || IGNORABLE.test(String.fromCodePoint(cp))));
     if (!owner) {
       prev = null;
       if (ZERO.test(segment) && cps.every((cp) => ZERO.test(String.fromCodePoint(cp)))) continue;
