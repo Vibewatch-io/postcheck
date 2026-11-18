@@ -359,6 +359,45 @@ Before cancelling, also capture these existing posts while they are certainly wh
   a styled expanded row runs at a tighter pitch (QUIRKS, Android rows).
 - Premium was cancelled on 2026-10-21 and stays active until 2026-11-16. After that date, open 05, 70b and 104 on x.com once: are they still whole, styled and marked edited? Note the answer here. The check also leaves every @Postcheck_test post, so later captures show none.
 
+## 15. Batch 11: repeated letters
+
+Runs of one glyph, where a line ends inside a word and every character's width adds up: the case that
+tells a font model apart from an approximation. Each post is `Repeat test <n>`, a line break, then the run.
+The engine's predictions were written down before posting.
+
+| # | Run | Tests |
+|---|---|---|
+| 132 | 160 × `i` | The narrowest Chirp glyph, unbroken: where each surface cuts a word it can't break. The iPhone preview and CoreText disagree here (89 vs 92 per line). |
+| 133 | 60 × `i ` (spaced) | The same glyph with break opportunities: does the cut land on the space? |
+| 134 | 160 × `l` | A second narrow glyph: the same advance as `i` in x.com's Chirp (252/1000), a different shape. |
+| 135 | 60 × `W` | A wide glyph with a positive `WW` kern: Chrome keeps it when it breaks inside the word (31 of 60 W's at 473px). |
+| 136 | 160 × `.` | Punctuation, no break opportunity between the dots. |
+
+Posted 2026-11-18: 132 2123145806400344330, 133 2123145852306993579, 134 2123145887790862446,
+135 2123145921395605656, 136 2123145958821441890.
+
+Captured 2026-11-18 on x.com (`fixtures/web/postcheck_test.json`): rows 137/23, 60, 137/23, 34/26 and 144/16
+characters, each the engine's prediction; 135's 34 would be 35 if the positive kern were dropped.
+
+Captured 2026-11-18 on the Android app (X 12.36.1, Pixel 3; `fixtures/app/galaxy-s25.json`, `pixel-10.json`),
+rows counted one ink blob per glyph:
+
+| # | 360 dp: X | engine | 411.4 dp: X | engine |
+|---|---|---|---|---|
+| 132 | 77/77/6 | 75/75/10 | 80/80 | 83/77 |
+| 133 | 41/19 | 40/20 | 44/16 | 44/16 |
+| 134 | 77/77/6 | 75/75/10 | 80/80 | 83/77 |
+| 135 | 19/19/19/3 | 19/19/19/3 | 21/21/18 | 21/21/18 |
+| 136 | 80/80 | 79/79/2 | 91/69 | 88/72 |
+
+Every row fits one rule: the app sets each glyph at its advance rounded to whole device pixels (`i` 11 px at
+both sizes, from 11.34 and 10.58), with kerning unrounded (QUIRKS, "Layout engine"). The 7 misses are marked gaps.
+
+Captured 2026-11-18 on the iPhone 15 Pro (`fixtures/app/iphone-16.json`; search-result cells, which bold the
+matched first line): rows 90/70, 47/13, 90/70, 23/23/14 and 84/76. The preview predicted 89/71, 47/13, 89/71,
+22/22/16 and 94/66; CoreText with the app's font, 92/68, 48/12, 92/68, 21/21/18 and 97/63. Neither matches: the
+app sets its own Chirp-UI with no pair kerning (QUIRKS, "Layout engine"). The 4 misses are marked gaps.
+
 ---
 
 ## What the tool can't draw yet
